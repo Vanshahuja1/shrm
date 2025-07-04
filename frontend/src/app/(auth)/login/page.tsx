@@ -100,7 +100,7 @@ export default function LoginPage() {
       setIsLoading(false)
       if (formData.id === "101") router.push("/admin")
       else if (formData.id === "102") router.push("/manager")
-      else if (formData.id === "103") router.push("/employee/{")
+      else if (formData.id === "103") router.push("/hr")
       else setError("Invalid credentials. Try ID: 101, 102, or 103.")
     }, 1500)
   }
@@ -163,7 +163,7 @@ export default function LoginPage() {
           >
             <Building2 className="w-8 h-8 text-white" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900 font-bold mb-2">SHRM Portal</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">SHRM Portal</h1>
           
         </motion.div>
 

@@ -20,7 +20,8 @@ export default function RegisterPage() {
   const roles = [
     { value: 'employee', label: 'Employee' },
     { value: 'manager', label: 'Manager' },
-    { value: 'admin', label: 'Admin' }
+    { value: 'admin', label: 'Admin' },
+    { value: 'hr', label: 'hr' }
   ]
 
   const managers = [
