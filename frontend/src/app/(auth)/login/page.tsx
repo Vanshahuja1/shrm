@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -19,7 +18,6 @@ export default function LoginPage() {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
@@ -91,18 +89,62 @@ export default function LoginPage() {
     }
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Role-based redirect function
+  const getRedirectPath = (role: string) => {
+    const roleRoutes = {
+      admin: "/admin",
+      manager: "/manager",
+      hr: "/hr",
+      employee: "/employee",
+      sales: "/sales",
+      intern: "/intern",
+    }
+    return roleRoutes[role.toLowerCase() as keyof typeof roleRoutes] || "/dashboard"
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
-     //api call 
-    setTimeout(() => {
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: formData.id.trim(),
+          password: formData.password,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Store authentication data
+        localStorage.setItem("authToken", data.data.token)
+        localStorage.setItem("userData", JSON.stringify(data.data.user))
+
+        // Show success message briefly
+        setError("")
+
+        // Redirect based on user role
+        const redirectPath = getRedirectPath(data.data.user.role)
+
+        // Add a small delay for better UX
+        setTimeout(() => {
+          router.push(redirectPath)
+        }, 500)
+      } else {
+        setError(data.message || "Login failed. Please check your credentials.")
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      setError("Network error. Please check if the server is running and try again.")
+    } finally {
       setIsLoading(false)
-      if (formData.id === "101") router.push("/admin")
-      else if (formData.id === "102") router.push("/manager")
-      else if (formData.id === "103") router.push("/hr")
-      else setError("Invalid credentials. Try ID: 101, 102, or 103.")
-    }, 1500)
+    }
   }
 
   return (
@@ -164,7 +206,7 @@ export default function LoginPage() {
             <Building2 className="w-8 h-8 text-white" />
           </motion.div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">SHRM Portal</h1>
-          
+          <p className="text-gray-600 text-sm">Employee Management System</p>
         </motion.div>
 
         {/* Login form */}
@@ -191,13 +233,14 @@ export default function LoginPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Employee ID"
+                  placeholder="Employee ID "
                   value={formData.id}
-                  onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, id: e.target.value.toUpperCase() })}
                   onFocus={() => setFocusedField("id")}
                   onBlur={() => setFocusedField("")}
                   className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <motion.div
@@ -230,6 +273,7 @@ export default function LoginPage() {
                   onBlur={() => setFocusedField("")}
                   className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <motion.div
@@ -256,9 +300,9 @@ export default function LoginPage() {
             {/* Login button */}
             <motion.button
               type="submit"
-              disabled={isLoading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              disabled={isLoading || !formData.id.trim() || !formData.password}
+              whileHover={{ scale: isLoading ? 1 : 1.02 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
               className="w-full relative overflow-hidden bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <motion.div
@@ -278,6 +322,33 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
+          {/* Demo credentials info 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+          >
+            <p className="text-blue-800 text-xs text-center font-medium mb-2">Demo Credentials:</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="text-blue-700">
+                <strong>Admin:</strong> ADM101
+              </div>
+              <div className="text-blue-700">
+                <strong>Manager:</strong> MAG101
+              </div>
+              <div className="text-blue-700">
+                <strong>HR:</strong> HR101
+              </div>
+              <div className="text-blue-700">
+                <strong>Employee:</strong> EMP101
+              </div>
+            </div>
+            <p className="text-blue-600 text-xs text-center mt-2">
+              <em>Password is same as ID</em>
+            </p>
+          </motion.div>*/}
+
           {/* Footer */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -285,7 +356,6 @@ export default function LoginPage() {
             transition={{ delay: 0.8, duration: 0.8 }}
             className="mt-8 pt-6 border-t border-gray-200 text-center"
           >
-            
             <p className="text-gray-500 text-xs">
               Need assistance? Contact{" "}
               <motion.span whileHover={{ color: "#ef4444" }} className="text-red-400 cursor-pointer transition-colors">

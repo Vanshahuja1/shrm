@@ -145,11 +145,38 @@ type EmailNotification = {
   timestamp: string
 }
 
+type ProjectUpdate = {
+  projectId: number
+  projectName: string
+  oldProgress: number
+  newProgress: number
+  updatedBy: string
+  timestamp: string
+}
+
+type EmployeeResponse = {
+  taskId: number
+  taskTitle: string
+  employee: string
+  rating: number
+  ratedBy: string
+  timestamp: string
+}
+
+type AttendanceData = {
+  employee: string
+  date: string
+  action: string
+  reason: string
+  approvedBy: string
+  timestamp: string
+}
+
 type AdminData = {
-  projectUpdates: any[]
-  employeeResponses: any[]
-  attendanceData: any[]
-  performanceMetrics: any[]
+  projectUpdates: ProjectUpdate[]
+  employeeResponses: EmployeeResponse[]
+  attendanceData: AttendanceData[]
+  performanceMetrics: unknown[]
 }
 
 const ManagerDashboard: React.FC = () => {
@@ -415,7 +442,7 @@ const ManagerDashboard: React.FC = () => {
   ])
 
   // Email Notifications State
-  const [emailNotifications, setEmailNotifications] = useState<EmailNotification[]>([
+ /* const [emailNotifications, setEmailNotifications] = useState<EmailNotification[]>([
     {
       id: 1,
       to: "alice@company.com",
@@ -446,9 +473,7 @@ const ManagerDashboard: React.FC = () => {
 
   const [showNewProject, setShowNewProject] = useState(false)
   const [showNewTask, setShowNewTask] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [showAttendanceEdit, setShowAttendanceEdit] = useState(false)
-  const [selectedAttendance, setSelectedAttendance] = useState<AttendanceRecord | null>(null)
+  //const [selectedAttendance, setSelectedAttendance] = useState<AttendanceRecord | null>(null)
 
   // Handle project progress change and send to admin
   const handleProgressChange = (projectId: number, newProgress: number) => {
@@ -526,7 +551,7 @@ const ManagerDashboard: React.FC = () => {
   }
 
   // Send email notification
-  const sendEmailNotification = (task: Task) => {
+  /*const sendEmailNotification = (task: Task) => {
     const newNotification: EmailNotification = {
       id: emailNotifications.length + 1,
       to: managerInfo.employees.find((emp) => emp.name === task.assignedTo)?.email || "",
@@ -537,7 +562,7 @@ const ManagerDashboard: React.FC = () => {
       timestamp: new Date().toLocaleString(),
     }
     setEmailNotifications([...emailNotifications, newNotification])
-  }
+  }*/
 
   // Calculate performance metrics
   const calculatePerformanceMetrics = (employee: Employee) => {
@@ -557,7 +582,7 @@ const ManagerDashboard: React.FC = () => {
   // Handle attendance edit
   const handleAttendanceEdit = (record: AttendanceRecord) => {
     setSelectedAttendance(record)
-    setShowAttendanceEdit(true)
+    // setShowAttendanceEdit(true) - removed unused state
   }
 
   // Handle attendance regularization
@@ -1260,7 +1285,7 @@ const ManagerDashboard: React.FC = () => {
 
         {/* Time Tracking */}
         <div className="mt-6 pt-6 border-t border-red-100">
-          <h4 className="font-medium text-gray-900 mb-3">Today's Time Tracking</h4>
+          <h4 className="font-medium text-gray-900 mb-3">{"Today's Time Tracking"}</h4>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="bg-red-50 rounded-lg p-3">
               <p className="text-sm text-gray-600">Total Hours</p>
@@ -1664,4 +1689,4 @@ const ManagerDashboard: React.FC = () => {
   )
 }
 
-export default ManagerDashboard;
+export default ManagerDashboard
