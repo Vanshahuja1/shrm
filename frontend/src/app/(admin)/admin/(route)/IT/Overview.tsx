@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Users, Briefcase, TrendingUp, Building, Calendar, CheckCircle } from "lucide-react"
+import { Users, Briefcase, TrendingUp, Building, Calendar, CheckCircle, type LucideIcon } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -32,8 +32,20 @@ const departmentData = [
   { name: "IT/CS Management", value: 25, color: "#F59E0B" },
 ]
 
+// Define the color type
+type ColorType = "blue" | "green" | "purple" | "orange" | "emerald" | "red"
+
+// Define the stat interface
+interface StatItem {
+  title: string
+  value: string
+  change: string
+  icon: LucideIcon
+  color: ColorType
+}
+
 export default function Overview() {
-  const stats = [
+  const stats: StatItem[] = [
     { title: "Total Employees", value: "247", change: "+12%", icon: Users, color: "blue" },
     { title: "Active Projects", value: "20", change: "+5%", icon: Briefcase, color: "green" },
     { title: "Monthly Revenue", value: "$2.6M", change: "+18%", icon: TrendingUp, color: "purple" },
@@ -42,13 +54,25 @@ export default function Overview() {
     { title: "Avg Attendance", value: "95%", change: "+2%", icon: Calendar, color: "red" },
   ]
 
-  const colorClasses = {
+  const colorClasses: Record<ColorType, string> = {
     blue: "bg-blue-50 text-blue-700 border-blue-200",
     green: "bg-green-50 text-green-700 border-green-200",
     purple: "bg-purple-50 text-purple-700 border-purple-200",
     orange: "bg-orange-50 text-orange-700 border-orange-200",
     emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
     red: "bg-red-50 text-red-700 border-red-200",
+  }
+
+  const getIconBackgroundClass = (color: ColorType): string => {
+    const backgroundClasses: Record<ColorType, string> = {
+      blue: "bg-blue-100",
+      green: "bg-green-100",
+      purple: "bg-purple-100",
+      orange: "bg-orange-100",
+      emerald: "bg-emerald-100",
+      red: "bg-red-100",
+    }
+    return backgroundClasses[color]
   }
 
   return (
@@ -64,9 +88,7 @@ export default function Overview() {
               className={`p-6 rounded-xl border-2 ${colorClasses[stat.color]} bg-white shadow-sm`}
             >
               <div className="flex items-center justify-between mb-4">
-                <div
-                  className={`p-3 rounded-lg ${colorClasses[stat.color].replace("border-", "bg-").replace("-200", "-100")}`}
-                >
+                <div className={`p-3 rounded-lg ${getIconBackgroundClass(stat.color)}`}>
                   <Icon size={24} />
                 </div>
                 <span
@@ -96,7 +118,7 @@ export default function Overview() {
               <YAxis stroke="#6b7280" />
               <Tooltip
                 formatter={(value, name) => [
-                  name === "revenue" ? `$${value.toLocaleString()}` : value,
+                  name === "revenue" ? `$${Number(value).toLocaleString()}` : value,
                   name === "revenue" ? "Revenue" : name === "employees" ? "Employees" : "Attendance %",
                 ]}
                 contentStyle={{

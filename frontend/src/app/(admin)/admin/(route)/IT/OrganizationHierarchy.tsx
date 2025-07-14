@@ -2,9 +2,8 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Building, Users, Award, UserCheck, Target, ChevronDown, ChevronRight } from 'lucide-react'
-import { sampleDepartments, sampleMembers } from "./SampleData";
-import type { Department, OrganizationMember } from "../types";
+import { Award, UserCheck, ChevronDown, ChevronRight } from "lucide-react"
+import { sampleDepartments, sampleMembers } from "./SampleData"
 
 export default function OrganizationHierarchy() {
   const [selectedDepartment, setSelectedDepartment] = useState(sampleDepartments[0]?.id || null)
@@ -25,15 +24,9 @@ export default function OrganizationHierarchy() {
   const getReportingStructure = () => {
     if (!selectedDept) return null
 
-    const managers = sampleMembers.filter(
-      (m) => m.department === selectedDept.name && m.role === "Manager"
-    )
-    const employees = sampleMembers.filter(
-      (m) => m.department === selectedDept.name && m.role === "Employee"
-    )
-    const interns = sampleMembers.filter(
-      (m) => m.department === selectedDept.name && m.role === "Intern"
-    )
+    const managers = sampleMembers.filter((m) => m.department === selectedDept.name && m.role === "Manager")
+    const employees = sampleMembers.filter((m) => m.department === selectedDept.name && m.role === "Employee")
+    const interns = sampleMembers.filter((m) => m.department === selectedDept.name && m.role === "Intern")
 
     return { managers, employees, interns }
   }
@@ -45,8 +38,7 @@ export default function OrganizationHierarchy() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900"></h1>
-          
+          <h1 className="text-3xl font-bold text-gray-900">Organization Hierarchy</h1>
         </div>
         <select
           value={selectedDepartment}
@@ -198,17 +190,13 @@ export default function OrganizationHierarchy() {
                     <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2 text-white text-sm font-bold">
                       {employee.name
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")}
                     </div>
                     <p className="font-semibold text-green-800 text-sm">{employee.name}</p>
                     <p className="text-green-600 text-xs">{employee.role}</p>
-                    <p className="text-green-500 text-xs">
-                      {employee.performanceMetrics.combinedPercentage}%
-                    </p>
-                    {employee.reportsTo && (
-                      <p className="text-green-400 text-xs mt-1">→ {employee.reportsTo}</p>
-                    )}
+                    <p className="text-green-500 text-xs">{employee.performanceMetrics.combinedPercentage}%</p>
+                    {employee.reportsTo && <p className="text-green-400 text-xs mt-1">→ {employee.reportsTo}</p>}
                   </motion.div>
                 ))}
               </div>
@@ -238,17 +226,13 @@ export default function OrganizationHierarchy() {
                     <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2 text-white text-sm font-bold">
                       {intern.name
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")}
                     </div>
                     <p className="font-semibold text-purple-800 text-sm">{intern.name}</p>
                     <p className="text-purple-600 text-xs">{intern.role}</p>
-                    <p className="text-purple-500 text-xs">
-                      {intern.performanceMetrics.combinedPercentage}%
-                    </p>
-                    {intern.reportsTo && (
-                      <p className="text-purple-400 text-xs mt-1">→ {intern.reportsTo}</p>
-                    )}
+                    <p className="text-purple-500 text-xs">{intern.performanceMetrics.combinedPercentage}%</p>
+                    {intern.reportsTo && <p className="text-purple-400 text-xs mt-1">→ {intern.reportsTo}</p>}
                   </motion.div>
                 ))}
               </div>
@@ -267,9 +251,7 @@ export default function OrganizationHierarchy() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Employee
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Reports To
                 </th>
@@ -290,7 +272,7 @@ export default function OrganizationHierarchy() {
                         <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
                           {member.name
                             .split(" ")
-                            .map((n) => n[0])
+                            .map((n: string) => n[0])
                             .join("")}
                         </div>
                         <div>
@@ -305,8 +287,8 @@ export default function OrganizationHierarchy() {
                           member.role === "Manager"
                             ? "bg-red-100 text-red-800"
                             : member.role === "Employee"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-purple-100 text-purple-800"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-purple-100 text-purple-800"
                         }`}
                       >
                         {member.role}
@@ -329,9 +311,7 @@ export default function OrganizationHierarchy() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          member.attendance.todayPresent
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                          member.attendance.todayPresent ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                         }`}
                       >
                         {member.attendance.todayPresent ? "Present" : "Absent"}
