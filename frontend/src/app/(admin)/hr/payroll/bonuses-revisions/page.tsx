@@ -139,18 +139,18 @@ export default function BonusesRevisionsPage() {
           <CardHeader title="Employee Bonus & Revisions Table" />
           <CardContent>
             <div className="flex gap-3 mb-4">
-     {['All', 'Bonus', 'Salary Revision'].map((t) => (
-       <Button
-         key={t}
-         variant={filter === t ? 'contained' : 'outlined'}
-         color="error"
-         size="small"
-         onClick={() => setFilter(t as typeof filter)}
-       >
-         {t}
-       </Button>
-     ))}
-   </div>
+              {["All", "Bonus", "Salary Revision"].map((t) => (
+                <Button
+                  key={t}
+                  variant={filter === t ? "contained" : "outlined"}
+                  color="error"
+                  size="small"
+                  onClick={() => setFilter(t as typeof filter)}
+                >
+                  {t}
+                </Button>
+              ))}
+            </div>
             <TableContainer component={Paper}>
               <Table size="small">
                 <TableHead>
