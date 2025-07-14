@@ -1,10 +1,4 @@
-import React, { useState, useRef } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import React, { useCallback, useState, useRef } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,59 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import html2canvas from "html2canvas-pro";
+import { jsPDF } from "jspdf";
 
-interface PayslipData {
-  employee: {
-    id: string;
-    empNo: string;
-    name: string;
-    department?: string;
-    dateOfJoining?: string;
-    designation?: string;
-  };
-  company: {
-    name: string;
-    address: string;
-  };
-  paymentDetails: {
-    paymentMode: string;
-    bankName: string;
-    bankIFSC: string;
-    bankAccount: string;
-  };
-  identifiers: {
-    pan: string;
-    uan: string;
-    pfNumber: string;
-    payCycleDate: string;
-  };
-  salaryDetails: {
-    actualPayableDays: number;
-    totalWorkingDays: number;
-    lossOfPayDays: number;
-    daysPayable: number;
-  };
-  earnings: {
-    basic: number;
-    hra: number;
-    communicationReimbursement: number;
-    professionalReimbursement: number;
-    ltc: number;
-    specialAllowance: number;
-    total: number;
-  };
-  contributions: {
-    pfEmployee: number;
-    total: number;
-  };
-  deductions: {
-    professionalTax: number;
-    pfEmployee: number;
-    total: number;
-  };
-  netSalary: number;
-  netSalaryInWords: string;
-}
 export interface PayslipEmployee {
   id: string;
   empNo: string;
@@ -82,24 +26,25 @@ export interface PayslipEmployee {
 
 interface FunctionalPayslipPageProps {
   employee: PayslipEmployee | null;
+  onClose: () => void;
 }
 
 const FunctionalPayslipPage: React.FC<FunctionalPayslipPageProps> = ({
   employee,
+  onClose,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [showPayslipDialog, setShowPayslipDialog] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const payslipRef = useRef<HTMLDivElement>(null);
 
-  const payslipData: PayslipData = {
+  const payslipData = {
     employee: {
       name: employee?.name || "",
       empNo: employee?.id || "",
       dateOfJoining: employee?.dateOfJoining || "Apr 1, 2021",
       department: employee?.department || "Engineering",
       designation: employee?.designation || "Software Engineer",
-      id: "",
+      id: employee?.id || "",
     },
     company: {
       name: "Keka Technologies Private Limited",
@@ -119,10 +64,16 @@ const FunctionalPayslipPage: React.FC<FunctionalPayslipPageProps> = ({
       payCycleDate: "26 Mar - 25 Apr",
     },
     salaryDetails: {
-      actualPayableDays: 31,
-      totalWorkingDays: 31,
+      actualPayableDays: employee?.payableDays
+        ? parseInt(employee.payableDays.split("/")[0], 10)
+        : 31,
+      totalWorkingDays: employee?.payableDays
+        ? parseInt(employee.payableDays.split("/")[1], 10)
+        : 31,
       lossOfPayDays: 0,
-      daysPayable: 31,
+      daysPayable: employee?.payableDays
+        ? parseInt(employee.payableDays.split("/")[0], 10)
+        : 31,
     },
     earnings: {
       basic: 45000,
@@ -131,7 +82,7 @@ const FunctionalPayslipPage: React.FC<FunctionalPayslipPageProps> = ({
       professionalReimbursement: 2000,
       ltc: 2000,
       specialAllowance: 25000,
-      total: 96000,
+      total: employee?.totalEarnings || 96000,
     },
     contributions: {
       pfEmployee: 3000,
@@ -140,359 +91,310 @@ const FunctionalPayslipPage: React.FC<FunctionalPayslipPageProps> = ({
     deductions: {
       professionalTax: 200,
       pfEmployee: 2085,
-      total: 2285,
+      total: employee?.totalDeductions || 2285,
     },
-    netSalary: 90715,
+    netSalary: employee?.netPay || 90715,
     netSalaryInWords: "Ninety Thousand & Seven Hundred Fifteen Rupees Only",
   };
 
-  const handlePrint = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
-        const printContent = payslipRef.current?.innerHTML || "";
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Payslip April 2021</title>
-              <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                .print-container { max-width: 800px; margin: 0 auto; }
-                .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-                .company-logo { font-size: 24px; font-weight: bold; color: #f59e0b; }
-                .employee-section { margin-bottom: 20px; }
-                .details-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-                .detail-item { }
-                .detail-label { font-size: 12px; color: #666; margin-bottom: 2px; }
-                .detail-value { font-weight: 500; }
-                .earnings-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-                .earnings-column { background: #f9f9f9; padding: 15px; border-radius: 8px; }
-                .earnings-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-                .total-row { border-top: 1px solid #ddd; padding-top: 8px; font-weight: bold; }
-                .net-salary { background: #dbeafe; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-                .net-salary-amount { font-size: 20px; font-weight: bold; }
-                .footer-note { font-size: 12px; color: #666; font-style: italic; }
-                @media print {
-                  body { margin: 0; }
-                  .print-container { max-width: none; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="print-container">
-                ${printContent}
-              </div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-        printWindow.close();
+  const forceRgbStyles = (element: HTMLElement) => {
+    const allElements = element.querySelectorAll('*');
+    allElements.forEach(el => {
+      const computed = window.getComputedStyle(el);
+      if (computed && computed.color.includes('oklch')) {
+        (el as HTMLElement).style.color = 'black';
       }
-      setIsLoading(false);
-    }, 1000);
+      if (computed && computed.backgroundColor.includes('oklch')) {
+        (el as HTMLElement).style.backgroundColor = 'white';
+      }
+    });
   };
 
-  const handleDownload = () => {
+  const generatePdfFromRef = async (action: 'print' | 'download') => {
+    if (!payslipRef.current) return;
     setIsLoading(true);
-    setTimeout(() => {
-      const element = document.createElement("a");
-      const htmlContent = `
-        <html>
-          <head>
-            <title>Payslip April 2021</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .container { max-width: 800px; margin: 0 auto; }
-              .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-              .company-logo { font-size: 24px; font-weight: bold; color: #f59e0b; }
-              .employee-section { margin-bottom: 20px; }
-              .details-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-              .detail-item { }
-              .detail-label { font-size: 12px; color: #666; margin-bottom: 2px; }
-              .detail-value { font-weight: 500; }
-              .earnings-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-              .earnings-column { background: #f9f9f9; padding: 15px; border-radius: 8px; }
-              .earnings-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-              .total-row { border-top: 1px solid #ddd; padding-top: 8px; font-weight: bold; }
-              .net-salary { background: #dbeafe; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-              .net-salary-amount { font-size: 20px; font-weight: bold; }
-              .footer-note { font-size: 12px; color: #666; font-style: italic; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              ${payslipRef.current?.innerHTML || ""}
-            </div>
-          </body>
-        </html>
-      `;
 
-      const file = new Blob([htmlContent], { type: "text/html" });
-      element.href = URL.createObjectURL(file);
-      element.download = "Payslip_April_2021.html";
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-      URL.revokeObjectURL(element.href);
+    forceRgbStyles(payslipRef.current);
+
+    try {
+      const canvas = await html2canvas(payslipRef.current!, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const imgWidth = 190;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight - 20;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight - 20;
+      }
+
+      if (action === 'download') {
+        pdf.save(`Payslip_April_2021_${employee?.name || "employee"}.pdf`);
+      } else {
+        const pdfBlob = pdf.output("blob");
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const printWindow = window.open(pdfUrl, "_blank");
+        if (printWindow) {
+          printWindow.onload = () => {
+            printWindow.print();
+            printWindow.onafterprint = () => {
+              printWindow.close();
+              URL.revokeObjectURL(pdfUrl);
+            };
+          };
+        }
+      }
+    } catch (err) {
+      console.error(`${action} error:`, err);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
+
+  const handlePrint = useCallback(() => generatePdfFromRef('print'), []);
+  const handleDownload = useCallback(() => generatePdfFromRef('download'), [employee?.name]);
 
   const handleRefresh = () => {
     setIsLoading(true);
     setTimeout(() => {
-      // Simulate data refresh
       window.location.reload();
     }, 1000);
   };
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < 2) setCurrentPage(currentPage + 1);
-  };
+  const handlePrevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
+  const handleNextPage = () => currentPage < 2 && setCurrentPage(currentPage + 1);
 
   return (
-    <Dialog open={showPayslipDialog} onOpenChange={setShowPayslipDialog}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 outline-none border-none rounded-lg shadow-lg">
-        <DialogHeader className="sticky top-0 z-10 bg-white px-6 py-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">
-            Employee Payslip – April 2021
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 text-gray-500 hover:text-black"
-            onClick={() => setShowPayslipDialog(false)}
-          >
-            ✕
-          </Button>
-        </DialogHeader>
+    <div className="w-full" ref={payslipRef}>
+      <Card className="w-full shadow-none border-none">
+        <CardHeader className="bg-gray-800 text-white rounded-t-lg">
+          <div className="flex justify-between items-center px-6 py-4">
+            <div>
+              <h2 className="text-lg font-semibold">April 2021</h2>
+              <span className="text-sm text-gray-300">{currentPage} / 2</span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                variant="ghost"
+                className="text-white hover:bg-gray-700"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleDownload}
+                disabled={isLoading}
+                className="text-white hover:bg-gray-700"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handlePrint}
+                disabled={isLoading}
+                className="text-white hover:bg-gray-700"
+              >
+                <Printer className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-8 p-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold">Payslip</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {payslipData.company.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {payslipData.company.address}
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="text-xl font-bold text-amber-500">
+                ONE AIM IT SOLUTIONS
+              </span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">EMP NO</span>
+              <p className="font-medium">{payslipData.employee.empNo}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">DOJ</span>
+              <p className="font-medium">{payslipData.employee.dateOfJoining}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Department</span>
+              <p className="font-medium">{payslipData.employee.department}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Designation</span>
+              <p className="font-medium">{payslipData.employee.designation}</p>
+            </div>
+          </div>
 
-        <div className="bg-white rounded-b-lg p-6">
-          <Card className="w-full shadow-none border-none">
-            {/* Top Header */}
-            <CardHeader className="bg-gray-800 text-white rounded-t-lg">
-              <div className="flex justify-between items-center px-6 py-4">
-                <div>
-                  <h2 className="text-lg font-semibold">April 2021</h2>
-                  <span className="text-sm text-gray-300">1 / 2</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Mode</span>
+              <p className="font-medium">{payslipData.paymentDetails.paymentMode}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Bank</span>
+              <p className="font-medium">{payslipData.paymentDetails.bankName}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">IFSC</span>
+              <p className="font-medium">{payslipData.paymentDetails.bankIFSC}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Account</span>
+              <p className="font-medium">{payslipData.paymentDetails.bankAccount}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 text-sm break-words">
+            <div>
+              <p className="text-gray-500 text-xs mb-1">PAN</p>
+              <p className="font-medium break-all">{payslipData.identifiers.pan}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs mb-1">UAN</p>
+              <p className="font-medium break-all">{payslipData.identifiers.uan}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs mb-1">PF Number</p>
+              <p className="font-medium break-all">{payslipData.identifiers.pfNumber}</p>
+            </div>
+            <div className="sm:col-span-2 lg:col-span-1">
+              <p className="text-gray-500 text-xs mb-1">Pay Cycle Date</p>
+              <p className="font-medium">{payslipData.identifiers.payCycleDate}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Actual Days</span>
+              <p className="font-medium">{payslipData.salaryDetails.actualPayableDays}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Working Days</span>
+              <p className="font-medium">{payslipData.salaryDetails.totalWorkingDays}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">LOP</span>
+              <p className="font-medium">{payslipData.salaryDetails.lossOfPayDays}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Payable Days</span>
+              <p className="font-medium">{payslipData.salaryDetails.daysPayable}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+              <h3 className="font-semibold mb-2">Earnings</h3>
+              {[
+                ["Basic", payslipData.earnings.basic],
+                ["HRA", payslipData.earnings.hra],
+                ["Comm. Reimburse.", payslipData.earnings.communicationReimbursement],
+                ["Prof. Reimburse.", payslipData.earnings.professionalReimbursement],
+                ["LTC", payslipData.earnings.ltc],
+                ["Special Allow.", payslipData.earnings.specialAllowance],
+              ].map(([label, value]) => (
+                <div className="flex justify-between text-sm" key={label}>
+                  <span>{label}</span>
+                  <span>₹ {(value as number).toLocaleString()}</span>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={handleRefresh}
-                    disabled={isLoading}
-                    variant="ghost"
-                    className="text-white hover:bg-gray-700"
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-                    />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleDownload}
-                    disabled={isLoading}
-                    className="text-white hover:bg-gray-700"
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handlePrint}
-                    disabled={isLoading}
-                    className="text-white hover:bg-gray-700"
-                  >
-                    <Printer className="w-4 h-4" />
-                  </Button>
-                </div>
+              ))}
+              <div className="flex justify-between font-bold border-t pt-2">
+                <span>Total Earnings</span>
+                <span>₹ {payslipData.earnings.total.toLocaleString()}</span>
               </div>
-            </CardHeader>
+            </div>
 
-            {/* Payslip Body */}
-            <CardContent className="space-y-8 p-6">
-              {/* Company + Employee Details */}
-              <div className="flex justify-between items-start">
-                <div>
-                  <h1 className="text-2xl font-bold">Payslip</h1>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Keka Technologies Pvt Ltd
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Plot no. 104, Kavuri Hills, Hyderabad, TS 500033
-                  </p>
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <h3 className="font-semibold mb-2">Contribution</h3>
+                <div className="flex justify-between text-sm">
+                  <span>PF</span>
+                  <span>₹ {payslipData.contributions.pfEmployee.toLocaleString()}</span>
                 </div>
-                <div className="text-right">
-                  <span className="text-xl font-bold text-amber-500">
-                    ONE AIM IT SOLUTIONS
-                  </span>
-                </div>
-              </div>
-
-              {/* Employee Summary */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">EMP NO</span>
-                  <p className="font-medium">1012852</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">DOJ</span>
-                  <p className="font-medium">Sep 12, 2017</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Department</span>
-                  <p className="font-medium">User Experience</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Designation</span>
-                  <p className="font-medium">Sr. UX Designer</p>
-                </div>
-              </div>
-
-              {/* Banking Details */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Mode</span>
-                  <p className="font-medium">Bank Transfer</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Bank</span>
-                  <p className="font-medium">ICICI Bank</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">IFSC</span>
-                  <p className="font-medium">KBKH0000167</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Account</span>
-                  <p className="font-medium">101287000434233</p>
-                </div>
-              </div>
-
-              {/* Identifiers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 text-sm break-words">
-                <div>
-                  <p className="text-gray-500 text-xs mb-1">PAN</p>
-                  <p className="font-medium break-all">
-                    {payslipData.identifiers.pan}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs mb-1">UAN</p>
-                  <p className="font-medium break-all">
-                    {payslipData.identifiers.uan}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs mb-1">PF Number</p>
-                  <p className="font-medium break-all">
-                    {payslipData.identifiers.pfNumber}
-                  </p>
-                </div>
-                <div className="sm:col-span-2 lg:col-span-1">
-                  <p className="text-gray-500 text-xs mb-1">Pay Cycle Date</p>
-                  <p className="font-medium">
-                    {payslipData.identifiers.payCycleDate}
-                  </p>
-                </div>
-              </div>
-
-              {/* Salary Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Actual Days</span>
-                  <p className="font-medium">31</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Working Days</span>
-                  <p className="font-medium">31</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">LOP</span>
-                  <p className="font-medium">0</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Payable Days</span>
-                  <p className="font-medium">31</p>
-                </div>
-              </div>
-
-              {/* Earnings & Deductions */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                  <h3 className="font-semibold mb-2">Earnings</h3>
-                  {[
-                    ["Basic", 45000],
-                    ["HRA", 20000],
-                    ["Comm. Reimburse.", 2000],
-                    ["Prof. Reimburse.", 2000],
-                    ["LTC", 2000],
-                    ["Special Allow.", 25000],
-                  ].map(([label, value]) => (
-                    <div className="flex justify-between text-sm" key={label}>
-                      <span>{label}</span>
-                      <span>₹ {(value as number).toLocaleString()}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between font-bold border-t pt-2">
-                    <span>Total Earnings</span>
-                    <span>₹ 96,000</span>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                    <h3 className="font-semibold mb-2">Contribution</h3>
-                    <div className="flex justify-between text-sm">
-                      <span>PF</span>
-                      <span>₹ 3000</span>
-                    </div>
-                    <div className="flex justify-between font-bold border-t pt-2">
-                      <span>Total</span>
-                      <span>₹ 3000</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                    <h3 className="font-semibold mb-2">Deductions</h3>
-                    <div className="flex justify-between text-sm">
-                      <span>Prof. Tax</span>
-                      <span>₹ 200</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>PF</span>
-                      <span>₹ 2085</span>
-                    </div>
-                    <div className="flex justify-between font-bold border-t pt-2">
-                      <span>Total</span>
-                      <span>₹ 2285</span>
-                    </div>
-                  </div>
+                <div className="flex justify-between font-bold border-t pt-2">
+                  <span>Total</span>
+                  <span>₹ {payslipData.contributions.total.toLocaleString()}</span>
                 </div>
               </div>
 
-              {/* Net Salary */}
-              <div className="bg-blue-50 p-4 rounded-lg text-sm">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-semibold">Net Salary</span>
-                  <span className="text-lg font-bold">₹ 90,715</span>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <h3 className="font-semibold mb-2">Deductions</h3>
+                <div className="flex justify-between text-sm">
+                  <span>Prof. Tax</span>
+                  <span>₹ {payslipData.deductions.professionalTax.toLocaleString()}</span>
                 </div>
-                <p className="text-gray-600 italic text-xs">
-                  Ninety Thousand & Seven Hundred Fifteen Rupees Only
-                </p>
+                <div className="flex justify-between text-sm">
+                  <span>PF</span>
+                  <span>₹ {payslipData.deductions.pfEmployee.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold border-t pt-2">
+                  <span>Total</span>
+                  <span>₹ {payslipData.deductions.total.toLocaleString()}</span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </DialogContent>
-    </Dialog>
+            </div>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg text-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold">Net Salary</span>
+              <span className="text-lg font-bold">₹ {payslipData.netSalary.toLocaleString()}</span>
+            </div>
+            <p className="text-gray-600 italic text-xs">
+              {payslipData.netSalaryInWords}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+      <div className="flex justify-between items-center mt-4 px-6">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handlePrevPage}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="w-4 h-4 mr-2" /> Previous
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleNextPage}
+          disabled={currentPage === 2}
+        >
+          Next <ChevronRight className="w-4 h-4 ml-2" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onClose}
+          className="ml-auto"
+        >
+          Close
+        </Button>
+      </div>
+    </div>
   );
 };
 
