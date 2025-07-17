@@ -94,25 +94,136 @@ export default function EmployeeRecords() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4 text-gray-900">
-        👥 Employees
-      </h1>
+    <div className="bg-white border rounded-xl shadow-sm">
+      {/* Header Section */}
+      <div className="px-6 py-4 border-b">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+            <span className="text-red-600">📋</span> Employee Records
+          </h2>
+          <Link href="/hr/employees/add">
+            <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2">
+              <span>+</span> Add Employee
+            </button>
+          </Link>
+        </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        {tabs.map((tab, index) => (
-          <button
-            key={index}
-            onClick={() => setActiveTab(index)}
-            className={`px-4 py-2 rounded-full font-medium text-sm ${
-              activeTab === index
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : "bg-red-100 text-red-700 hover:bg-red-50"
-            }`}
+        {/* Search and Filter */}
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              
+            </span>
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+            className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
           >
-            {tab.icon} {tab.label}
-          </button>
-        ))}
+            <option value="All">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead>
+            <tr className="bg-gray-50 text-gray-600">
+              
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">Employee</th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">Email Address</th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">Department</th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">Job Title</th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">Joined Date</th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">Status</th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {filteredRecords.map((emp, index) => (
+              <tr
+                key={emp.id}
+                className="hover:bg-[#FDD0C4] transition-colors cursor-pointer"
+                onClick={() => handleRowClick(emp.employeeId)}
+              >
+                
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 flex-shrink-0 rounded-full bg-red-100 flex items-center justify-center">
+                      <span className="font-medium text-red-700">{emp.name.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">{emp.name}</div>
+                      <div className="text-gray-500 text-xs">{emp.employeeId}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                  {emp.email}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                  {emp.department || "N/A"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                  {emp.designation}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                  {emp.joinedDate ? new Date(emp.joinedDate).toLocaleDateString() : "—"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      emp.status === "Active"
+                        ? "bg-green-100 text-green-800"
+                        : emp.status === "On Leave"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {emp.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-3">
+                    <button
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // handle edit
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button
+                      className="text-gray-400 hover:text-red-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // handle delete
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Mobile View */}
