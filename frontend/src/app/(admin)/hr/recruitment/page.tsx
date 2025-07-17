@@ -118,14 +118,6 @@ export default function HRDashboard() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              KPI Dashboard for HR Recruitment Process
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Chart auto-updates via linked data source.
-            </p>
-          </div>
           <div className="text-sm text-gray-600">
             <Users size={20} className="inline text-blue-600 mr-1" />
             Team | Period: Q3 2020

@@ -322,33 +322,6 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          {/* Demo credentials info 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
-            className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
-          >
-            <p className="text-blue-800 text-xs text-center font-medium mb-2">Demo Credentials:</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="text-blue-700">
-                <strong>Admin:</strong> ADM101
-              </div>
-              <div className="text-blue-700">
-                <strong>Manager:</strong> MAG101
-              </div>
-              <div className="text-blue-700">
-                <strong>HR:</strong> HR101
-              </div>
-              <div className="text-blue-700">
-                <strong>Employee:</strong> EMP101
-              </div>
-            </div>
-            <p className="text-blue-600 text-xs text-center mt-2">
-              <em>Password is same as ID</em>
-            </p>
-          </motion.div>*/}
-
           {/* Footer */}
           <motion.div
             initial={{ opacity: 0 }}

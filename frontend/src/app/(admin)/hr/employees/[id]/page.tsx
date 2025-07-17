@@ -150,7 +150,7 @@ export default function EmployeeDetailsPage() {
               <button
                 className="flex items-center text-gray-600 cursor-pointer hover:text-red-600 transition"
                 onClick={() => {
-                  router.back();
+                  router.push("/hr/employees");
                 }}
               >
                 <ArrowLeft size={18} className="mr-2" />

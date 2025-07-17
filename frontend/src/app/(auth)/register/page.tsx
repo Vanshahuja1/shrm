@@ -201,7 +201,7 @@ export default function RegisterPage() {
   }
 
   const isStep1Valid = formData.name && formData.role && formData.organizationName && formData.departmentName
-  const isStep2Valid = true // Optional fields
+  const isStep2Valid = true 
 
   if (generatedCredentials && currentStep === 3) {
     return (
