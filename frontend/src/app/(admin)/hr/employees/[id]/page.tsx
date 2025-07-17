@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   User,
@@ -16,6 +17,7 @@ import {
   Clock,
   FileText,
   Star,
+  ClipboardList,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 interface EmployeeDetails {
@@ -23,19 +25,38 @@ interface EmployeeDetails {
     name: string;
     email: string;
     phone: string;
+    dob: string;
+    gender: string;
+    aadhar: string;
+    pan: string;
+    address: string;
+    emergencyContact: string;
   };
   financialInfo: {
     salary: string;
-    bankAccount: string;
+    bankInfo: {
+      accountHolderName: string;
+      accountType: string;
+      accountNumber: string;
+      bankName: string;
+      ifscCode: string;
+      branch: string;
+    };
   };
   departmentInfo: {
     department: string;
     designation: string;
+    managerName: string;
     performanceRating: number;
   };
   joiningDetails: {
     joiningDate: string;
     employeeId: string;
+  };
+  taskInfo: {
+    taskName: string;
+    assignedOn: string;
+    assignedBy: string;
   };
   payrollInfo: {
     taxCode: string;
@@ -47,7 +68,7 @@ export default function EmployeeDetailsPage() {
   const [details, setDetails] = useState<EmployeeDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
-
+  const params = useParams();
   const router = useRouter();
 
   useEffect(() => {
@@ -55,31 +76,60 @@ export default function EmployeeDetailsPage() {
       try {
         await new Promise((resolve) => setTimeout(resolve, 800));
 
-        setDetails({
-          personalInfo: {
-            name: "John Doe",
-            email: "john.doe@company.com",
-            phone: "1234567890",
-          },
-          financialInfo: {
-            salary: "$4000",
-            bankAccount: "9876543210",
-          },
-          departmentInfo: {
-            department: "Engineering",
-            designation: "Software Engineer",
+        // Try to get employee from localStorage first
+        const employeeId = params.id as string;
+        const storedEmployees = JSON.parse(localStorage.getItem("employeeList") || "[]");
+        const employee = storedEmployees.find((emp: any) => emp.employeeId === employeeId);
 
-            performanceRating: 4.8,
-          },
-          joiningDetails: {
-            joiningDate: "2021-06-01",
-            employeeId: "EMP999",
-          },
-          payrollInfo: {
-            taxCode: "TX456",
-            benefits: "Health Insurance, Paid Leave",
-          },
-        });
+        if (employee && employee._details) {
+          // Use the stored employee data
+          setDetails(employee._details);
+        } else {
+          // Fallback to mock data
+          setDetails({
+            personalInfo: {
+              name: "John Doe",
+              email: "john.doe@company.com",
+              phone: "1234567890",
+              dob: "1990-05-15",
+              gender: "Male",
+              aadhar: "1234-5678-9012",
+              pan: "ABCDE1234F",
+              address: "123 Main Street, City, State, PIN - 123456",
+              emergencyContact: "9876543210",
+            },
+            financialInfo: {
+              salary: "$4000",
+              bankInfo: {
+                accountHolderName: "John Doe",
+                accountType: "Savings",
+                accountNumber: "9876543210",
+                bankName: "State Bank of India",
+                ifscCode: "SBIN0001234",
+                branch: "Main Branch",
+              },
+            },
+            departmentInfo: {
+              department: "Engineering",
+              designation: "Software Engineer",
+              managerName: "Jane Smith",
+              performanceRating: 4.8,
+            },
+            joiningDetails: {
+              joiningDate: "2021-06-01",
+              employeeId: employeeId,
+            },
+            taskInfo: {
+              taskName: "Setup Development Environment",
+              assignedOn: "2021-06-01",
+              assignedBy: "Jane Smith",
+            },
+            payrollInfo: {
+              taxCode: "TX456",
+              benefits: "Health Insurance, Paid Leave",
+            },
+          });
+        }
       } catch (error) {
         console.error("Failed to fetch employee details:", error);
       } finally {
@@ -88,7 +138,7 @@ export default function EmployeeDetailsPage() {
     };
 
     fetchEmployeeDetails();
-  }, []);
+  }, [params.id]);
 
   const calculateYearsWithCompany = (joiningDate: string) => {
     const start = new Date(joiningDate);
@@ -372,6 +422,78 @@ export default function EmployeeDetailsPage() {
                           </p>
                         </div>
                       </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Date of Birth
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {formatDate(details.personalInfo.dob)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Gender
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.personalInfo.gender}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Aadhar Number
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900 font-mono">
+                            {details.personalInfo.aadhar}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            PAN Number
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900 font-mono">
+                            {details.personalInfo.pan}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Address
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.personalInfo.address}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Emergency Contact
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.personalInfo.emergencyContact}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -402,6 +524,18 @@ export default function EmployeeDetailsPage() {
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
                             {details.departmentInfo.designation}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Manager Name
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.departmentInfo.managerName}
                           </p>
                         </div>
                       </div>
@@ -455,6 +589,53 @@ export default function EmployeeDetailsPage() {
 
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+                      <ClipboardList size={16} className="mr-2 text-red-500" />
+                      Task Information
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Task Name
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.taskInfo.taskName}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Assigned On
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {formatDate(details.taskInfo.assignedOn)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Assigned By
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.taskInfo.assignedBy}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
                       <DollarSign size={16} className="mr-2 text-red-500" />
                       Financial Information
                     </h3>
@@ -474,12 +655,72 @@ export default function EmployeeDetailsPage() {
                       <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-1">
                           <p className="text-sm font-medium text-gray-600">
-                            Bank Account
+                            Account Holder Name
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.financialInfo.bankInfo.accountHolderName}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Account Type
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.financialInfo.bankInfo.accountType}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Account Number
                           </p>
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900 font-mono">
-                            ••••{details.financialInfo.bankAccount.slice(-4)}
+                            ••••{details.financialInfo.bankInfo.accountNumber.slice(-4)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Bank Name
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.financialInfo.bankInfo.bankName}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            IFSC Code
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900 font-mono">
+                            {details.financialInfo.bankInfo.ifscCode}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Branch
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.financialInfo.bankInfo.branch}
                           </p>
                         </div>
                       </div>
