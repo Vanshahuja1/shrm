@@ -109,3 +109,74 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
+
+/* PDF Export Styling */
+.pdf-export {
+  color: #000;
+  background-color: #fff;
+  padding: 15px;
+  font-family: Arial, sans-serif;
+}
+
+/* Background colors */
+.pdf-export .bg-gray-50,
+.pdf-export .bg-yellow-50,
+.pdf-export .bg-blue-50 {
+  background-color: #f9f9f9 !important;
+  border: 1px solid #eaeaea !important;
+  box-shadow: none !important;
+  margin-bottom: 10px !important;
+}
+
+/* Headers */
+.pdf-export h3,
+.pdf-export h4 {
+  color: #000 !important;
+  font-weight: 600 !important;
+  margin: 10px 0 !important;
+}
+
+/* Text colors */
+.pdf-export .text-blue-600,
+.pdf-export .text-red-600 {
+  color: #000 !important;
+  font-weight: bold !important;
+}
+
+/* Badges */
+.pdf-export .px-3.py-1 {
+  background-color: #f3f4f6 !important;
+  color: #000 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+/* Improve spacing */
+.pdf-export .space-y-6 > * {
+  margin-top: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+/* Grid layout */
+.pdf-export .grid {
+  display: block !important;
+}
+
+.pdf-export .grid > div {
+  margin-bottom: 15px !important;
+}
+
+/* Table-like layouts */
+.pdf-export .flex.justify-between {
+  display: flex !important;
+  justify-content: space-between !important;
+  padding: 3px 0 !important;
+  border-bottom: 1px dotted #eaeaea !important;
+}
+
+/* Total section highlight */
+.pdf-export .font-bold.text-lg {
+  font-size: 14pt !important;
+  font-weight: bold !important;
+  padding-top: 5px !important;
+  border-top: 2px solid #000 !important;
+}
