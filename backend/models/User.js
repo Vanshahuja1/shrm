@@ -1,6 +1,6 @@
-const mongoose = require("mongoose")
-const bcrypt = require("bcryptjs")
-const validator = require("validator")
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
@@ -28,16 +28,154 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "manager", "employee", "sales", "intern", "hr"],
       lowercase: true,
     },
+
+    dateOfBirth: {
+      type: Date,
+    },
+
+    address: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    performance: {
+      type: Number,
+      min: [0, "Performance cannot be below 0"],
+      max: [100, "Performance cannot exceed 100"],
+      default: 0,
+    },
+
+    joiningDate: {
+      type: Date,
+    },
+
+    currentProjects: {
+      type: [String],
+      default: [],
+    },
+
+    pastProjects: {
+      type: [String],
+      default: [],
+    },
+    documents: [
+      {
+        title: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: 100,
+        },
+        url: {
+          type: String,
+          required: true,
+          trim: true,
+          validate: {
+            validator: (v) => validator.isURL(v),
+            message: "Invalid document URL",
+          },
+        },
+        type: {
+          type: String,
+          enum: ["experience", "certificate", "other"],
+          default: "other",
+        },
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    attendanceCount30Days: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    taskCountPerDay: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    tasks: {
+      type: [String],
+      default: [],
+    },
+
+    responses: {
+      type: [String],
+      default: [],
+    },
+
+    managers: {
+      type: [String],
+      default: [],
+    },
+
+    photo: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    bankDetails: {
+      accountHolder: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      accountNumber: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      ifsc: {
+        type: String,
+        default: "",
+        uppercase: true,
+        trim: true,
+      },
+      branch: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      accountType: {
+        type: String,
+        enum: ["SAVING", "CURRENT"],
+        default: "SAVING",
+        uppercase: true,
+      },
+    },
+
+    workLog: {
+      punchIn: {
+        type: Date,
+      },
+      punchOut: {
+        type: Date,
+      },
+      hoursWorked: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+    },
+
     upperManager: {
       type: String,
       trim: true,
       default: "",
     },
+
     salary: {
       type: Number,
       min: [0, "Salary cannot be negative"],
       default: 0,
     },
+
     adharCard: {
       type: String,
       trim: true,
@@ -47,6 +185,7 @@ const userSchema = new mongoose.Schema(
       },
       default: "",
     },
+
     panCard: {
       type: String,
       trim: true,
@@ -57,34 +196,41 @@ const userSchema = new mongoose.Schema(
       },
       default: "",
     },
+
     experience: {
       type: Number,
       min: [0, "Experience cannot be negative"],
       default: 0,
     },
+
     projects: [
       {
         type: String,
         trim: true,
       },
     ],
+
     organizationName: {
       type: String,
       trim: true,
       default: "",
     },
+
     departmentName: {
       type: String,
       trim: true,
       default: "",
     },
+
     isActive: {
       type: Boolean,
       default: true,
     },
+
     lastLogin: {
       type: Date,
     },
+
     passwordChangedAt: {
       type: Date,
       default: Date.now,
@@ -94,16 +240,16 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  },
-)
+  }
+);
 
-// Indexes for better performance
-userSchema.index({ role: 1 })
-userSchema.index({ organizationName: 1 })
-userSchema.index({ departmentName: 1 })
-userSchema.index({ createdAt: -1 })
+// Indexes
+userSchema.index({ role: 1 });
+userSchema.index({ organizationName: 1 });
+userSchema.index({ departmentName: 1 });
+userSchema.index({ createdAt: -1 });
 
-// Virtual for full employee info
+// Virtual
 userSchema.virtual("employeeInfo").get(function () {
   return {
     id: this.id,
@@ -111,37 +257,35 @@ userSchema.virtual("employeeInfo").get(function () {
     role: this.role,
     department: this.departmentName,
     organization: this.organizationName,
-  }
-})
+  };
+});
 
-// Pre-save middleware to hash password
+// Password Hash
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next()
+  if (!this.isModified("password")) return next();
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
 
-  try {
-    const salt = await bcrypt.genSalt(12)
-    this.password = await bcrypt.hash(this.password, salt)
-    next()
-  } catch (error) {
-    next(error)
-  }
-})
-
-// Instance method to check password
+// Compare Password
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password)
-}
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
-// Instance method to check if password was changed after JWT was issued
+// JWT check
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
-    const changedTimestamp = Number.parseInt(this.passwordChangedAt.getTime() / 1000, 10)
-    return JWTTimestamp < changedTimestamp
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return JWTTimestamp < changedTimestamp;
   }
-  return false
-}
+  return false;
+};
 
-// Static method to get next ID for a role
+// Static: Get Next ID
 userSchema.statics.getNextId = async function (role) {
   const rolePrefixes = {
     admin: "ADM",
@@ -150,26 +294,28 @@ userSchema.statics.getNextId = async function (role) {
     sales: "SAL",
     intern: "INT",
     hr: "HR",
-  }
+  };
 
-  const prefix = rolePrefixes[role.toLowerCase()]
-  if (!prefix) throw new Error("Invalid role")
+  const prefix = rolePrefixes[role.toLowerCase()];
+  if (!prefix) throw new Error("Invalid role");
 
-  // Find the highest ID for this role
-  const lastUser = await this.findOne({ id: { $regex: `^${prefix}` } }, { id: 1 }).sort({ id: -1 })
+  const lastUser = await this.findOne(
+    { id: { $regex: `^${prefix}` } },
+    { id: 1 }
+  ).sort({ id: -1 });
 
-  let nextNumber = 101
+  let nextNumber = 101;
   if (lastUser) {
-    const currentNumber = Number.parseInt(lastUser.id.replace(prefix, ""))
-    nextNumber = currentNumber + 1
+    const currentNumber = parseInt(lastUser.id.replace(prefix, ""));
+    nextNumber = currentNumber + 1;
   }
 
-  return `${prefix}${nextNumber}`
-}
+  return `${prefix}${nextNumber}`;
+};
 
-// Static method to find by employee ID
+// Static: Find by Employee ID
 userSchema.statics.findByEmployeeId = function (employeeId) {
-  return this.findOne({ id: employeeId, isActive: true })
-}
+  return this.findOne({ id: employeeId, isActive: true });
+};
 
-module.exports = mongoose.model("User", userSchema)
+module.exports = mongoose.model("User", userSchema);

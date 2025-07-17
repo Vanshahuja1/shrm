@@ -3,10 +3,9 @@
 import { JSX, useState } from 'react';
 import LeavePolicy from './leave/page';
 import AttendancePolicy from './attendance/page';
-import PerformancePolicy from './performance/page';
 import DisciplinePolicy from './discipline/page';
 
-const tabs = ['Leave', 'Attendance', 'Performance', 'Discipline'] as const;
+const tabs = ['Leave', 'Attendance','Discipline'] as const;
 
 export default function PolicyManagementPage(): JSX.Element {
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -30,7 +29,6 @@ export default function PolicyManagementPage(): JSX.Element {
           >
             {tab === 'Leave' && '📄 Leave'}
             {tab === 'Attendance' && '🕒 Attendance'}
-            {tab === 'Performance' && '📈 Performance'}
             {tab === 'Discipline' && '⚠️ Discipline'}
           </button>
         ))}
@@ -39,8 +37,7 @@ export default function PolicyManagementPage(): JSX.Element {
       <div className="transition-all">
         {activeTab === 0 && <LeavePolicy />}
         {activeTab === 1 && <AttendancePolicy />}
-        {activeTab === 2 && <PerformancePolicy />}
-        {activeTab === 3 && <DisciplinePolicy />}
+        {activeTab === 2 && <DisciplinePolicy />}
       </div>
     </div>
   );

@@ -265,7 +265,6 @@ export default function HRDashboard() {
                   data={[
                     {
                       Application: 31,
-                      Screening: 24,
                       Interview: 24,
                       Hired: 21,
                     },
@@ -295,19 +294,6 @@ export default function HRDashboard() {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#F06292]"></div>
                 <span>Hired</span>
-              </div>
-            </div>
-
-            {/* Acceptance Metric */}
-            <div className="mt-6">
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>Offer Acceptance Ratio</span>
-                <span className="font-semibold">80%</span>
-              </div>
-              <Progress value={80} className="mt-2" />
-              <div className="flex justify-between text-sm text-gray-600 mt-2">
-                <span>Offers Accepted: 19</span>
-                <span>Offers Provided: 23</span>
               </div>
             </div>
           </CardContent>
