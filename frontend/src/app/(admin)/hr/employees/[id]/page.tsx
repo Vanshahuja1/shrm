@@ -53,6 +53,16 @@ interface EmployeeDetails {
     joiningDate: string;
     employeeId: string;
   };
+  pastOrganizations: Array<{
+    companyName: string;
+    designation: string;
+    duration: string;
+    type: string; // Full Time / Part Time
+    workMode: string; // Onsite / Remote
+    contactInfo: string;
+    expLetterUrl?: string;
+    resignationLetterUrl?: string;
+  }>;
   taskInfo: {
     taskName: string;
     assignedOn: string;
@@ -128,6 +138,27 @@ export default function EmployeeDetailsPage() {
               taxCode: "TX456",
               benefits: "Health Insurance, Paid Leave",
             },
+            pastOrganizations: [
+              {
+                companyName: "TechSolutions Inc.",
+                designation: "Software Developer",
+                duration: "Jan 2018 - Dec 2019",
+                type: "Full Time",
+                workMode: "Onsite",
+                contactInfo: "+91 9876543222 (HR Department)",
+                expLetterUrl: "#",
+                resignationLetterUrl: "#"
+              },
+              {
+                companyName: "Digital Innovations Ltd.",
+                designation: "Junior Developer",
+                duration: "Jun 2016 - Dec 2017",
+                type: "Full Time",
+                workMode: "Hybrid",
+                contactInfo: "hr@digitalinnovations.com",
+                expLetterUrl: "#"
+              }
+            ],
           });
         }
       } catch (error) {
@@ -171,6 +202,7 @@ export default function EmployeeDetailsPage() {
   const tabs = [
     { id: "overview", label: "Overview", icon: User },
     { id: "details", label: "Details", icon: FileText },
+    { id: "pastorg", label: "Past Organizations", icon: Building },
     { id: "payroll", label: "Payroll", icon: CreditCard },
   ];
 
@@ -372,6 +404,36 @@ export default function EmployeeDetailsPage() {
                         <span className="text-sm text-gray-900">{benefit}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900">
+                      Employment History
+                    </h3>
+                    <Building size={16} className="text-blue-500" />
+                  </div>
+                  <div className="space-y-2">
+                    {details.pastOrganizations && details.pastOrganizations.length > 0 ? (
+                      details.pastOrganizations.slice(0, 2).map((org, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-sm text-gray-900">{org.companyName}</span>
+                          </div>
+                          <span className="text-xs text-gray-500">{org.duration}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">No previous employment records</p>
+                    )}
+                    
+                    {details.pastOrganizations && details.pastOrganizations.length > 2 && (
+                      <div className="text-xs text-blue-600 mt-1 hover:underline cursor-pointer" onClick={() => setActiveTab("pastorg")}>
+                        + {details.pastOrganizations.length - 2} more
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -636,6 +698,39 @@ export default function EmployeeDetailsPage() {
                 <div className="space-y-6">
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+                      <Building size={16} className="mr-2 text-red-500" />
+                      Past Organizations
+                    </h3>
+                    <div className="space-y-4">
+                      {details.pastOrganizations && details.pastOrganizations.length > 0 ? (
+                        details.pastOrganizations.map((org, index) => (
+                          <div key={index} className="p-3 bg-white rounded border mb-3">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="font-medium text-gray-900">{org.companyName}</span>
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                {org.type}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="text-gray-500">Role:</span>{" "}
+                                <span className="text-gray-900">{org.designation}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Duration:</span>{" "}
+                                <span className="text-gray-900">{org.duration}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No past organization records available.</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
                       <DollarSign size={16} className="mr-2 text-red-500" />
                       Financial Information
                     </h3>
@@ -727,6 +822,91 @@ export default function EmployeeDetailsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === "pastorg" && (
+              <div className="max-w-4xl">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center">
+                    <Building size={16} className="text-blue-600 mr-2" />
+                    <p className="text-sm text-blue-800">
+                      <strong>Employment History:</strong> This section contains the employee's work history prior to joining our organization.
+                    </p>
+                  </div>
+                </div>
+
+                {details?.pastOrganizations && details.pastOrganizations.length > 0 ? (
+                  <div className="space-y-6">
+                    {details.pastOrganizations.map((org, index) => (
+                      <div key={index} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-gray-900 flex items-center">
+                            <Building size={16} className="mr-2 text-blue-500" />
+                            {org.companyName}
+                          </h3>
+                          <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                            {org.type}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium text-gray-500">Designation</p>
+                            <p className="text-sm text-gray-900">{org.designation}</p>
+                          </div>
+                          
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium text-gray-500">Duration</p>
+                            <p className="text-sm text-gray-900">{org.duration}</p>
+                          </div>
+                          
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium text-gray-500">Work Mode</p>
+                            <p className="text-sm text-gray-900">{org.workMode}</p>
+                          </div>
+                          
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium text-gray-500">Contact Information</p>
+                            <p className="text-sm text-gray-900">{org.contactInfo}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-200">
+                          {org.expLetterUrl && (
+                            <a 
+                              href={org.expLetterUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-md text-gray-700 hover:bg-gray-50"
+                            >
+                              <FileText size={14} className="mr-1.5 text-blue-600" />
+                              Experience Letter
+                            </a>
+                          )}
+                          
+                          {org.resignationLetterUrl && (
+                            <a 
+                              href={org.resignationLetterUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-md text-gray-700 hover:bg-gray-50"
+                            >
+                              <FileText size={14} className="mr-1.5 text-red-600" />
+                              Resignation Letter
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center">
+                    <Building size={24} className="mx-auto mb-3 text-gray-400" />
+                    <h4 className="text-gray-600 font-medium mb-1">No Past Organization Records</h4>
+                    <p className="text-gray-500 text-sm">This employee has no previous work history records.</p>
+                  </div>
+                )}
               </div>
             )}
 
