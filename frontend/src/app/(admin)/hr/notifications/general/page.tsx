@@ -112,15 +112,24 @@ export default function GeneralNotificationPage() {
               {emp.organization} — {emp.department} — {emp.role}
             </p>
             <button
-              onClick={() => setSelectedId(emp.id)}
+              onClick={() => {
+                setSelectedId(emp.id)
+                // Open Gmail compose in new window
+                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emp.email)}`
+                window.open(gmailUrl, '_blank')
+              }}
               disabled={sentIds.includes(emp.id)}
-              className={`mt-2 px-3 py-1 text-xs rounded ${
+              className={`mt-2 px-3 py-1 text-xs rounded flex items-center gap-1.5 ${
                 sentIds.includes(emp.id)
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-red-500 text-white hover:bg-red-600'
               }`}
             >
-              {sentIds.includes(emp.id) ? 'Sent' : 'Select'}
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              {sentIds.includes(emp.id) ? 'Sent' : 'Compose Email'}
             </button>
           </div>
         ))}

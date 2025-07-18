@@ -118,13 +118,13 @@ export default function EmployeeRecords() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              
-            </span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></span>
           </div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as typeof statusFilter)
+            }
             className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
           >
             <option value="All">All Statuses</option>
@@ -140,32 +140,50 @@ export default function EmployeeRecords() {
         <table className="w-full text-sm text-left">
           <thead>
             <tr className="bg-gray-50 text-gray-600">
-              
-              <th className="px-6 py-3 border-b border-gray-200 font-medium">Employee</th>
-              <th className="px-6 py-3 border-b border-gray-200 font-medium">Email Address</th>
-              <th className="px-6 py-3 border-b border-gray-200 font-medium">Department</th>
-              <th className="px-6 py-3 border-b border-gray-200 font-medium">Job Title</th>
-              <th className="px-6 py-3 border-b border-gray-200 font-medium">Joined Date</th>
-              <th className="px-6 py-3 border-b border-gray-200 font-medium">Status</th>
-              <th className="px-6 py-3 border-b border-gray-200 font-medium">Actions</th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">
+                Employee
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">
+                Email Address
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">
+                Department
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">
+                Job Title
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">
+                Joined Date
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">
+                Status
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200 font-medium">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredRecords.map((emp, index) => (
               <tr
                 key={emp.id}
-                className="hover:bg-[#FDD0C4] transition-colors cursor-pointer"
+                className="hover:bg-red-500/5 transition-colors cursor-pointer"
                 onClick={() => handleRowClick(emp.employeeId)}
               >
-                
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 flex-shrink-0 rounded-full bg-red-100 flex items-center justify-center">
-                      <span className="font-medium text-red-700">{emp.name.charAt(0)}</span>
+                      <span className="font-medium text-red-700">
+                        {emp.name.charAt(0)}
+                      </span>
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">{emp.name}</div>
-                      <div className="text-gray-500 text-xs">{emp.employeeId}</div>
+                      <div className="font-medium text-gray-900">
+                        {emp.name}
+                      </div>
+                      <div className="text-gray-500 text-xs">
+                        {emp.employeeId}
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -179,7 +197,9 @@ export default function EmployeeRecords() {
                   {emp.designation}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                  {emp.joinedDate ? new Date(emp.joinedDate).toLocaleDateString() : "—"}
+                  {emp.joinedDate
+                    ? new Date(emp.joinedDate).toLocaleDateString()
+                    : "—"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
@@ -187,8 +207,8 @@ export default function EmployeeRecords() {
                       emp.status === "Active"
                         ? "bg-green-100 text-green-800"
                         : emp.status === "On Leave"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-gray-100 text-gray-800"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
                     }`}
                   >
                     {emp.status}
@@ -203,8 +223,18 @@ export default function EmployeeRecords() {
                         // handle edit
                       }}
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        />
                       </svg>
                     </button>
                     <button
@@ -214,8 +244,18 @@ export default function EmployeeRecords() {
                         // handle delete
                       }}
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -236,7 +276,9 @@ export default function EmployeeRecords() {
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                <span className="font-medium text-red-700">{emp.name.charAt(0)}</span>
+                <span className="font-medium text-red-700">
+                  {emp.name.charAt(0)}
+                </span>
               </div>
               <div>
                 <div className="font-medium text-gray-900">{emp.name}</div>
@@ -245,15 +287,17 @@ export default function EmployeeRecords() {
             </div>
             <div className="ml-13 space-y-1 text-sm">
               <div className="text-gray-600">{emp.email}</div>
-              <div className="text-gray-600">{emp.designation} • {emp.department || "No Department"}</div>
+              <div className="text-gray-600">
+                {emp.designation} • {emp.department || "No Department"}
+              </div>
               <div className="flex items-center justify-between mt-2">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     emp.status === "Active"
                       ? "bg-green-100 text-green-800"
                       : emp.status === "On Leave"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-gray-100 text-gray-800"
                   }`}
                 >
                   {emp.status}
@@ -266,8 +310,18 @@ export default function EmployeeRecords() {
                       // handle edit
                     }}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      />
                     </svg>
                   </button>
                   <button
@@ -277,8 +331,18 @@ export default function EmployeeRecords() {
                       // handle delete
                     }}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -290,4 +354,3 @@ export default function EmployeeRecords() {
     </div>
   );
 }
-
