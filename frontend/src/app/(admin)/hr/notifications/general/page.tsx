@@ -15,16 +15,8 @@ export default function GeneralNotificationPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedId, setSelectedId] = useState<number | null>(null)
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
   const [sentIds, setSentIds] = useState<number[]>([])
-  const [preview, setPreview] = useState(false)
-
-  const templates = [
-    { subject: 'Welcome Aboard!', body: 'Dear [Name], welcome to the team!' },
-    { subject: 'Policy Reminder', body: 'Please review the attached company policy.' },
-    { subject: 'Upcoming Meeting', body: 'Reminder: You have a meeting scheduled tomorrow.' },
-  ]
+  
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -57,28 +49,7 @@ export default function GeneralNotificationPage() {
     fetchEmployees()
   }, [])
 
-  const handleSend = async () => {
-    if (!selectedId || !subject.trim() || !body.trim()) {
-      return alert('Please complete all fields.')
-    }
-
-    try {
-      await fetch('/api/notifications/general', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedId, subject, body }),
-      })
-
-      setSentIds((prev) => [...prev, selectedId])
-      setSubject('')
-      setBody('')
-      setSelectedId(null)
-      setPreview(false)
-    } catch {
-      alert('❌ Failed to send email.')
-    }
-  }
-
+  
   const filtered = employees.filter(
     (emp) =>
       emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

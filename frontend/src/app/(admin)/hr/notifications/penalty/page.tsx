@@ -15,24 +15,15 @@ export default function PenaltyNotificationPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedId, setSelectedId] = useState<number | null>(null)
-  const [percent, setPercent] = useState('')
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
-  const [preview, setPreview] = useState(false)
+  const [penalty, setPenalty] = useState('')
+  const [reason, setReason] = useState('')
   const [sentIds, setSentIds] = useState<number[]>([])
-  const penaltyReasons = [
-    'Late arrival',
-    'Uninformed leave',
-    'Policy violation',
-    'Unprofessional conduct',
-    'Missed deadline'
-  ]
 
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
         const res = await fetch('/api/employees/all')
-        const data: Employee[] = await res.json()
+        const data = await res.json()
         setEmployees(data)
       } catch {
         setEmployees([
@@ -59,27 +50,16 @@ export default function PenaltyNotificationPage() {
     fetchEmployees()
   }, [])
 
-  const handleSend = async () => {
-    if (!selectedId || !subject.trim() || !body.trim() || !percent) {
-      return alert('Please complete all fields.')
-    }
-
-    try {
-      await fetch('/api/notifications/penalty', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedId, subject, body, percent })
-      })
-
-      setSentIds((prev) => [...prev, selectedId])
-      setSubject('')
-      setBody('')
-      setPercent('')
-      setSelectedId(null)
-      setPreview(false)
-    } catch {
-      alert('❌ Failed to send penalty email.')
-    }
+  const handleEmailCompose = (employee: Employee, penaltyAmount: string, penaltyReason: string) => {
+    const subject = `Notice of Penalty - ${employee.department}`
+    const body = `Dear ${employee.name},\n\nThis notice is to inform you of a penalty of Rs. ${penaltyAmount} due to the following reason:\n\n${penaltyReason}\n\nIf you have any questions, please contact HR department.\n\nRegards,\nHR Team`
+    
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(employee.email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    window.open(gmailUrl, '_blank')
+    setSentIds(prev => [...prev, employee.id])
+    setSelectedId(null)
+    setPenalty('')
+    setReason('')
   }
 
   const filtered = employees.filter(
@@ -91,7 +71,7 @@ export default function PenaltyNotificationPage() {
 
   return (
     <div className="bg-white border border-red-100 rounded-xl p-4 sm:p-6 shadow-sm text-gray-900">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">🚫 Penalty Notification</h2>
+      <h2 className="text-lg font-semibold mb-4">⚠️ Penalty Notification</h2>
 
       <input
         type="text"
@@ -106,111 +86,68 @@ export default function PenaltyNotificationPage() {
           <div
             key={emp.id}
             className={`border px-4 py-3 rounded-xl ${
-              selectedId === emp.id ? 'bg-red-100 border-red-300' : 'bg-white border-red-100'
+              sentIds.includes(emp.id) ? 'bg-green-50 border-green-200' : 'bg-white border-red-100'
             }`}
           >
-            <p className="text-sm font-medium text-gray-900">{emp.name}</p>
+            <p className="text-sm font-medium">{emp.name}</p>
             <p className="text-sm text-gray-600">{emp.email}</p>
             <p className="text-xs text-gray-500">
               {emp.organization} — {emp.department} — {emp.role}
             </p>
-            <button
-              onClick={() => setSelectedId(emp.id)}
-              disabled={sentIds.includes(emp.id)}
-              className={`mt-2 px-3 py-1 text-xs rounded ${
-                sentIds.includes(emp.id)
-                  ? 'bg-gray-300 text-gray-500'
-                  : 'bg-red-500 text-white hover:bg-red-600'
-              }`}
-            >
-              {sentIds.includes(emp.id) ? 'Sent' : 'Select'}
-            </button>
+            {!sentIds.includes(emp.id) && (
+              <div className="mt-2 space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    placeholder="Penalty Amount"
+                    value={selectedId === emp.id ? penalty : ''}
+                    onChange={(e) => {
+                      setSelectedId(emp.id)
+                      setPenalty(e.target.value)
+                    }}
+                    className="w-32 px-2 py-1 text-xs border border-red-100 rounded"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Reason"
+                    value={selectedId === emp.id ? reason : ''}
+                    onChange={(e) => {
+                      setSelectedId(emp.id)
+                      setReason(e.target.value)
+                    }}
+                    className="flex-1 px-2 py-1 text-xs border border-red-100 rounded"
+                  />
+                </div>
+                <button
+                  onClick={() => handleEmailCompose(emp, penalty, reason)}
+                  disabled={selectedId !== emp.id || !penalty || !reason}
+                  className={`w-full px-3 py-1 text-xs rounded flex items-center justify-center gap-1.5 ${
+                    selectedId !== emp.id || !penalty || !reason
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-red-500 text-white hover:bg-red-600'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Compose Email
+                </button>
+              </div>
+            )}
+            {sentIds.includes(emp.id) && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs text-green-600 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Email Sent
+                </span>
+              </div>
+            )}
           </div>
         ))}
       </div>
-
-      {selectedId && (
-        <div className="border-t pt-4">
-          <h3 className="text-md font-semibold mb-2 text-gray-800">🖋️ Compose Penalty Mail</h3>
-
-          <input
-            type="number"
-            placeholder="Penalty %"
-            value={percent}
-            onChange={(e) => setPercent(e.target.value)}
-            className="w-full px-3 py-2 border border-red-100 rounded text-sm mb-3"
-          />
-
-          <input
-            type="text"
-            placeholder="Subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="w-full px-3 py-2 border border-red-100 rounded text-sm mb-3"
-          />
-
-          <select
-            onChange={(e) => setBody(e.target.value)}
-            className="w-full px-3 py-2 border border-red-100 rounded text-sm mb-3"
-          >
-            <option value="">📋 Select Penalty Reason (optional)</option>
-            {penaltyReasons.map((reason, idx) => (
-              <option key={idx} value={`Reason: ${reason}`}>
-                {reason}
-              </option>
-            ))}
-          </select>
-
-          <textarea
-            placeholder="Write penalty reason/message..."
-            rows={5}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            className="w-full px-3 py-2 border border-red-100 rounded text-sm mb-3"
-          />
-
-          <button
-            onClick={() => setPreview(true)}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 text-sm rounded"
-          >
-            Preview
-          </button>
-        </div>
-      )}
-
-      {preview && selectedId !== null && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
-          <div className="bg-white border border-red-100 rounded-xl p-6 shadow-lg w-[90%] max-w-md">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">📨 Email Preview</h3>
-            <p className="text-sm text-gray-600 mb-1">
-              <strong>To:</strong> {employees.find((e) => e.id === selectedId)?.email}
-            </p>
-            <p className="text-sm text-gray-600 mb-1">
-              <strong>Subject:</strong> {subject}
-            </p>
-            <p className="text-sm text-gray-600 mb-1">
-              <strong>Penalty:</strong> {percent}%
-            </p>
-            <div className="text-sm text-gray-800 whitespace-pre-line border-t pt-2 mt-2 mb-4">
-              {body}
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={handleSend}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded text-sm"
-              >
-                Confirm & Send
-              </button>
-              <button
-                onClick={() => setPreview(false)}
-                className="bg-gray-200 text-gray-700 px-4 py-1 rounded text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

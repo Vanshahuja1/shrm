@@ -16,10 +16,8 @@ export default function IncrementNotificationPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [percent, setPercent] = useState('')
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
-  const [preview, setPreview] = useState(false)
   const [sentIds, setSentIds] = useState<number[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -52,27 +50,15 @@ export default function IncrementNotificationPage() {
     fetchEmployees()
   }, [])
 
-  const handleSend = async () => {
-    if (!selectedId || !subject.trim() || !body.trim() || !percent) {
-      return alert('Please complete all fields.')
-    }
-
-    try {
-      await fetch('/api/notifications/increment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedId, subject, body, percent })
-      })
-
-      setSentIds((prev) => [...prev, selectedId])
-      setSubject('')
-      setBody('')
-      setPercent('')
-      setSelectedId(null)
-      setPreview(false)
-    } catch {
-      alert('❌ Failed to send increment email.')
-    }
+  const handleEmailCompose = (employee: Employee, percent: string) => {
+    const subject = `Salary Increment Notification - ${percent}% Increase`
+    const body = `Dear ${employee.name},\n\nWe are pleased to inform you that your salary has been increased by ${percent}%.\n\nBest regards,\nHR Team`
+    
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(employee.email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    window.open(gmailUrl, '_blank')
+    setSentIds(prev => [...prev, employee.id])
+    setSelectedId(null)
+    setPercent('')
   }
 
   const filtered = employees.filter(
@@ -99,7 +85,7 @@ export default function IncrementNotificationPage() {
           <div
             key={emp.id}
             className={`border px-4 py-3 rounded-xl ${
-              selectedId === emp.id ? 'bg-red-100 border-red-300' : 'bg-white border-red-100'
+              sentIds.includes(emp.id) ? 'bg-green-50 border-green-200' : 'bg-white border-red-100'
             }`}
           >
             <p className="text-sm font-medium">{emp.name}</p>
@@ -107,90 +93,48 @@ export default function IncrementNotificationPage() {
             <p className="text-xs text-gray-500">
               {emp.organization} — {emp.department} — {emp.role}
             </p>
-            <button
-              onClick={() => setSelectedId(emp.id)}
-              disabled={sentIds.includes(emp.id)}
-              className={`mt-2 px-3 py-1 text-xs rounded ${
-                sentIds.includes(emp.id)
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-red-500 text-white hover:bg-red-600'
-              }`}
-            >
-              {sentIds.includes(emp.id) ? 'Sent' : 'Select'}
-            </button>
+            {!sentIds.includes(emp.id) && (
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Increment %"
+                  value={selectedId === emp.id ? percent : ''}
+                  onChange={(e) => {
+                    setSelectedId(emp.id)
+                    setPercent(e.target.value)
+                  }}
+                  className="w-24 px-2 py-1 text-xs border border-red-100 rounded"
+                />
+                <button
+                  onClick={() => handleEmailCompose(emp, percent)}
+                  disabled={selectedId !== emp.id || !percent}
+                  className={`px-3 py-1 text-xs rounded flex items-center gap-1.5 ${
+                    selectedId !== emp.id || !percent
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-red-500 text-white hover:bg-red-600'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Compose Email
+                </button>
+              </div>
+            )}
+            {sentIds.includes(emp.id) && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs text-green-600 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Email Sent
+                </span>
+              </div>
+            )}
           </div>
         ))}
       </div>
-
-      {selectedId && (
-        <div className="border-t pt-4">
-          <h3 className="text-md font-semibold mb-2 text-gray-800">✍️ Compose Increment Mail</h3>
-
-          <input
-            type="number"
-            placeholder="Increment %"
-            value={percent}
-            onChange={(e) => setPercent(e.target.value)}
-            className="w-full px-3 py-2 border border-red-100 rounded text-sm mb-3"
-          />
-
-          <input
-            type="text"
-            placeholder="Subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="w-full px-3 py-2 border border-red-100 rounded text-sm mb-3"
-          />
-
-          <textarea
-            placeholder="Write your increment message..."
-            rows={5}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            className="w-full px-3 py-2 border border-red-100 rounded text-sm mb-3"
-          />
-
-          <button
-            onClick={() => setPreview(true)}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 text-sm rounded"
-          >
-            Preview
-          </button>
-        </div>
-      )}
-
-      {preview && selectedId !== null && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
-          <div className="bg-white border border-red-100 rounded-xl p-6 shadow-lg w-[90%] max-w-md">
-            <h3 className="text-lg font-semibold mb-3">📨 Email Preview</h3>
-            <p className="text-sm mb-1">
-              <strong>To:</strong>{' '}
-              {employees.find((e) => e.id === selectedId)?.email}
-            </p>
-            <p className="text-sm mb-1">
-              <strong>Subject:</strong> {subject}
-            </p>
-            <p className="text-sm mb-1">
-              <strong>Increment:</strong> {percent}%
-            </p>
-            <div className="text-sm whitespace-pre-line border-t pt-2 mt-2 mb-4">{body}</div>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={handleSend}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded text-sm"
-              >
-                Confirm & Send
-              </button>
-              <button
-                onClick={() => setPreview(false)}
-                className="bg-gray-200 text-gray-700 px-4 py-1 rounded text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
