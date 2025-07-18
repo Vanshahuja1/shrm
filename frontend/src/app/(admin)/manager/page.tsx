@@ -15,7 +15,7 @@ import NewProjectModal from "./modals/NewProjectModal"
 import NewTaskModal from "./modals/NewTaskModal"
 
 // Import types and data
-import type { Project, Task, AttendanceRecord, AdminData, EmailNotification } from "@/types"
+import type { Project, Task, AttendanceRecord, AdminData, EmailNotification } from "./types"
 import {
   mockManagerInfo,
   mockOngoingProjects,
