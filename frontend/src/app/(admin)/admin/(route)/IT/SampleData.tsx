@@ -1,4 +1,4 @@
-import type { Department, OrganizationMember, Project, Task } from "./types"
+import type { Department, OrganizationMember, Project, Task } from "../types/index.ts";
 
 export const sampleMembers: OrganizationMember[] = [
   // IT Development Department

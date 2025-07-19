@@ -55,6 +55,12 @@ export default function ProjectManagement() {
         return <CheckCircle className="text-green-600" size={16} />
       case "pending":
         return <AlertCircle className="text-yellow-600" size={16} />
+      case "on-hold":
+        return <AlertCircle className="text-orange-600" size={16} />
+      case "cancelled":
+        return <AlertCircle className="text-red-600" size={16} />
+      default:
+        return <AlertCircle className="text-gray-600" size={16} />
     }
   }
 
@@ -66,6 +72,12 @@ export default function ProjectManagement() {
         return "bg-green-100 text-green-800 border-green-200"
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      case "on-hold":
+        return "bg-orange-100 text-orange-800 border-orange-200"
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
 

@@ -356,6 +356,11 @@ const Sidebar = ({
   setActiveTab,
   isSidebarOpen,
   setIsSidebarOpen,
+}: {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (open: boolean) => void;
 }) => {
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: Home },
@@ -453,10 +458,9 @@ const Sidebar = ({
   );
 };
 
-// Top Header Bar
-const TopHeader = ({ activeTab, setIsSidebarOpen }) => {
-  const getPageTitle = (tab) => {
-    const titles = {
+const TopHeader = ({ activeTab, setIsSidebarOpen }: { activeTab: string; setIsSidebarOpen: (open: boolean) => void }) => {
+  const getPageTitle = (tab: string) => {
+    const titles: Record<string, string> = {
       overview: "Dashboard Overview",
       "sub-departments": "Sub Departments",
       "ongoing-batches": "Ongoing Batches",
