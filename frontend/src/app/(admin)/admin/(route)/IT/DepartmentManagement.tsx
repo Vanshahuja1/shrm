@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Building, Users, DollarSign, Plus, Edit, Trash2, Search, Filter } from 'lucide-react'
 import { sampleDepartments } from "./SampleData";
 import type { Department } from "../types";
+import axios from "@/lib/axiosInstance"
 
 export default function DepartmentManagement() {
   const [departments, setDepartments] = useState(sampleDepartments)
@@ -12,19 +13,72 @@ export default function DepartmentManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddForm, setShowAddForm] = useState(false)
 
+  // const filteredDepartments = departments.filter((dept) =>
+  //   dept.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // )
+
+  // const handleDeleteDepartment = (id: number) => {
+  //   setDepartments(departments.filter((dept) => dept.id !== id))
+  // }
+
+  // const handleAddDepartment = (newDept: Omit<Department, "id">) => {
+  //   const id = Math.max(...departments.map((d) => d.id)) + 1
+  //   setDepartments([...departments, { ...newDept, id }])
+  //   setShowAddForm(false)
+  // }
+
+  // if (selectedDepartment) {
+  //   return (
+  //     <DepartmentDetail
+  //       department={selectedDepartment}
+  //       onBack={() => setSelectedDepartment(null)}
+  //       onUpdate={(updated) => {
+  //         setDepartments(departments.map((d) => (d.id === updated.id ? updated : d)))
+  //         setSelectedDepartment(null)
+  //       }}
+  //     />
+  //   )
+  // }
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await axios.get("/departments")
+        setDepartments(res.data)
+      } catch (err) {
+        console.error("API error, using sample data")
+        setDepartments(sampleDepartments)
+      }
+    }
+    fetchDepartments()
+  }, [])
+
+  const handleDeleteDepartment = async (id: number) => {
+    try {
+      await axios.delete(`/departments/${id}`)
+      setDepartments((prev) => prev.filter((d) => d.id !== id))
+    } catch (err) {
+      console.warn("Failed to delete, falling back to local removal")
+      setDepartments((prev) => prev.filter((d) => d.id !== id))
+    }
+  }
+
+  const handleAddDepartment = async (newDept: Omit<Department, "id">) => {
+    try {
+      const res = await axios.post("/departments", newDept)
+      setDepartments((prev) => [...prev, res.data])
+    } catch (err) {
+      console.warn("Failed to add via API, adding to local only")
+      const id = Math.max(...departments.map((d) => d.id), 0) + 1
+      setDepartments((prev) => [...prev, { ...newDept, id }])
+    } finally {
+      setShowAddForm(false)
+    }
+  }
+
   const filteredDepartments = departments.filter((dept) =>
     dept.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
-
-  const handleDeleteDepartment = (id: number) => {
-    setDepartments(departments.filter((dept) => dept.id !== id))
-  }
-
-  const handleAddDepartment = (newDept: Omit<Department, "id">) => {
-    const id = Math.max(...departments.map((d) => d.id)) + 1
-    setDepartments([...departments, { ...newDept, id }])
-    setShowAddForm(false)
-  }
 
   if (selectedDepartment) {
     return (
@@ -32,7 +86,9 @@ export default function DepartmentManagement() {
         department={selectedDepartment}
         onBack={() => setSelectedDepartment(null)}
         onUpdate={(updated) => {
-          setDepartments(departments.map((d) => (d.id === updated.id ? updated : d)))
+          setDepartments((prev) =>
+            prev.map((d) => (d.id === updated.id ? updated : d))
+          )
           setSelectedDepartment(null)
         }}
       />
