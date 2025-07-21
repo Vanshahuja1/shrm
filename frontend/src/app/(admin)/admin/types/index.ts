@@ -1,5 +1,5 @@
 export interface OrganizationMember {
-  id: number
+  id: number | string
   name: string
   role: "Manager" | "Employee" | "Intern" | "Head"
   department: string
@@ -30,7 +30,7 @@ export interface OrganizationMember {
 }
 
 export interface Department {
-  id: number
+  id: number | string
   name: string
   head: string
   budget: number
@@ -43,13 +43,14 @@ export interface Department {
 export interface Project {
   id: number
   name: string
+  description: string
   departmentsInvolved: string[]
   membersInvolved: string[]
   startDate: string
   deadline: string
   managersInvolved: string[]
   completionPercentage: number
-  price: number
+  amount: number
   client: string
   projectScope: string
   clientInputs: string

@@ -1,22 +1,35 @@
 "use client"
 
-import { Home, Building, Briefcase, Activity, Users, CheckSquare, Mail, X, LogOut, BarChart3 } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import {
+  Home,
+  Building,
+  Briefcase,
+  Activity,
+  Users,
+  CheckSquare,
+  Mail,
+  X,
+  LogOut,
+  BarChart3,
+} from "lucide-react"
 
 interface SidebarProps {
-  activeTab: string
-  setActiveTab: (tab: string) => void
   isSidebarOpen: boolean
   setIsSidebarOpen: (open: boolean) => void
 }
 
-export default function Sidebar({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
+export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: Home },
     { id: "departments", label: "Departments", icon: Building },
     { id: "projects", label: "Projects", icon: Briefcase },
     { id: "members", label: "Organization Members", icon: Users },
     { id: "hierarchy", label: "Organization Hierarchy", icon: Activity },
-    { id: "tasks", label: "Task Management", icon: CheckSquare },
+    { id: "task", label: "Task Management", icon: CheckSquare },
     { id: "analytics", label: "Analytics & Charts", icon: BarChart3 },
     { id: "emails", label: "Email System", icon: Mail },
   ]
@@ -53,15 +66,21 @@ export default function Sidebar({ activeTab, setActiveTab, isSidebarOpen, setIsS
           <nav className="flex-1 p-4 space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon
+              const active = pathname.startsWith(`/admin/IT/${item.id}`)
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveTab(item.id)
+                    // if (item.id === "overview") {
+                    //   router.push("/admin")
+                    // } else {
+                    //   router.push(`/admin/IT/${item.id}`)
+                    // }
+                    router.push(`/admin/IT/${item.id}`)
                     setIsSidebarOpen(false)
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left ${
-                    activeTab === item.id
+                    active
                       ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600 font-semibold"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   }`}

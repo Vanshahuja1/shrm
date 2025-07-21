@@ -73,7 +73,7 @@ const attendanceData = [
   { day: "Sun", present: 80, absent: 20 },
 ]
 
-export default function AnalyticsCharts() {
+export default function AnalyticsPage() {
   const [selectedTimeRange, setSelectedTimeRange] = useState("6months")
 
   return (

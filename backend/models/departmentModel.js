@@ -8,39 +8,44 @@ const departmentSchema = new mongoose.Schema({
     maxlength: [100, 'Department name cannot exceed 100 characters']
   },
   
-  organisation: {
+  head: {
     type: String,
-    required: [true, 'Organisation name is required'],
+    required: [true, 'Department head is required'],
     trim: true,
-    maxlength: [100, 'Organisation name cannot exceed 100 characters']
+    maxlength: [100, 'Department head name cannot exceed 100 characters']
   },
   
-  totalEmployeesCount: {
+  budget: {
     type: Number,
-    required: [true, 'Total employees count is required'],
-    min: [0, 'Total employees count cannot be negative'],
+    required: [true, 'Budget is required'],
+    min: [0, 'Budget cannot be negative'],
     default: 0
   },
   
-  totalManagerCount: {
+  managers: {
     type: Number,
-    required: [true, 'Total manager count is required'],
-    min: [0, 'Total manager count cannot be negative'],
+    required: [true, 'Managers count is required'],
+    min: [0, 'Managers count cannot be negative'],
     default: 0
   },
   
-  totalInternsCount: {
+  employees: {
     type: Number,
-    required: [true, 'Total interns count is required'],
-    min: [0, 'Total interns count cannot be negative'],
+    required: [true, 'Employees count is required'],
+    min: [0, 'Employees count cannot be negative'],
     default: 0
   },
   
-  totalCount: {
+  interns: {
     type: Number,
-    required: [true, 'Total count is required'],
-    min: [0, 'Total count cannot be negative'],
+    required: [true, 'Interns count is required'],
+    min: [0, 'Interns count cannot be negative'],
     default: 0
+  },
+  //add a member ke andar list of available members aa jaaye
+  members: {
+    type: Array,
+    default: []
   }
 }, {
   timestamps: true, // Adds createdAt and updatedAt fields
@@ -48,26 +53,26 @@ const departmentSchema = new mongoose.Schema({
 });
 
 // Index for better query performance
-departmentSchema.index({ name: 1, organisation: 1 });
+// departmentSchema.index({ name: 1, organisation: 1 });
 
 // Pre-save middleware to automatically calculate totalCount
-departmentSchema.pre('save', function(next) {
-  this.totalCount = this.totalEmployeesCount + this.totalManagerCount + this.totalInternsCount;
-  next();
-});
+// departmentSchema.pre('save', function(next) {
+//   this.totalCount = this.totalEmployeesCount + this.totalManagerCount + this.totalInternsCount;
+//   next();
+// });
 
 // Pre-update middleware for findOneAndUpdate operations
 departmentSchema.pre('findOneAndUpdate', function(next) {
   const update = this.getUpdate();
-  if (update.totalEmployeesCount !== undefined || 
-      update.totalManagerCount !== undefined || 
-      update.totalInternsCount !== undefined) {
+  if (update.employees !== undefined || 
+      update.managers !== undefined || 
+      update.interns !== undefined) {
     
-    const employeesCount = update.totalEmployeesCount || 0;
-    const managerCount = update.totalManagerCount || 0;
-    const internsCount = update.totalInternsCount || 0;
+    const employeesCount = update.employees || 0;
+    const managerCount = update.managers || 0;
+    const internsCount = update.interns || 0;
     
-    update.totalCount = employeesCount + managerCount + internsCount;
+    // Additional validation or calculations can be added here
   }
   next();
 });
@@ -76,20 +81,21 @@ departmentSchema.pre('findOneAndUpdate', function(next) {
 departmentSchema.methods.getSummary = function() {
   return {
     departmentName: this.name,
-    organisation: this.organisation,
+    head: this.head,
+    budget: this.budget,
     breakdown: {
-      employees: this.totalEmployeesCount,
-      managers: this.totalManagerCount,
-      interns: this.totalInternsCount,
-      total: this.totalCount
+      employees: this.employees,
+      managers: this.managers,
+      interns: this.interns,
+      total: this.employees + this.managers + this.interns
     }
   };
 };
 
 // Static method to find departments by organisation
-departmentSchema.statics.findByOrganisation = function(orgName) {
-  return this.find({ organisation: orgName });
-};
+// departmentSchema.statics.findByOrganisation = function(orgName) {
+//   return this.find({ organisation: orgName });
+// };
 
 const Department = mongoose.model('Department', departmentSchema);
 

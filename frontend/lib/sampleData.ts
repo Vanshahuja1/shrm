@@ -1,4 +1,20 @@
-import type { Department, OrganizationMember, Project, Task } from "../types/index.ts";
+import { Department,OrganizationMember,Project,Task } from "@/src/app/(admin)/admin/types"
+
+export type DepartmentMember = {
+  id: number
+  name: string
+  position: string
+  salary: number
+  experience: string
+  joinDate: string
+  email: string
+  phone: string
+  address: string
+  manager: string
+  skills: string[]
+  performance: number
+  avatar?: string
+}
 
 export const sampleMembers: OrganizationMember[] = [
   // IT Development Department
@@ -636,7 +652,6 @@ export const sampleMembers: OrganizationMember[] = [
     reportsTo: "William Anderson",
   },
 ]
-
 export const sampleDepartments: Department[] = [
   {
     id: 1,
@@ -689,18 +704,18 @@ export const sampleDepartments: Department[] = [
     members: sampleMembers.filter((m) => m.department === "Management"),
   },
 ]
-
 export const sampleProjects: Project[] = [
   {
     id: 1,
     name: "E-commerce Platform Redesign",
+    description: "Complete redesign of the existing e-commerce platform with modern UI/UX, improved performance, and mobile responsiveness.",
     departmentsInvolved: ["IT Development", "Business Development"],
     membersInvolved: ["John Doe", "Jane Smith", "Mike Johnson", "Sarah Wilson", "Emma Davis"],
     startDate: "2024-01-15",
     deadline: "2024-06-30",
     managersInvolved: ["John Doe", "Robert Thompson"],
     completionPercentage: 75,
-    price: 150000,
+    amount: 150000,
     client: "TechCorp Solutions",
     projectScope:
       "Complete redesign of the existing e-commerce platform with modern UI/UX, improved performance, and mobile responsiveness.",
@@ -722,13 +737,14 @@ export const sampleProjects: Project[] = [
   {
     id: 2,
     name: "Mobile Banking App",
+    description: "Development of a secure mobile banking application with biometric authentication, transaction history, and bill payment features.",
     departmentsInvolved: ["IT Development", "IT/CS"],
     membersInvolved: ["Sarah Johnson", "Alex Chen", "Amanda Foster", "Rachel Green"],
     startDate: "2023-09-01",
     deadline: "2024-02-28",
     managersInvolved: ["Sarah Johnson", "Amanda Foster"],
     completionPercentage: 100,
-    price: 200000,
+    amount: 200000,
     client: "First National Bank",
     projectScope:
       "Development of a secure mobile banking application with biometric authentication, transaction history, and bill payment features.",
@@ -758,13 +774,14 @@ export const sampleProjects: Project[] = [
   {
     id: 3,
     name: "Inventory Management System",
+    description: "Custom inventory management system with real-time tracking, automated reordering, and comprehensive reporting.",
     departmentsInvolved: ["IT Development", "Business Development"],
     membersInvolved: ["Alex Chen", "Maria Garcia", "Kevin Park"],
     startDate: "2024-03-01",
     deadline: "2024-08-15",
     managersInvolved: ["John Doe", "Robert Thompson"],
     completionPercentage: 45,
-    price: 80000,
+    amount: 80000,
     client: "Warehouse Solutions Inc",
     projectScope:
       "Custom inventory management system with real-time tracking, automated reordering, and comprehensive reporting.",
@@ -785,13 +802,14 @@ export const sampleProjects: Project[] = [
   {
     id: 4,
     name: "Healthcare Portal",
+    description: "HIPAA-compliant patient portal with appointment scheduling, medical records access, and telemedicine capabilities.",
     departmentsInvolved: ["IT Development", "IT/CS"],
     membersInvolved: ["Mike Johnson", "Daniel Kim", "Rachel Green", "Amanda Foster"],
     startDate: "2023-06-01",
     deadline: "2023-12-31",
     managersInvolved: ["Sarah Johnson", "Amanda Foster"],
     completionPercentage: 100,
-    price: 300000,
+    amount: 300000,
     client: "Regional Medical Center",
     projectScope:
       "HIPAA-compliant patient portal with appointment scheduling, medical records access, and telemedicine capabilities.",
@@ -821,13 +839,14 @@ export const sampleProjects: Project[] = [
   {
     id: 5,
     name: "Learning Management System",
+    description: "Comprehensive LMS with course management, student tracking, assignment submission, and grading system.",
     departmentsInvolved: ["IT Development", "HR"],
     membersInvolved: ["Lisa Wang", "Jennifer Lee", "Michael Rodriguez"],
     startDate: "2024-02-01",
     deadline: "2024-09-30",
     managersInvolved: ["Sarah Wilson"],
     completionPercentage: 30,
-    price: 120000,
+    amount: 120000,
     client: "State University",
     projectScope:
       "Comprehensive LMS with course management, student tracking, assignment submission, and grading system.",
@@ -849,13 +868,14 @@ export const sampleProjects: Project[] = [
   {
     id: 6,
     name: "HR Management System",
+    description: "Internal HR management system for employee tracking and performance management.",
     departmentsInvolved: ["HR", "IT Development"],
     membersInvolved: ["Sarah Wilson", "John Doe", "Michael Rodriguez"],
     startDate: "2024-03-15",
     deadline: "2024-07-20",
     managersInvolved: ["Sarah Wilson", "John Doe"],
     completionPercentage: 80,
-    price: 120000,
+    amount: 120000,
     client: "Internal Project",
     projectScope: "Internal HR management system for employee tracking and performance",
     clientInputs: "Employee database, performance tracking, attendance management",
@@ -876,13 +896,14 @@ export const sampleProjects: Project[] = [
   {
     id: 7,
     name: "Infrastructure Modernization",
+    description: "Modernize IT infrastructure with cloud migration and security enhancements.",
     departmentsInvolved: ["IT/CS", "Management"],
     membersInvolved: ["Robert Chen", "Amanda Foster", "Daniel Kim", "Patricia Miller"],
     startDate: "2024-02-01",
     deadline: "2024-09-30",
     managersInvolved: ["Robert Chen", "Amanda Foster", "Patricia Miller"],
     completionPercentage: 45,
-    price: 180000,
+    amount: 180000,
     client: "Internal Project",
     projectScope: "Modernize IT infrastructure with cloud migration and security enhancements",
     clientInputs: "Cloud-first approach, enhanced security, scalable architecture",
@@ -901,7 +922,6 @@ export const sampleProjects: Project[] = [
     milestonesAchieved: ["Cloud Architecture Design", "Security Framework"],
   },
 ]
-
 export const sampleTasks: Task[] = [
   // IT Development Tasks
   {
@@ -1163,5 +1183,150 @@ export const sampleTasks: Task[] = [
     dueDate: "2024-03-05",
     status: "pending",
     priority: "medium",
+  },
+]
+
+export const sampleOngoingProjects: Project[] = [
+  {
+    id: 1,
+    name: "E-commerce Platform Redesign",
+    description: "Complete overhaul of the existing e-commerce platform with modern UI/UX and enhanced functionality.",
+    departmentsInvolved: ["IT Development", "Business Development"],
+    membersInvolved: ["John Doe", "Jane Smith", "Mike Johnson"],
+    startDate: "2024-01-10",
+    deadline: "2024-08-15",
+    managersInvolved: ["John Doe"],
+    completionPercentage: 65,
+    amount: 250000,
+    client: "TechCorp Solutions",
+    projectScope: "Complete overhaul of the existing e-commerce platform with modern UI/UX and enhanced functionality.",
+    clientInputs: "Modern UI/UX design with focus on user experience and mobile responsiveness.",
+    skillsRequired: ["React", "Node.js", "MongoDB", "AWS"],
+    status: "active",
+    priority: "High",
+    category: "Web Development",
+    technologiesUsed: ["React", "Node.js", "MongoDB", "AWS"],
+    budgetAllocated: 250000,
+    actualSpent: 162500,
+    estimatedHours: 2000,
+    actualHours: 1300,
+    riskAssessment: "Medium",
+    projectLead: "John Doe",
+    milestonesAchieved: ["UI Design Complete", "Backend API Development"],
+  },
+  {
+    id: 2,
+    name: "Mobile Banking App",
+    description: "Development of a secure mobile banking application with biometric authentication.",
+    departmentsInvolved: ["IT Development", "IT/CS"],
+    membersInvolved: ["Jane Smith", "Emma Davis"],
+    startDate: "2024-02-01",
+    deadline: "2024-09-30",
+    managersInvolved: ["Sarah Johnson"],
+    completionPercentage: 40,
+    amount: 180000,
+    client: "SecureBank Ltd",
+    projectScope: "Development of a secure mobile banking application with biometric authentication.",
+    clientInputs: "High security requirements with biometric authentication and compliance with banking regulations.",
+    skillsRequired: ["React Native", "Node.js", "Security", "Biometric Auth"],
+    status: "active",
+    priority: "High",
+    category: "Mobile Development",
+    technologiesUsed: ["React Native", "Node.js", "PostgreSQL"],
+    budgetAllocated: 180000,
+    actualSpent: 72000,
+    estimatedHours: 1500,
+    actualHours: 600,
+    riskAssessment: "High",
+    projectLead: "Sarah Johnson",
+    milestonesAchieved: ["Security Framework", "Core Features Planning"],
+  },
+  {
+    id: 3,
+    name: "HR Management System",
+    description: "Internal HR management system for employee tracking and performance management.",
+    departmentsInvolved: ["HR", "IT Development"],
+    membersInvolved: ["Sarah Wilson", "Mike Johnson"],
+    startDate: "2024-03-15",
+    deadline: "2024-07-20",
+    managersInvolved: ["Sarah Wilson"],
+    completionPercentage: 80,
+    amount: 120000,
+    client: "Internal Project",
+    projectScope: "Internal HR management system for employee tracking and performance management.",
+    clientInputs: "Employee database integration, performance tracking, and attendance management features.",
+    skillsRequired: ["React", "Python", "PostgreSQL"],
+    status: "active",
+    priority: "High",
+    category: "Internal Systems",
+    technologiesUsed: ["React", "Python", "PostgreSQL"],
+    budgetAllocated: 120000,
+    actualSpent: 96000,
+    estimatedHours: 1000,
+    actualHours: 800,
+    riskAssessment: "Low",
+    projectLead: "Sarah Wilson",
+    milestonesAchieved: ["Database Design", "Core Features", "Testing Phase"],
+  },
+]
+
+export const samplePastProjects: Project[] = [
+  {
+    id: 4,
+    name: "Inventory Management System",
+    description: "Complete inventory tracking system with real-time updates and analytics.",
+    departmentsInvolved: ["IT Development", "Business Development"],
+    membersInvolved: ["John Doe", "Emma Davis"],
+    startDate: "2023-08-01",
+    deadline: "2023-12-15",
+    managersInvolved: ["John Doe"],
+    completionPercentage: 100,
+    amount: 95000,
+    client: "RetailMax Inc",
+    projectScope: "Complete inventory tracking system with real-time updates and analytics.",
+    clientInputs: "Real-time inventory tracking, analytics dashboard, and automated reordering capabilities.",
+    skillsRequired: ["Python", "Django", "PostgreSQL", "React"],
+    status: "completed",
+    priority: "Medium",
+    category: "Enterprise Software",
+    technologiesUsed: ["Python", "Django", "PostgreSQL", "React"],
+    clientSatisfactionRating: 5,
+    budgetAllocated: 95000,
+    actualSpent: 92000,
+    estimatedHours: 800,
+    actualHours: 780,
+    riskAssessment: "Low",
+    projectLead: "John Doe",
+    milestonesAchieved: ["Database Design", "Core Features", "Testing Complete", "Deployment"],
+    effectAnalysis: "Reduced inventory discrepancies by 85% and improved order fulfillment speed by 40%.",
+  },
+  {
+    id: 5,
+    name: "Customer Portal",
+    description: "Self-service customer portal with account management and support features.",
+    departmentsInvolved: ["IT Development"],
+    membersInvolved: ["Jane Smith", "Mike Johnson"],
+    startDate: "2023-07-15",
+    deadline: "2023-11-30",
+    managersInvolved: ["Sarah Johnson"],
+    completionPercentage: 100,
+    amount: 75000,
+    client: "ServicePro Ltd",
+    projectScope: "Self-service customer portal with account management and support features.",
+    clientInputs: "Customer self-service capabilities, account management, and integrated support ticketing system.",
+    skillsRequired: ["React", "Node.js", "MySQL"],
+    status: "completed",
+    priority: "Medium",
+    category: "Web Development",
+    technologiesUsed: ["React", "Node.js", "MySQL"],
+    clientSatisfactionRating: 4,
+    budgetAllocated: 75000,
+    actualSpent: 73000,
+    estimatedHours: 600,
+    actualHours: 585,
+    riskAssessment: "Low",
+    projectLead: "Sarah Johnson",
+    milestonesAchieved: ["Portal Design", "Core Features", "Testing Complete", "Launch"],
+    effectAnalysis: "Reduced customer support tickets by 60% and improved customer satisfaction by 30%.",
   },
 ]

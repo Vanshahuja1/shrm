@@ -1,34 +1,25 @@
 "use client"
 
 import { Menu, Bell, Settings } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 interface TopHeaderProps {
-  activeTab: string
   setIsSidebarOpen: (open: boolean) => void
 }
 
-export default function TopHeader({ activeTab, setIsSidebarOpen }: TopHeaderProps) {
-  const getPageTitle = (tab: string) => {
-    switch (tab) {
-      case "overview":
-        return "Dashboard Overview"
-      case "departments":
-        return "Department Management"
-      case "projects":
-        return "Project Management"
-      case "members":
-        return "Organization Members"
-      case "hierarchy":
-        return "Organization Hierarchy"
-      case "tasks":
-        return "Task Management"
-      case "analytics":
-        return "Analytics & Charts"
-      case "emails":
-        return "Email System"
-      default:
-        return "Dashboard"
-    }
+export default function TopHeader({ setIsSidebarOpen }: TopHeaderProps) {
+  const pathname = usePathname()
+
+  const getPageTitle = (path: string) => {
+    if (path.startsWith("/overview")) return "Dashboard Overview"
+    if (path.startsWith("/departments")) return "Department Management"
+    if (path.startsWith("/projects")) return "Project Management"
+    if (path.startsWith("/members")) return "Organization Members"
+    if (path.startsWith("/hierarchy")) return "Organization Hierarchy"
+    if (path.startsWith("/tasks")) return "Task Management"
+    if (path.startsWith("/analytics")) return "Analytics & Charts"
+    if (path.startsWith("/emails")) return "Email System"
+    return "Dashboard"
   }
 
   return (
@@ -42,7 +33,7 @@ export default function TopHeader({ activeTab, setIsSidebarOpen }: TopHeaderProp
             <Menu size={24} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{getPageTitle(activeTab)}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{getPageTitle(pathname)}</h1>
             <p className="text-sm text-gray-500">Welcome back, manage your organization efficiently</p>
           </div>
         </div>
