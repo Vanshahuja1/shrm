@@ -6,7 +6,7 @@ const counterSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      enum: ["admin", "manager", "employee", "sales", "intern", "hr"],
+      enum: ["admin", "manager", "employee", "intern", "hr"],
     },
     count: {
       type: Number,
