@@ -13,7 +13,17 @@ import {
   Award,
   Target,
   Pencil,
+  Trash2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import type { OrganizationMember } from "../../../types";
 import { sampleMembers } from "@/lib/sampleData";
 
@@ -21,11 +31,41 @@ export default function MemberDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const [member, setMember] = useState<OrganizationMember | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
-    const found = sampleMembers.find((m) => m.id === Number(id));
-    if (found) setMember(found);
+    const fetchMember = async () => {
+      const response = await fetch(
+        `http://localhost:5000/api/IT/org-members/${id}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setMember(data);
+      }
+    };
+    fetchMember();
   }, [id]);
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/IT/org-members/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        setIsDeleteDialogOpen(false);
+        router.push("/admin/IT/members");
+      } else {
+        alert("Failed to delete member. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error deleting member:", error);
+      alert("An error occurred while deleting the member.");
+    }
+  };
 
   if (!member) return <p className="text-center text-gray-500">Loading...</p>;
 
@@ -38,48 +78,118 @@ export default function MemberDetailPage() {
         >
           ← Back to Members
         </button>
-        <button
-          onClick={() => router.push(`/admin/IT/members/${member.id}/edit`)}
-          className="flex items-center gap-2 text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-        >
-          <Pencil size={16} /> Edit Member
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push(`/admin/IT/members/${member.id}/edit`)}
+            className="flex items-center gap-2 text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+          >
+            <Pencil size={16} /> Edit Member
+          </button>
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogTrigger asChild>
+              <button className="flex items-center gap-2 text-sm px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+                <Trash2 size={16} /> Delete Member
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Delete Member</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete <strong>{member.name}</strong>? This action cannot be undone and will permanently remove all their data from the system.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <button
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
+                >
+                  Delete Member
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-8">
         {/* Header */}
         <div className="flex items-center gap-6">
           <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-            {member.name.split(" ").map((n) => n[0]).join("")}
+            {member.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")}
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{member.name}</h1>
-            <p className="text-xl text-gray-600">{member.role} – {member.department}</p>
+            <p className="text-xl text-gray-600">
+              {member.role} – {member.department}
+            </p>
           </div>
         </div>
 
         {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <InfoCard title="Tasks/Day" value={`${member.performanceMetrics.tasksPerDay}/5`} icon={<Target />} color="blue" />
-          <InfoCard title="Attendance" value={`${member.performanceMetrics.attendanceScore}%`} icon={<Clock />} color="green" />
-          <InfoCard title="Manager Rating" value={`${member.performanceMetrics.managerReviewRating}/5`} icon={<Award />} color="purple" />
-          <InfoCard title="Performance" value={`${member.performanceMetrics.combinedPercentage}%`} icon={<TrendingUp />} color="orange" />
+          <InfoCard
+            title="Tasks/Day"
+            value={`${member.performanceMetrics.tasksPerDay}/5`}
+            icon={<Target />}
+            color="blue"
+          />
+          <InfoCard
+            title="Attendance"
+            value={`${member.performanceMetrics.attendanceScore}%`}
+            icon={<Clock />}
+            color="green"
+          />
+          <InfoCard
+            title="Manager Rating"
+            value={`${member.performanceMetrics.managerReviewRating}/5`}
+            icon={<Award />}
+            color="purple"
+          />
+          <InfoCard
+            title="Performance"
+            value={`${member.performanceMetrics.combinedPercentage}%`}
+            icon={<TrendingUp />}
+            color="orange"
+          />
         </div>
 
         {/* Contact + Professional Info */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-gray-900">Contact Info</h2>
-            <div className="flex items-center gap-3"><Mail className="text-gray-500" size={20} />{member.contactInfo.email}</div>
-            <div className="flex items-center gap-3"><Phone className="text-gray-500" size={20} />{member.contactInfo.phone}</div>
-            <div className="flex items-center gap-3"><MapPin className="text-gray-500" size={20} />{member.contactInfo.address}</div>
+            <div className="flex items-center gap-3">
+              <Mail className="text-gray-500" size={20} />
+              {member.contactInfo.email}
+            </div>
+            <div className="flex items-center gap-3">
+              <Phone className="text-gray-500" size={20} />
+              {member.contactInfo.phone}
+            </div>
+            <div className="flex items-center gap-3">
+              <MapPin className="text-gray-500" size={20} />
+              {member.contactInfo.address}
+            </div>
             {member.reportsTo && (
-              <div className="flex items-center gap-3"><UserCheck className="text-gray-500" size={20} />Reports to: {member.reportsTo}</div>
+              <div className="flex items-center gap-3">
+                <UserCheck className="text-gray-500" size={20} />
+                Reports to: {member.reportsTo}
+              </div>
             )}
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-900">Professional Info</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              Professional Info
+            </h2>
             <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 font-semibold">
               Salary: ${member.salary.toLocaleString()}
             </div>
@@ -98,11 +208,15 @@ export default function MemberDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
               <p className="font-semibold text-gray-700 mb-1">PAN</p>
-              <p className="text-lg font-mono text-yellow-800">{member.documents.pan}</p>
+              <p className="text-lg font-mono text-yellow-800">
+                {member.documents.pan}
+              </p>
             </div>
             <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
               <p className="font-semibold text-gray-700 mb-1">Aadhar</p>
-              <p className="text-lg font-mono text-orange-800">{member.documents.aadhar}</p>
+              <p className="text-lg font-mono text-orange-800">
+                {member.documents.aadhar}
+              </p>
             </div>
           </div>
         </div>
@@ -112,7 +226,10 @@ export default function MemberDetailPage() {
           <h2 className="text-xl font-bold text-gray-900 mb-2">Projects</h2>
           <div className="flex flex-wrap gap-2">
             {member.projects.map((project, index) => (
-              <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              <span
+                key={index}
+                className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+              >
                 {project}
               </span>
             ))}

@@ -6,25 +6,40 @@ const userSchema = new mongoose.Schema(
   {
     id: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
       trim: true,
       index: true,
     },
     name: {
       type: String,
-      required: [true, "Name is required"],
+      // required: [true, "Name is required"],
       trim: true,
       maxlength: [100, "Name cannot exceed 100 characters"],
     },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      // validate: {
+      //   validator: (v) => !v || validator.isEmail(v),
+      //   message: "Invalid email format",
+      // },
+      default: "",
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      // required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
     role: {
       type: String,
-      required: [true, "Role is required"],
+      // required: [true, "Role is required"],
       enum: ["admin", "manager", "employee", "sales", "intern", "hr"],
       lowercase: true,
     },
@@ -63,13 +78,13 @@ const userSchema = new mongoose.Schema(
       {
         title: {
           type: String,
-          required: true,
+          // required: true,
           trim: true,
           maxlength: 100,
         },
         url: {
           type: String,
-          required: true,
+          // required: true,
           trim: true,
           validate: {
             validator: (v) => validator.isURL(v),
@@ -179,10 +194,10 @@ const userSchema = new mongoose.Schema(
     adharCard: {
       type: String,
       trim: true,
-      validate: {
-        validator: (v) => !v || /^\d{12}$/.test(v.replace(/\s/g, "")),
-        message: "Aadhar card must be 12 digits",
-      },
+      // validate: {
+      //   validator: (v) => !v || /^\d{12}$/.test(v.replace(/\s/g, "")),
+      //   message: "Aadhar card must be 12 digits",
+      // },
       default: "",
     },
 
@@ -190,17 +205,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       uppercase: true,
-      validate: {
-        validator: (v) => !v || /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(v),
-        message: "Invalid PAN card format",
-      },
+      // validate: {
+      //   validator: (v) => !v || /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(v),
+      //   message: "Invalid PAN card format",
+      // },
       default: "",
     },
 
     experience: {
-      type: Number,
+      type: String,
       min: [0, "Experience cannot be negative"],
-      default: 0,
+      default: "0",
     },
 
     projects: [
@@ -257,6 +272,40 @@ userSchema.virtual("employeeInfo").get(function () {
     role: this.role,
     department: this.departmentName,
     organization: this.organizationName,
+  };
+});
+
+
+userSchema.virtual("OrgMemberInfo").get(function () {
+  return {
+    id: this.id,
+    name: this.name,
+    role: this.role,
+    department: this.departmentName,
+    salary: this.salary,
+    projects: this.projects || [],
+    experience: `${this.experience || 0} years`,
+    contactInfo: {
+      email: this.email || "",
+      phone: this.phone || "",
+      address: this.address || "",
+    },
+    documents: {
+      pan: this.panCard || "",
+      aadhar: this.adharCard || "",
+    },
+    joiningDate: this.joiningDate ? this.joiningDate.toISOString().split('T')[0] : "",
+    performanceMetrics: {
+      tasksPerDay: this.taskCountPerDay || 0,
+      attendanceScore: this.attendanceCount30Days || 0,
+      managerReviewRating: this.performance / 20 || 0, // Convert 0-100 to 0-5 scale
+      combinedPercentage: this.performance || 0,
+    },
+    attendance: {
+      last7Days: new Array(7).fill(true), // You can implement actual logic here
+      todayPresent: this.isActive,
+    },
+    reportsTo: this.upperManager || undefined,
   };
 });
 

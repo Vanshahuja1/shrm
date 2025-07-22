@@ -5,7 +5,7 @@ export interface OrganizationMember {
   department: string
   salary: number
   projects: string[]
-  experience: string
+  experience: string | number
   contactInfo: {
     email: string
     phone: string

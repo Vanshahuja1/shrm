@@ -1,83 +1,38 @@
-// "use client";
-
-// import { useRouter } from "next/navigation";
-// import { useState } from "react";
-// import { motion } from "framer-motion";
-// import { Users, Plus } from "lucide-react";
-// import { sampleMembers } from "@/lib/sampleData";
-// // import type { OrganizationMember } from "../../types";
-
-// export default function MembersPage() {
-//   const [members, setMembers] = useState(sampleMembers);
-//   const router = useRouter();
-
-//   return (
-//     <div className="space-y-6">
-//       <div className="flex justify-between items-center">
-//         <div className="flex items-center gap-3">
-//           <div className="p-3 bg-blue-100 rounded-lg">
-//             <Users className="text-blue-600" size={24} />
-//           </div>
-//           <div>
-//             <h1 className="text-2xl font-bold text-gray-900">Members</h1>
-//             <p className="text-gray-600">Manage your organization members</p>
-//           </div>
-//         </div>
-//         <button
-//           onClick={() => router.push("/members/add")}
-//           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-//         >
-//           <Plus size={20} />
-//           Add Member
-//         </button>
-//       </div>
-
-//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-//         {members.map((member) => (
-//           <motion.div
-//             key={member.id}
-//             whileHover={{ y: -2, scale: 1.01 }}
-//             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-all"
-//             onClick={() => router.push(`/members/${member.id}`)}
-//           >
-//             <div className="flex items-center gap-4 mb-4">
-//               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-bold">
-//                 {member.name
-//                   .split(" ")
-//                   .map((n: string) => n[0])
-//                   .join("")}
-//               </div>
-//               <div>
-//                 <h3 className="font-bold text-lg text-gray-900">{member.name}</h3>
-//                 <p className="text-gray-600">{member.role}</p>
-//               </div>
-//             </div>
-//             <div className="space-y-2 text-sm">
-//               <div className="flex justify-between">
-//                 <span className="text-gray-600">Department:</span>
-//                 <span className="font-semibold text-gray-900">{member.department}</span>
-//               </div>
-//               <div className="flex justify-between">
-//                 <span className="text-gray-600">Salary:</span>
-//                 <span className="font-semibold text-green-600">${member.salary.toLocaleString()}</span>
-//               </div>
-//             </div>
-//           </motion.div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
 "use client"
-
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Users, Plus } from "lucide-react"
 import { sampleMembers } from "@/lib/sampleData"
-
+import type { OrganizationMember } from "../../types/index"
 export default function MembersPage() {
-  const [members, setMembers] = useState(sampleMembers)
+
+  const fetchMembers = async () => {
+    // Fetch members from the backend API
+    const response = await fetch(`http://localhost:5000/api/IT/org-members`)
+    if (!response.ok) {
+      throw new Error("Failed to fetch members")
+    }
+    const data = await response.json()
+    return data
+  }
+
+  useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const membersData = await fetchMembers()
+        setMembers(membersData)
+      } catch (error) {
+        console.error("Error fetching members:", error)
+        // Fallback to sample data if fetch fails
+        setMembers(sampleMembers)
+      }
+    }
+
+    loadMembers()
+  }, [])
+
+  const [members, setMembers] = useState<OrganizationMember[]>([])
   const router = useRouter()
 
   return (
