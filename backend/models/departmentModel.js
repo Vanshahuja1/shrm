@@ -22,26 +22,18 @@ const departmentSchema = new mongoose.Schema({
     default: 0
   },
   
-  managers: {
-    type: Number,
-    required: [true, 'Managers count is required'],
-    min: [0, 'Managers count cannot be negative'],
-    default: 0
-  },
-  
-  employees: {
-    type: Number,
-    required: [true, 'Employees count is required'],
-    min: [0, 'Employees count cannot be negative'],
-    default: 0
-  },
-  
-  interns: {
-    type: Number,
-    required: [true, 'Interns count is required'],
-    min: [0, 'Interns count cannot be negative'],
-    default: 0
-  },
+  managers: [{
+    type: mongoose.Schema.Types.Mixed,
+    required: false
+  }],
+  employees: [{
+    type: mongoose.Schema.Types.Mixed,
+    required: false
+  }],
+  interns: [{
+    type: mongoose.Schema.Types.Mixed,
+    required: false
+  }],
   //add a member ke andar list of available members aa jaaye
   members: {
     type: Array,

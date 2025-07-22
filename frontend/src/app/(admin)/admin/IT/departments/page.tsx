@@ -1,137 +1,3 @@
-// "use client"
-
-// import { useEffect, useState } from "react"
-// import { useRouter } from "next/navigation"
-// import { Plus, Trash2, Edit, Search, Filter, Users, Building } from "lucide-react"
-// import { motion } from "framer-motion"
-// import axios from "@/lib/axiosInstance"
-// import type { Department } from "../../types"
-
-// export default function DepartmentsPage() {
-//   const [departments, setDepartments] = useState<Department[]>([])
-//   const [searchTerm, setSearchTerm] = useState("")
-//   const router = useRouter()
-
-//   useEffect(() => {
-//     axios.get("/departments").then((res) => {
-//       const normalized = res.data.map((d: any) => ({ ...d, id: d._id }))
-//       setDepartments(normalized)
-//     })
-//   }, [])
-
-//   const handleDelete = async (id: string) => {
-//     try {
-//       await axios.delete(`/departments/${id}`)
-//       setDepartments((prev) => prev.filter((d) => d.id !== id))
-//     } catch (err) {
-//       console.error("Delete failed:", err)
-//       alert("Failed to delete department. Try again.")
-//     }
-//   }
-
-//   const filtered = departments.filter((d) =>
-//     d.name.toLowerCase().includes(searchTerm.toLowerCase())
-//   )
-
-//   return (
-//     <div className="space-y-6">
-//       {/* Top Bar */}
-//       <div className="flex flex-col md:flex-row gap-4 items-center">
-//         <button
-//           onClick={() => router.push("/admin/IT/departments/add")}
-//           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-//         >
-//           <Plus size={20} /> Add Department
-//         </button>
-//         <div className="relative flex-1 w-full">
-//           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-//           <input
-//             type="text"
-//             placeholder="Search departments..."
-//             value={searchTerm}
-//             onChange={(e) => setSearchTerm(e.target.value)}
-//             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-//           />
-//         </div>
-//         <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-//           <Filter size={20} /> Filter
-//         </button>
-//       </div>
-
-//       {/* Department Cards */}
-//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-//         {filtered.map((dept) => (
-//           <motion.div
-//             key={dept.id}
-//             whileHover={{ y: -2, scale: 1.01 }}
-//             className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all"
-//             onClick={() => router.push(`/admin/IT/departments/${dept.id}`)}
-//           >
-//             <div className="flex items-center justify-between mb-4">
-//               <h3 className="text-xl font-bold text-gray-900">{dept.name}</h3>
-//               <div className="flex gap-2">
-//                 <button
-//                   onClick={(e) => {
-//                     e.stopPropagation()
-//                     router.push(`/admin/IT/departments/${dept.id}`)
-//                   }}
-//                   className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-//                 >
-//                   <Edit size={16} />
-//                 </button>
-//                 <button
-//                   onClick={(e) => {
-//                     e.stopPropagation()
-//                     handleDelete(String(dept.id))
-//                   }}
-//                   className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-//                 >
-//                   <Trash2 size={16} />
-//                 </button>
-//               </div>
-//             </div>
-
-//             <div className="space-y-3">
-//               <div className="flex justify-between">
-//                 <span className="text-gray-600">Head:</span>
-//                 <span className="font-semibold">{dept.head}</span>
-//               </div>
-//               <div className="flex justify-between">
-//                 <span className="text-gray-600">Budget:</span>
-//                 <span className="font-semibold text-green-600">₹{dept.budget?.toLocaleString()}</span>
-//               </div>
-//               <div className="flex justify-between">
-//                 <span className="text-gray-600">Members:</span>
-//                 <span className="font-semibold">
-//                   {(dept.managers || 0) + (dept.employees || 0) + (dept.interns || 0)}
-//                 </span>
-//               </div>
-//             </div>
-
-//             <div className="mt-4 pt-4 border-t border-gray-200">
-//               <div className="grid grid-cols-3 text-center text-sm text-gray-600">
-//                 <div>
-//                   <p className="font-bold text-blue-600">{dept.managers || 0}</p>
-//                   <p>Managers</p>
-//                 </div>
-//                 <div>
-//                   <p className="font-bold text-green-600">{dept.employees || 0}</p>
-//                   <p>Employees</p>
-//                 </div>
-//                 <div>
-//                   <p className="font-bold text-purple-600">{dept.interns || 0}</p>
-//                   <p>Interns</p>
-//                 </div>
-//               </div>
-//             </div>
-//           </motion.div>
-//         ))}
-//       </div>
-//     </div>
-//   )
-// }
-// File: /app/admin/IT/departments/page.tsx
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -150,6 +16,7 @@ export default function DepartmentsPage() {
     axios.get("/departments").then((res) => {
       const normalized = res.data.map((d: any) => ({ ...d, id: d._id }))
       setDepartments(normalized)
+      console.log("Departments loaded")
     })
   }, [])
 
@@ -157,6 +24,7 @@ export default function DepartmentsPage() {
     try {
       await axios.delete(`/departments/${id}`)
       setDepartments((prev) => prev.filter((d) => d.id !== id))
+      console.log("Department deleted successfully")
     } catch (err) {
       console.error("Delete failed:", err)
       alert("Failed to delete department. Try again.")
@@ -168,11 +36,11 @@ export default function DepartmentsPage() {
   )
 
   const totalMembers = departments.reduce(
-    (sum, d) => sum + (d.managers || 0) + (d.employees || 0) + (d.interns || 0),
+    (sum, d) => sum + (Array.isArray(d.managers) ? d.managers.length : 0) + (Array.isArray(d.employees) ? d.employees.length : 0) + (Array.isArray(d.interns) ? d.interns.length : 0),
     0
   )
 
-  const totalManagers = departments.reduce((sum, d) => sum + (d.managers || 0), 0)
+  const totalManagers = departments.reduce((sum, d) => sum + (Array.isArray(d.managers) ? d.managers.length : 0), 0)
 
   return (
     <div className="space-y-6">
@@ -201,9 +69,6 @@ export default function DepartmentsPage() {
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-          <Filter size={20} /> Filter
-        </button>
       </div>
 
       {/* Department Cards */}
@@ -251,7 +116,7 @@ export default function DepartmentsPage() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Members:</span>
                 <span className="font-semibold">
-                  {(dept.managers || 0) + (dept.employees || 0) + (dept.interns || 0)}
+                  {(dept.managers?.length || 0) + (dept.employees?.length || 0) + (dept.interns?.length || 0)}
                 </span>
               </div>
             </div>
@@ -259,15 +124,15 @@ export default function DepartmentsPage() {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-3 text-center text-sm text-gray-600">
                 <div>
-                  <p className="font-bold text-blue-600">{dept.managers || 0}</p>
+                  <p className="font-bold text-blue-600">{dept.managers?.length || 0}</p>
                   <p>Managers</p>
                 </div>
                 <div>
-                  <p className="font-bold text-green-600">{dept.employees || 0}</p>
+                  <p className="font-bold text-green-600">{dept.employees?.length || 0}</p>
                   <p>Employees</p>
                 </div>
                 <div>
-                  <p className="font-bold text-purple-600">{dept.interns || 0}</p>
+                  <p className="font-bold text-purple-600">{dept.interns?.length || 0}</p>
                   <p>Interns</p>
                 </div>
               </div>

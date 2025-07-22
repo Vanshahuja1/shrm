@@ -34,9 +34,9 @@ export interface Department {
   name: string
   head: string
   budget: number
-  managers: number
-  employees: number
-  interns: number
+  managers: any[]
+  employees: any[]
+  interns: any[]
   members: OrganizationMember[]
 }
 
