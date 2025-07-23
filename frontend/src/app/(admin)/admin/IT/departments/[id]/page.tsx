@@ -1,10 +1,9 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { sampleMembers } from "@/lib/sampleData"
-import { useRouter, useParams } from "next/navigation"
-import axios from "@/lib/axiosInstance"
-import { Edit, ArrowLeft, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import axios from "@/lib/axiosInstance";
+import { Edit, ArrowLeft, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,47 +12,44 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
+import EditForm from "./EditForm";
 
 export default function DepartmentDetailPage() {
-  const { id } = useParams()
-  const router = useRouter()
-  const [dept, setDept] = useState<any>(null)
-  const [editData, setEditData] = useState<any>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [orgMembers, setOrgMembers] = useState<any[]>([]);
-  const [showManagerDropdown, setShowManagerDropdown] = useState(false);
-  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
-  const [showInternDropdown, setShowInternDropdown] = useState(false);
+  const { id } = useParams();
+  const router = useRouter();
+  const [dept, setDept] = useState<any>(null);
+  const [editData, setEditData] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     axios.get(`/departments/${id}`).then((res) => {
-      setDept(res.data)
-      setEditData(res.data)
-    })
-  }, [id])
+      setDept(res.data);
+      setEditData(res.data);
+    });
+  }, [id]);
 
   const handleUpdate = async () => {
-    await axios.put(`/departments/${id}`, editData)
-    console.log("Department updated successfully")
-    setDept(editData)
-    setIsEditing(false)
-  }
+    await axios.put(`/departments/${id}`, editData);
+    console.log("Department updated successfully");
+    setDept(editData);
+    setIsEditing(false);
+  };
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`/departments/${id}`)
-      console.log("Department deleted successfully")
-      setIsDeleteDialogOpen(false)
-      router.push("/admin/IT/departments")  
+      await axios.delete(`/departments/${id}`);
+      console.log("Department deleted successfully");
+      setIsDeleteDialogOpen(false);
+      router.push("/admin/IT/departments");
     } catch (error) {
-      console.error("Error deleting department:", error)
-      alert("Failed to delete department. Please try again.")
+      console.error("Error deleting department:", error);
+      alert("Failed to delete department. Please try again.");
     }
-  }
+  };
 
-  if (!dept) return <div className="p-6 text-gray-600">Loading...</div>
+  if (!dept) return <div className="p-6 text-gray-600">Loading...</div>;
 
   return (
     <div className="max-w-3xl mx-auto py-10 space-y-6">
@@ -73,7 +69,10 @@ export default function DepartmentDetailPage() {
             <Edit size={16} />
             {isEditing ? "Cancel" : "Edit"}
           </button>
-          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
             <DialogTrigger asChild>
               <button className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
                 <Trash2 size={16} />
@@ -84,7 +83,10 @@ export default function DepartmentDetailPage() {
               <DialogHeader>
                 <DialogTitle>Delete Department</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to delete the <strong>{dept?.name}</strong> department? This action cannot be undone and will permanently remove the department and all its associated data.
+                  Are you sure you want to delete the{" "}
+                  <strong>{dept?.name}</strong> department? This action cannot
+                  be undone and will permanently remove the department and all
+                  its associated data.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -108,148 +110,12 @@ export default function DepartmentDetailPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-6">
         {isEditing ? (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department Name</label>
-              <input
-                value={editData.name || ""}
-                onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department Head</label>
-              <input
-                value={editData.head || ""}
-                onChange={(e) => setEditData({ ...editData, head: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
-              <input
-                type="number"
-                value={editData.budget || 0}
-                onChange={(e) => setEditData({ ...editData, budget: Number(e.target.value) })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              {/* Managers */}
-              <div>
-                <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">Managers
-                  <button type="button" className="ml-2 p-1" onClick={async () => {
-                    if (!Array.isArray(orgMembers) || orgMembers.length === 0) {
-                      try {
-                        const res = await axios.get("/organization-members");
-                        setOrgMembers(res.data);
-                      } catch (err) {
-                        setOrgMembers(sampleMembers);
-                      }
-                    }
-                    setShowManagerDropdown(true);
-                  }}> <span className="text-blue-600">+</span> </button>
-                </label>
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {editData.managers?.map((m: any, idx: number) => (
-                    <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center text-xs">
-                      {m.name || m}
-                      <button type="button" className="ml-1" onClick={() => {
-                        setEditData((prev: any) => ({ ...prev, managers: prev.managers.filter((_: any, i: number) => i !== idx) }));
-                      }}>×</button>
-                    </span>
-                  ))}
-                </div>
-                {showManagerDropdown && (
-                  <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                    {orgMembers.filter((m: any) => m.role === "Manager").map((m: any) => (
-                      <div key={m.id} className="cursor-pointer hover:bg-blue-100 px-2 py-1" onClick={() => {
-                        setEditData((prev: any) => ({ ...prev, managers: [...(prev.managers || []), m] }));
-                        setShowManagerDropdown(false);
-                      }}>{m.name}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {/* Employees */}
-              <div>
-                <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">Employees
-                  <button type="button" className="ml-2 p-1" onClick={async () => {
-                    if (!Array.isArray(orgMembers) || orgMembers.length === 0) {
-                      try {
-                        const res = await axios.get("/organization-members");
-                        setOrgMembers(res.data);
-                      } catch (err) {
-                        setOrgMembers(sampleMembers);
-                      }
-                    }
-                    setShowEmployeeDropdown(true);
-                  }}> <span className="text-green-600">+</span> </button>
-                </label>
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {editData.employees?.map((m: any, idx: number) => (
-                    <span key={idx} className="bg-green-100 text-green-800 px-2 py-1 rounded flex items-center text-xs">
-                      {m.name || m}
-                      <button type="button" className="ml-1" onClick={() => {
-                        setEditData((prev: any) => ({ ...prev, employees: prev.employees.filter((_: any, i: number) => i !== idx) }));
-                      }}>×</button>
-                    </span>
-                  ))}
-                </div>
-                {showEmployeeDropdown && (
-                  <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                    {orgMembers.filter((m: any) => m.role === "Employee").map((m: any) => (
-                      <div key={m.id} className="cursor-pointer hover:bg-green-100 px-2 py-1" onClick={() => {
-                        setEditData((prev: any) => ({ ...prev, employees: [...(prev.employees || []), m] }));
-                        setShowEmployeeDropdown(false);
-                      }}>{m.name}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {/* Interns */}
-              <div>
-                <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">Interns
-                  <button type="button" className="ml-2 p-1" onClick={async () => {
-                    if (!Array.isArray(orgMembers) || orgMembers.length === 0) {
-                      try {
-                        const res = await axios.get("/organization-members");
-                        setOrgMembers(res.data);
-                      } catch (err) {
-                        setOrgMembers(sampleMembers);
-                      }
-                    }
-                    setShowInternDropdown(true);
-                  }}> <span className="text-yellow-600">+</span> </button>
-                </label>
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {editData.interns?.map((m: any, idx: number) => (
-                    <span key={idx} className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex items-center text-xs">
-                      {m.name || m}
-                      <button type="button" className="ml-1" onClick={() => {
-                        setEditData((prev: any) => ({ ...prev, interns: prev.interns.filter((_: any, i: number) => i !== idx) }));
-                      }}>×</button>
-                    </span>
-                  ))}
-                </div>
-                {showInternDropdown && (
-                  <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                    {orgMembers.filter((m: any) => m.role === "Intern").map((m: any) => (
-                      <div key={m.id} className="cursor-pointer hover:bg-yellow-100 px-2 py-1" onClick={() => {
-                        setEditData((prev: any) => ({ ...prev, interns: [...(prev.interns || []), m] }));
-                        setShowInternDropdown(false);
-                      }}>{m.name}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-4 pt-4">
-              <button onClick={handleUpdate} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                Save Changes
-              </button>
-            </div>
-          </div>
+          <EditForm
+            editData={editData}
+            setEditData={setEditData}
+            onSave={handleUpdate}
+            onCancel={() => setIsEditing(false)}
+          />
         ) : (
           <div className="space-y-6">
             <div>
@@ -258,96 +124,239 @@ export default function DepartmentDetailPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard label="Managers" value={dept.managers?.length || 0} color="blue" />
-              <StatCard label="Employees" value={dept.employees?.length || 0} color="green" />
-              <StatCard label="Interns" value={dept.interns?.length || 0} color="purple" />
-              <StatCard label="Budget" value={`$${(dept.budget || 0).toLocaleString()}`} color="orange" />
+              <StatCard
+                label="Managers"
+                value={dept.managers?.length || 0}
+                color="blue"
+              />
+              <StatCard
+                label="Employees"
+                value={dept.employees?.length || 0}
+                color="green"
+              />
+              <StatCard
+                label="Interns"
+                value={dept.interns?.length || 0}
+                color="purple"
+              />
+              <StatCard
+                label="Budget"
+                value={`$${(dept.budget || 0).toLocaleString()}`}
+                color="orange"
+              />
             </div>
 
             {/* Team Members Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Managers */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <h3 className="text-lg font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                  Managers
-                  <span className="bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full">
-                    {dept.managers?.length || 0}
-                  </span>
-                </h3>
-                {dept.managers && dept.managers.length > 0 ? (
-                  <div className="space-y-2">
-                    {dept.managers.map((manager: any, index: number) => (
-                      <div key={index} className="bg-white rounded-md p-2 text-sm text-gray-700 border border-blue-100">
-                        {manager.name || manager}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-blue-600 text-sm italic">No managers assigned</p>
-                )}
-              </div>
+            <div className="space-y-8">
+              <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-3">
+                Team Members
+              </h2>
 
-              {/* Employees */}
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
-                  Employees
-                  <span className="bg-green-200 text-green-800 text-xs px-2 py-1 rounded-full">
-                    {dept.employees?.length || 0}
-                  </span>
-                </h3>
-                {dept.employees && dept.employees.length > 0 ? (
-                  <div className="space-y-2">
-                    {dept.employees.map((employee: any, index: number) => (
-                      <div key={index} className="bg-white rounded-md p-2 text-sm text-gray-700 border border-green-100">
-                        {employee.name || employee}
+              <div className="space-y-8">
+                {/* Managers Section */}
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-blue-900 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-sm font-bold">M</span>
                       </div>
-                    ))}
+                      Managers
+                    </h3>
+                    <span className="bg-blue-600 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                      {dept.managers?.length || 0} Members
+                    </span>
                   </div>
-                ) : (
-                  <p className="text-green-600 text-sm italic">No employees assigned</p>
-                )}
-              </div>
 
-              {/* Interns */}
-              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                <h3 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center gap-2">
-                  Interns
-                  <span className="bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                    {dept.interns?.length || 0}
-                  </span>
-                </h3>
-                {dept.interns && dept.interns.length > 0 ? (
-                  <div className="space-y-2">
-                    {dept.interns.map((intern: any, index: number) => (
-                      <div key={index} className="bg-white rounded-md p-2 text-sm text-gray-700 border border-yellow-100">
-                        {intern.name || intern}
+                  {dept.managers && dept.managers.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {dept.managers.map((manager: any, index: number) => (
+                        <div
+                          key={index}
+                          className="bg-white rounded-lg p-5 border border-blue-200 cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-300 group"
+                          onClick={() =>
+                            router.push(
+                              `/admin/IT/members/${manager.id || manager._id}`
+                            )
+                          }
+                        >
+                          <div className="flex items-start space-x-4">
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors">
+                              <span className="text-blue-700 font-bold text-lg">
+                                {(manager.name || manager)
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-blue-700 transition-colors">
+                                {manager.name || manager}
+                              </h4>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-blue-600 text-2xl">👥</span>
                       </div>
-                    ))}
+                      <p className="text-blue-700 font-medium">
+                        No managers assigned
+                      </p>
+                      <p className="text-blue-600 text-sm mt-1">
+                        Managers will appear here when assigned
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Employees Section */}
+                <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-green-900 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-sm font-bold">E</span>
+                      </div>
+                      Employees
+                    </h3>
+                    <span className="bg-green-600 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                      {dept.employees?.length || 0} Members
+                    </span>
                   </div>
-                ) : (
-                  <p className="text-yellow-600 text-sm italic">No interns assigned</p>
-                )}
+
+                  {dept.employees && dept.employees.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {dept.employees.map((employee: any, index: number) => (
+                        <div
+                          key={index}
+                          className="bg-white rounded-lg p-5 border border-green-200 cursor-pointer hover:border-green-400 hover:shadow-lg transition-all duration-300 group"
+                          onClick={() =>
+                            router.push(
+                              `/admin/IT/members/${employee.id || employee._id}`
+                            )
+                          }
+                        >
+                          <div className="flex items-start space-x-4">
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 transition-colors">
+                              <span className="text-green-700 font-bold text-lg">
+                                {(employee.name || employee)
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-green-700 transition-colors">
+                                {employee.name || employee}
+                              </h4>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-green-600 text-2xl">👨‍💼</span>
+                      </div>
+                      <p className="text-green-700 font-medium">
+                        No employees assigned
+                      </p>
+                      <p className="text-green-600 text-sm mt-1">
+                        Employees will appear here when assigned
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Interns Section */}
+                <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl p-6 border border-yellow-200">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-yellow-900 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-sm font-bold">I</span>
+                      </div>
+                      Interns
+                    </h3>
+                    <span className="bg-yellow-600 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                      {dept.interns?.length || 0} Members
+                    </span>
+                  </div>
+
+                  {dept.interns && dept.interns.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {dept.interns.map((intern: any, index: number) => (
+                        <div
+                          key={index}
+                          className="bg-white rounded-lg p-5 border border-yellow-200 cursor-pointer hover:border-yellow-400 hover:shadow-lg transition-all duration-300 group"
+                          onClick={() =>
+                            router.push(
+                              `/admin/IT/members/${intern.id || intern._id}`
+                            )
+                          }
+                        >
+                          <div className="flex items-start space-x-4">
+                            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-yellow-200 transition-colors">
+                              <span className="text-yellow-700 font-bold text-lg">
+                                {(intern.name || intern)
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-yellow-700 transition-colors">
+                                {intern.name || intern}
+                              </h4>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-yellow-600 text-2xl">🎓</span>
+                      </div>
+                      <p className="text-yellow-700 font-medium">
+                        No interns assigned
+                      </p>
+                      <p className="text-yellow-600 text-sm mt-1">
+                        Interns will appear here when assigned
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
 
-function StatCard({ label, value, color }: { label: string; value: any; color: string }) {
+function StatCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: any;
+  color: string;
+}) {
   const colorMap = {
     blue: "text-blue-600 bg-blue-50 border-blue-200",
     green: "text-green-600 bg-green-50 border-green-200",
     purple: "text-purple-600 bg-purple-50 border-purple-200",
     orange: "text-orange-600 bg-orange-50 border-orange-200",
-  } as Record<string, string>
+  } as Record<string, string>;
 
   return (
     <div className={`p-4 rounded-lg border ${colorMap[color]}`}>
-      <p className={`text-2xl font-bold ${colorMap[color].split(" ")[0]}`}>{value}</p>
+      <p className={`text-2xl font-bold ${colorMap[color].split(" ")[0]}`}>
+        {value}
+      </p>
       <p className={`${colorMap[color].split(" ")[0]} text-sm`}>{label}</p>
     </div>
-  )
+  );
 }

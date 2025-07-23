@@ -4,10 +4,14 @@ import { useEffect, useState, useMemo } from "react"
 import { motion } from "framer-motion"
 import { Users, Plus, Search, Filter } from "lucide-react"
 import { sampleMembers } from "@/lib/sampleData"
+import axios from "@/lib/axiosInstance"
 import type { OrganizationMember } from "../../types/index"
 export default function MembersPage() {
 
   const fetchMembers = async () => {
+    // Fetch members from the backend API using axios
+    const response = await axios.get('/IT/org-members')
+    return response.data
     const response = await fetch(`http://localhost:5000/api/IT/org-members`)
     if (!response.ok) {
       throw new Error("Failed to fetch members")

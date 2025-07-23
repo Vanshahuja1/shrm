@@ -1,6 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { ChevronDown, Plus, X } from "lucide-react"
+import { sampleMembers } from "@/lib/sampleData"
+import { useRouter } from "next/navigation"
+import axios from "@/lib/axiosInstance"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 type RoleKey = "managers" | "employees" | "interns";
 type FormData = {
@@ -29,23 +40,37 @@ export default function AddDepartmentPage() {
   })
   const [orgMembers, setOrgMembers] = useState<any[]>([])
 
-  // Dropdown state for each role
-  const [showManagerDropdown, setShowManagerDropdown] = useState(false)
-  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false)
-  const [showInternDropdown, setShowInternDropdown] = useState(false)
-
-  const handleAddMember = async (role: string) => {
-    if (orgMembers.length === 0) {
+  // Fetch organization members on component mount
+  useEffect(() => {
+    const fetchMembers = async () => {
       try {
-        const res = await axios.get("/organization-members");
+        const res = await axios.get("/IT/org-members/empInfo");
+        console.log("Fetched employee info:", res.data);
         setOrgMembers(res.data);
       } catch (err) {
+        console.error("Failed to fetch organization members:", err);
         setOrgMembers(sampleMembers);
       }
-    }
-    if (role === "Manager") setShowManagerDropdown(true);
-    if (role === "Employee") setShowEmployeeDropdown(true);
-    if (role === "Intern") setShowInternDropdown(true);
+    };
+    fetchMembers();
+  }, []);
+
+  // Get all assigned member IDs across all roles
+  const getAssignedMemberIds = () => {
+    const assignedIds = new Set();
+    [...formData.managers, ...formData.employees, ...formData.interns].forEach(member => {
+      assignedIds.add(member.id);
+    });
+    return assignedIds;
+  };
+
+  // Get available members for a specific role (excluding already assigned ones)
+  const getAvailableMembersForRole = (targetRole: string) => {
+    const assignedIds = getAssignedMemberIds();
+    return orgMembers.filter(member => 
+      member.role.toLowerCase() === targetRole.toLowerCase() && 
+      !assignedIds.has(member.id)
+    );
   };
 
   const handleSelectMember = (role: string, member: any) => {
@@ -54,9 +79,6 @@ export default function AddDepartmentPage() {
       ...prev,
       [key]: [...prev[key], member]
     }));
-    if (role === "Manager") setShowManagerDropdown(false);
-    if (role === "Employee") setShowEmployeeDropdown(false);
-    if (role === "Intern") setShowInternDropdown(false);
   };
 
   const handleRemoveMember = (role: string, idx: number) => {
@@ -140,6 +162,7 @@ export default function AddDepartmentPage() {
           <input
             type="number"
             value={formData.budget}
+            min={0}
             onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
             placeholder="Enter budget in USD"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -196,3 +219,4 @@ export default function AddDepartmentPage() {
     </div>
   )
 }
+ 

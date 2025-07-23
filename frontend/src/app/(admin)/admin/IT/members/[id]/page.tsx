@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import axios from "@/lib/axiosInstance";
 import type { OrganizationMember } from "../../../types";
 import { sampleMembers } from "@/lib/sampleData";
 
@@ -35,12 +36,11 @@ export default function MemberDetailPage() {
 
   useEffect(() => {
     const fetchMember = async () => {
-      const response = await fetch(
-        `http://localhost:5000/api/IT/org-members/${id}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setMember(data);
+      try {
+        const response = await axios.get(`/IT/org-members/${id}`);
+        setMember(response.data);
+      } catch (error) {
+        console.error("Error fetching member:", error);
       }
     };
     fetchMember();
@@ -48,19 +48,9 @@ export default function MemberDetailPage() {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/IT/org-members/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        setIsDeleteDialogOpen(false);
-        router.push("/admin/IT/members");
-      } else {
-        alert("Failed to delete member. Please try again.");
-      }
+      await axios.delete(`/IT/org-members/${id}`);
+      setIsDeleteDialogOpen(false);
+      router.push("/admin/IT/members");
     } catch (error) {
       console.error("Error deleting member:", error);
       alert("An error occurred while deleting the member.");
@@ -73,10 +63,10 @@ export default function MemberDetailPage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => router.push("/admin/IT/members")}
+          onClick={() => router.back()}
           className="text-blue-600 hover:text-blue-800 font-medium"
         >
-          ← Back to Members
+          ← Back 
         </button>
         <div className="flex items-center gap-3">
           <button
@@ -178,10 +168,10 @@ export default function MemberDetailPage() {
               <MapPin className="text-gray-500" size={20} />
               {member.contactInfo.address}
             </div>
-            {member.reportsTo && (
+            {member.upperManager && (
               <div className="flex items-center gap-3">
                 <UserCheck className="text-gray-500" size={20} />
-                Reports to: {member.reportsTo}
+                Reports to: {member.upperManager}
               </div>
             )}
           </div>

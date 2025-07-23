@@ -28,6 +28,20 @@ exports.getMembersRaw = async (req, res) => {
   }
 };
 
+
+exports.getEmpInfo = async (req, res) => {
+  try {
+    const orgName = req.params.orgName || req.orgName;
+    const members = await User.find({ organizationName: orgName });
+    const empInfo = members.map((member) => member.employeeInfo);
+
+    res.status(200).json(empInfo);
+  } catch (error) {
+    console.error("Error in getEmpInfo:", error);
+    res.status(500).json({ message: "Error fetching employee information" });
+  }
+};
+
 exports.getMemberById = async (req, res) => {
   try {
     // console.log("Fetching member with ID:", req.params.id);
@@ -65,6 +79,7 @@ exports.createMember = async (req, res) => {
       organizationName: req.orgName || req.params.orgName,
       salary: req.body.salary,
       projects: req.body.projects,
+      upperManager: req.body.upperManager,
       experience: req.body.experience,
       email: req.body.contactInfo?.email,
       phone: req.body.contactInfo?.phone,
@@ -106,6 +121,8 @@ exports.updateMember = async (req, res) => {
     if (req.body.experience) updateData.experience = req.body.experience;
     if (req.body.contactInfo?.email)
       updateData.email = req.body.contactInfo.email;
+    if( req.body.upperManager)
+      updateData.upperManager = req.body.upperManager;
     if (req.body.contactInfo?.phone)
       updateData.phone = req.body.contactInfo.phone;
     if (req.body.contactInfo?.address)

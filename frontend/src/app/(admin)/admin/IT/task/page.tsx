@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
@@ -13,18 +13,39 @@ import {
   Edit,
   Trash2,
 } from "lucide-react"
-import { sampleTasks } from "@/lib/sampleData"
+import axiosInstance from "@/lib/axiosInstance"
 import type { Task } from "../../types"
 
 export default function TaskPage() {
-  const [tasks, setTasks] = useState<Task[]>(sampleTasks)
+  const [tasks, setTasks] = useState<Task[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  // Fetch tasks from API
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setLoading(true)
+        const response = await axiosInstance.get("/tasks")
+        setTasks(response.data)
+        setError(null)
+      } catch (err) {
+        setError("Failed to fetch tasks")
+        console.error("Error fetching tasks:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTasks()
+  }, [])
 
   const filteredTasks = tasks.filter(
     (task) =>
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.assignedTo.toLowerCase().includes(searchTerm.toLowerCase())
+      task.assignedTo.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const getStatusColor = (status: Task["status"]) => {
@@ -47,6 +68,22 @@ export default function TaskPage() {
       case "high":
         return "bg-red-100 text-red-800 border-red-200"
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-gray-600">Loading tasks...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-red-600">{error}</div>
+      </div>
+    )
   }
 
   return (
@@ -81,37 +118,18 @@ export default function TaskPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTasks.map((task) => (
           <motion.div
-            key={task.id}
+            key={task._id}
             whileHover={{ y: -2, scale: 1.01 }}
             className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all space-y-4 cursor-pointer"
-            onClick={() => router.push(`/admin/IT/task/${task.id}`)}
+            onClick={() => router.push(`/admin/IT/task/${task._id}`)}
           >
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{task.title}</h3>
-              <div className="flex gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    router.push(`/admin/IT/task/${task.id}/edit`)
-                  }}
-                  className="text-gray-400 hover:text-blue-600"
-                >
-                  <Edit size={16} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    router.push(`/admin/IT/task/${task.id}/delete`)
-                  }}
-                  className="text-gray-400 hover:text-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              
             </div>
             <p className="text-sm text-gray-600 line-clamp-2">{task.description}</p>
             <div className="text-sm text-gray-600">
-              <span>Assigned to: {task.assignedTo}</span>
+              <span>Assigned to: {task.assignedTo.name} ({task.assignedTo.id})</span>
               <br />
               <span>Due: {task.dueDate}</span>
             </div>

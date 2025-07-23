@@ -11,7 +11,7 @@ export default function DeleteTaskPage() {
   const [task, setTask] = useState<Task | null>(null)
 
   useEffect(() => {
-    const found = sampleTasks.find((t) => t.id === Number(id))
+    const found = sampleTasks.find((t) => t._id === Number(id))
     if (!found) {
       router.push("/admin/IT/task")
     } else {
@@ -20,12 +20,12 @@ export default function DeleteTaskPage() {
   }, [id])
 
   const handleDelete = () => {
-    console.log("Deleted Task ID:", task?.id)
+    console.log("Deleted Task ID:", task?._id)
     router.push("/admin/IT/task")
   }
 
   const handleCancel = () => {
-    router.push(`/admin/IT/task/${task?.id}`)
+    router.push(`/admin/IT/task/${task?._id}`)
   }
 
   if (!task) return null
@@ -35,7 +35,7 @@ export default function DeleteTaskPage() {
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Delete Task</h1>
       <p className="text-gray-700 mb-6">
         Are you sure you want to delete the task <strong>{task.title}</strong> assigned to{" "}
-        <strong>{task.assignedTo}</strong>?
+        <strong>{task.assignedTo.name}</strong>?
       </p>
 
       <div className="flex justify-end gap-4">

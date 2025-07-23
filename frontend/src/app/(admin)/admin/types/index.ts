@@ -26,7 +26,7 @@ export interface OrganizationMember {
     last7Days: boolean[]
     todayPresent: boolean
   }
-  reportsTo?: string
+  upperManager?: string
 }
 
 export interface Department {
@@ -76,11 +76,17 @@ export interface Project {
 }
 
 export interface Task {
-  id: number
+  _id: number
   title: string
   description: string
-  assignedTo: string
-  assignedBy: string
+  assignedTo: {
+    id: string
+    name: string
+  }
+  assignedBy: {
+    id: string
+    name: string
+  }
   dueDate: string
   status: "pending" | "in-progress" | "completed" | "overdue"
   priority: "low" | "medium" | "high" | "urgent"
