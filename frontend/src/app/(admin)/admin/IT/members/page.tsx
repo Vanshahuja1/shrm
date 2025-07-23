@@ -9,15 +9,8 @@ import type { OrganizationMember } from "../../types/index"
 export default function MembersPage() {
 
   const fetchMembers = async () => {
-    // Fetch members from the backend API using axios
     const response = await axios.get('/IT/org-members')
     return response.data
-    const response = await fetch(`http://localhost:5000/api/IT/org-members`)
-    if (!response.ok) {
-      throw new Error("Failed to fetch members")
-    }
-    const data = await response.json()
-    return data
   }
 
   useEffect(() => {
@@ -27,7 +20,6 @@ export default function MembersPage() {
         setMembers(membersData)
       } catch (error) {
         console.error("Error fetching members:", error)
-        // Fallback to sample data if fetch fails
         setMembers(sampleMembers)
       }
     }

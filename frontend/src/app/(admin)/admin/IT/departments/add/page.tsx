@@ -5,13 +5,14 @@ import { ChevronDown, Plus, X } from "lucide-react"
 import { sampleMembers } from "@/lib/sampleData"
 import { useRouter } from "next/navigation"
 import axios from "@/lib/axiosInstance"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select"
+import { MultiSelectDropdown } from "@/components/MultiSelectDropdown"
 
 type RoleKey = "managers" | "employees" | "interns";
 type FormData = {
@@ -22,11 +23,6 @@ type FormData = {
   employees: any[];
   interns: any[];
 };
-import { ChevronDown } from "lucide-react"
-import { MultiSelectDropdown } from "@/components/MultiSelectDropdown"
-import { sampleMembers } from "@/lib/sampleData"
-import { useRouter } from "next/navigation"
-import axios from "@/lib/axiosInstance"
 
 export default function AddDepartmentPage() {
   const router = useRouter()
