@@ -82,26 +82,7 @@ export default function DepartmentsPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900">{dept.name}</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    router.push(`/admin/IT/departments/${dept.id}`)
-                  }}
-                  className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                >
-                  <Edit size={16} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDelete(String(dept.id))
-                  }}
-                  className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+            
             </div>
 
             <div className="space-y-3">
