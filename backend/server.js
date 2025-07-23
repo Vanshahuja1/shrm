@@ -37,10 +37,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/departments", departmentRoutes);
-
-// Organization member routes with middleware to extract orgName
 app.use("/api/:orgName/org-members", (req, res, next) => {
-  // Make orgName available to the router
   req.orgName = req.params.orgName;
   next();
 }, require("./routes/orgMemberRoutes")); //orgName : IT

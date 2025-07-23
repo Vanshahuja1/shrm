@@ -63,10 +63,10 @@ export default function MemberDetailPage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => router.push("/admin/IT/members")}
+          onClick={() => router.back()}
           className="text-blue-600 hover:text-blue-800 font-medium"
         >
-          ← Back to Members
+          ← Back 
         </button>
         <div className="flex items-center gap-3">
           <button
