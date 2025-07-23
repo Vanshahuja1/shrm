@@ -28,6 +28,20 @@ exports.getMembersRaw = async (req, res) => {
   }
 };
 
+
+exports.getEmpInfo = async (req, res) => {
+  try {
+    const orgName = req.params.orgName || req.orgName;
+    const members = await User.find({ organizationName: orgName });
+    const empInfo = members.map((member) => member.employeeInfo);
+
+    res.status(200).json(empInfo);
+  } catch (error) {
+    console.error("Error in getEmpInfo:", error);
+    res.status(500).json({ message: "Error fetching employee information" });
+  }
+};
+
 exports.getMemberById = async (req, res) => {
   try {
     // console.log("Fetching member with ID:", req.params.id);

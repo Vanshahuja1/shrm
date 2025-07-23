@@ -1,6 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { Plus, X } from "lucide-react"
+import { sampleMembers } from "@/lib/sampleData"
+import { useRouter } from "next/navigation"
+import axios from "@/lib/axiosInstance"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 type RoleKey = "managers" | "employees" | "interns";
 type FormData = {
@@ -11,10 +22,6 @@ type FormData = {
   employees: any[];
   interns: any[];
 };
-import { ChevronDown, Plus, X } from "lucide-react"
-import { sampleMembers } from "@/lib/sampleData"
-import { useRouter } from "next/navigation"
-import axios from "@/lib/axiosInstance"
 
 export default function AddDepartmentPage() {
   const router = useRouter()
@@ -28,23 +35,37 @@ export default function AddDepartmentPage() {
   })
   const [orgMembers, setOrgMembers] = useState<any[]>([])
 
-  // Dropdown state for each role
-  const [showManagerDropdown, setShowManagerDropdown] = useState(false)
-  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false)
-  const [showInternDropdown, setShowInternDropdown] = useState(false)
-
-  const handleAddMember = async (role: string) => {
-    if (orgMembers.length === 0) {
+  // Fetch organization members on component mount
+  useEffect(() => {
+    const fetchMembers = async () => {
       try {
-        const res = await axios.get("/organization-members");
+        const res = await axios.get("/IT/org-members/empInfo");
+        console.log("Fetched employee info:", res.data);
         setOrgMembers(res.data);
       } catch (err) {
+        console.error("Failed to fetch organization members:", err);
         setOrgMembers(sampleMembers);
       }
-    }
-    if (role === "Manager") setShowManagerDropdown(true);
-    if (role === "Employee") setShowEmployeeDropdown(true);
-    if (role === "Intern") setShowInternDropdown(true);
+    };
+    fetchMembers();
+  }, []);
+
+  // Get all assigned member IDs across all roles
+  const getAssignedMemberIds = () => {
+    const assignedIds = new Set();
+    [...formData.managers, ...formData.employees, ...formData.interns].forEach(member => {
+      assignedIds.add(member.id);
+    });
+    return assignedIds;
+  };
+
+  // Get available members for a specific role (excluding already assigned ones)
+  const getAvailableMembersForRole = (targetRole: string) => {
+    const assignedIds = getAssignedMemberIds();
+    return orgMembers.filter(member => 
+      member.role.toLowerCase() === targetRole.toLowerCase() && 
+      !assignedIds.has(member.id)
+    );
   };
 
   const handleSelectMember = (role: string, member: any) => {
@@ -53,9 +74,6 @@ export default function AddDepartmentPage() {
       ...prev,
       [key]: [...prev[key], member]
     }));
-    if (role === "Manager") setShowManagerDropdown(false);
-    if (role === "Employee") setShowEmployeeDropdown(false);
-    if (role === "Intern") setShowInternDropdown(false);
   };
 
   const handleRemoveMember = (role: string, idx: number) => {
@@ -105,33 +123,21 @@ export default function AddDepartmentPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Department Head</label>
-          <div className="relative">
-            <select
-              value={formData.head}
-              onClick={async () => {
-                if (orgMembers.length === 0) {
-                  try {
-                    const res = await axios.get("/organization-members");
-                    setOrgMembers(res.data);
-                  } catch (err) {
-                    // fallback to sample data (only names of employees)
-                    setOrgMembers(sampleMembers.filter(m => m.role === "Employee").map(m => ({ name: m.name })));
-                  }
-                }
-              }}
-              onChange={e => setFormData({ ...formData, head: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none"
-              required
-            >
-              <option value="" disabled>Select department head</option>
-              {orgMembers.map((member, idx) => (
-                <option key={idx} value={member.name}>{member.name}</option>
+          <Select value={formData.head} onValueChange={(value) => setFormData({ ...formData, head: value })}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select department head" />
+            </SelectTrigger>
+            <SelectContent>
+              {orgMembers.map((member) => (
+                <SelectItem key={member.id} value={member.name}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{member.name}</span>
+                    <span className="text-xs text-gray-500">{member.role} • {member.department}</span>
+                  </div>
+                </SelectItem>
               ))}
-            </select>
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <ChevronDown size={20} />
-            </span>
-          </div>
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
@@ -139,6 +145,7 @@ export default function AddDepartmentPage() {
           <input
             type="number"
             value={formData.budget}
+            min={0}
             onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
             placeholder="Enter budget in USD"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -149,8 +156,30 @@ export default function AddDepartmentPage() {
         <div className="grid grid-cols-3 gap-4">
           {/* Managers */}
           <div>
-            <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">Managers
-              <button type="button" className="ml-2 p-1" onClick={() => handleAddMember("Manager")}> <Plus size={18} /> </button>
+            <label className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+              Managers
+              <Select onValueChange={(value) => {
+                const member = orgMembers.find(m => m.id === value);
+                if (member) handleSelectMember("Manager", member);
+              }}>
+                <SelectTrigger className="ml-2 w-8 h-8 p-0">
+                  <Plus size={16} />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableMembersForRole("Manager").length === 0 ? (
+                    <SelectItem value="none" disabled>No available managers</SelectItem>
+                  ) : (
+                    getAvailableMembersForRole("Manager").map((m: any) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{m.name}</span>
+                          <span className="text-xs text-gray-500">{m.department} • {m.organization}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </label>
             <div className="flex flex-wrap gap-1 mb-2">
               {formData.managers.map((m: any, idx: number) => (
@@ -160,18 +189,33 @@ export default function AddDepartmentPage() {
                 </span>
               ))}
             </div>
-            {showManagerDropdown && (
-              <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                {orgMembers.filter(m => m.role === "Manager").map((m: any) => (
-                  <div key={m.id} className="cursor-pointer hover:bg-blue-100 px-2 py-1" onClick={() => handleSelectMember("Manager", m)}>{m.name}</div>
-                ))}
-              </div>
-            )}
           </div>
           {/* Employees */}
           <div>
-            <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">Employees
-              <button type="button" className="ml-2 p-1" onClick={() => handleAddMember("Employee")}> <Plus size={18} /> </button>
+            <label className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+              Employees
+              <Select onValueChange={(value) => {
+                const member = orgMembers.find(m => m.id === value);
+                if (member) handleSelectMember("Employee", member);
+              }}>
+                <SelectTrigger className="ml-2 w-8 h-8 p-0">
+                  <Plus size={16} />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableMembersForRole("Employee").length === 0 ? (
+                    <SelectItem value="none" disabled>No available employees</SelectItem>
+                  ) : (
+                    getAvailableMembersForRole("Employee").map((m: any) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{m.name}</span>
+                          <span className="text-xs text-gray-500">{m.department} • {m.organization}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </label>
             <div className="flex flex-wrap gap-1 mb-2">
               {formData.employees.map((m: any, idx: number) => (
@@ -181,18 +225,33 @@ export default function AddDepartmentPage() {
                 </span>
               ))}
             </div>
-            {showEmployeeDropdown && (
-              <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                {orgMembers.filter(m => m.role === "Employee").map((m: any) => (
-                  <div key={m.id} className="cursor-pointer hover:bg-green-100 px-2 py-1" onClick={() => handleSelectMember("Employee", m)}>{m.name}</div>
-                ))}
-              </div>
-            )}
           </div>
           {/* Interns */}
           <div>
-            <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">Interns
-              <button type="button" className="ml-2 p-1" onClick={() => handleAddMember("Intern")}> <Plus size={18} /> </button>
+            <label className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+              Interns
+              <Select onValueChange={(value) => {
+                const member = orgMembers.find(m => m.id === value);
+                if (member) handleSelectMember("Intern", member);
+              }}>
+                <SelectTrigger className="ml-2 w-8 h-8 p-0">
+                  <Plus size={16} />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableMembersForRole("Intern").length === 0 ? (
+                    <SelectItem value="none" disabled>No available interns</SelectItem>
+                  ) : (
+                    getAvailableMembersForRole("Intern").map((m: any) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{m.name}</span>
+                          <span className="text-xs text-gray-500">{m.department} • {m.organization}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </label>
             <div className="flex flex-wrap gap-1 mb-2">
               {formData.interns.map((m: any, idx: number) => (
@@ -202,13 +261,6 @@ export default function AddDepartmentPage() {
                 </span>
               ))}
             </div>
-            {showInternDropdown && (
-              <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                {orgMembers.filter(m => m.role === "Intern").map((m: any) => (
-                  <div key={m.id} className="cursor-pointer hover:bg-yellow-100 px-2 py-1" onClick={() => handleSelectMember("Intern", m)}>{m.name}</div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
@@ -231,3 +283,4 @@ export default function AddDepartmentPage() {
     </div>
   )
 }
+ 

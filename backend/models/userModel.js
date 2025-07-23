@@ -284,7 +284,12 @@ userSchema.virtual("OrgMemberInfo").get(function () {
     department: this.departmentName,
     salary: this.salary,
     projects: this.projects || [],
-    experience: `${this.experience || 0} years`,
+    experience: (() => {
+      const exp = (this.experience || "0").toString();
+      // Remove any existing "years" and clean up, then add single "years"
+      const cleanExp = exp.replace(/\s*years?\s*/gi, '').trim();
+      return `${cleanExp} years`;
+    })(),
     contactInfo: {
       email: this.email || "",
       phone: this.phone || "",
