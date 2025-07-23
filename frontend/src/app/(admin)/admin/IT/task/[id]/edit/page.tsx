@@ -118,7 +118,7 @@ export default function EditTaskPage() {
           </button>
           <button
             type="button"
-            onClick={() => router.push(`/task/${task.id}`)}
+            onClick={() => router.push(`/admin/IT/task/${task.id}`)}
             className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
           >
             Cancel

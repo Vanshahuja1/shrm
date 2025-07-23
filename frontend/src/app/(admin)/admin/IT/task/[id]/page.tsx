@@ -45,7 +45,7 @@ export default function TaskDetailPage() {
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => router.push("/task")}
+          onClick={() => router.push("/admin/IT/task")}
           className="text-blue-600 hover:text-blue-800 text-sm"
         >
           ← Back to Tasks
