@@ -310,7 +310,7 @@ userSchema.virtual("OrgMemberInfo").get(function () {
       last7Days: new Array(7).fill(true), // You can implement actual logic here
       todayPresent: this.isActive,
     },
-    reportsTo: this.upperManager || undefined,
+    upperManager: this.upperManager || undefined,
   };
 });
 

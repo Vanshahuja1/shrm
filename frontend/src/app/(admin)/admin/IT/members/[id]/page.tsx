@@ -168,10 +168,10 @@ export default function MemberDetailPage() {
               <MapPin className="text-gray-500" size={20} />
               {member.contactInfo.address}
             </div>
-            {member.reportsTo && (
+            {member.upperManager && (
               <div className="flex items-center gap-3">
                 <UserCheck className="text-gray-500" size={20} />
-                Reports to: {member.reportsTo}
+                Reports to: {member.upperManager}
               </div>
             )}
           </div>

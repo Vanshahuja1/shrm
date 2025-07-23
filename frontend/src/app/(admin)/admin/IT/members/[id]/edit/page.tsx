@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "@/lib/axiosInstance";
 import type { OrganizationMember } from "../../../../types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function EditMemberPage() {
   const { id } = useParams();
@@ -14,6 +21,7 @@ export default function EditMemberPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [projectsText, setProjectsText] = useState<string>("");
+  const [supervisors, setSupervisors] = useState<Array<{id: string, name: string, role: string, department: string}>>([]);
 
   useEffect(() => {
     const fetchMember = async () => {
@@ -30,9 +38,24 @@ export default function EditMemberPage() {
         setLoading(false);
       }
     };
+
+    const fetchSupervisors = async () => {
+      try {
+        const response = await axios.get('/IT/org-members/empInfo');
+        const employees = response.data;
+        // Filter to get potential supervisors (managers and hr, excluding current member)
+        const potentialSupervisors = employees.filter((emp: any) => 
+          (emp.role === 'manager' || emp.role === 'hr' ) && emp.id !== id
+        );
+        setSupervisors(potentialSupervisors);
+      } catch (error) {
+        console.error("Error fetching supervisors:", error);
+      }
+    };
     
     if (id) {
       fetchMember();
+      fetchSupervisors();
     }
   }, [id, router]);
 
@@ -165,7 +188,32 @@ export default function EditMemberPage() {
           />
           <Field label="Email" value={member.contactInfo.email} onChange={(val) => handleContactChange("email", val)} />
           <Field label="Phone" value={member.contactInfo.phone} onChange={(val) => handleContactChange("phone", val)} />
-          <Field label="Reports To" value={member.reportsTo || ""} onChange={(val) => handleChange("reportsTo", val)} />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Reports To</label>
+            <Select 
+              value={member.upperManager || "none"} 
+              onValueChange={(value) => handleChange("upperManager", value === "none" ? "" : value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select supervisor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">
+                  <span className="text-gray-500">No supervisor</span>
+                </SelectItem>
+                {supervisors.map((supervisor) => (
+                  <SelectItem key={supervisor.id} value={supervisor.name}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{supervisor.name}</span>
+                      <span className="text-xs text-gray-500 capitalize">
+                        {supervisor.role} • {supervisor.department}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <TextArea

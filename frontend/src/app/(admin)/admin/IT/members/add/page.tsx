@@ -43,7 +43,7 @@ export default function AddMemberPage() {
       last7Days: [true, true, true, true, true, false, false],
       todayPresent: true,
     },
-    reportsTo: "",
+    upperManager: "",
   });
 
   const [projectsText, setProjectsText] = useState<string>("");
@@ -52,11 +52,11 @@ export default function AddMemberPage() {
   useEffect(() => {
     const fetchSupervisors = async () => {
       try {
-        const response = await axios.get("/IT/org-members");
+        const response = await axios.get("/IT/org-members/empInfo");
         const allMembers = response.data;
         // Filter for managers, employees, and HR personnel
         const eligibleSupervisors = allMembers.filter((member: any) =>
-          ["manager", "employee", "hr"].includes(member.role.toLowerCase())
+          ["manager", "hr"].includes(member.role.toLowerCase())
         );
         setSupervisors(eligibleSupervisors);
       } catch (error) {
@@ -162,11 +162,11 @@ export default function AddMemberPage() {
                 Reports To
               </label>
               <Select
-                value={formData.reportsTo || "none"}
+                value={formData.upperManager || "none"}
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    reportsTo: value === "none" ? "" : value,
+                    upperManager: value === "none" ? "" : value,
                   })
                 }
               >

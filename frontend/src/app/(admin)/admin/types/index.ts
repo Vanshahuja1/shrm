@@ -26,7 +26,7 @@ export interface OrganizationMember {
     last7Days: boolean[]
     todayPresent: boolean
   }
-  reportsTo?: string
+  upperManager?: string
 }
 
 export interface Department {

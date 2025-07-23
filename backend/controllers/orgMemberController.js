@@ -79,6 +79,7 @@ exports.createMember = async (req, res) => {
       organizationName: req.orgName || req.params.orgName,
       salary: req.body.salary,
       projects: req.body.projects,
+      upperManager: req.body.upperManager,
       experience: req.body.experience,
       email: req.body.contactInfo?.email,
       phone: req.body.contactInfo?.phone,
@@ -120,6 +121,8 @@ exports.updateMember = async (req, res) => {
     if (req.body.experience) updateData.experience = req.body.experience;
     if (req.body.contactInfo?.email)
       updateData.email = req.body.contactInfo.email;
+    if( req.body.upperManager)
+      updateData.upperManager = req.body.upperManager;
     if (req.body.contactInfo?.phone)
       updateData.phone = req.body.contactInfo.phone;
     if (req.body.contactInfo?.address)
