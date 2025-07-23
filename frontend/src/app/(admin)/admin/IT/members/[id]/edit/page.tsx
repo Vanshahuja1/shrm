@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import axios from "@/lib/axiosInstance";
 import type { OrganizationMember } from "../../../../types";
 
 export default function EditMemberPage() {
@@ -17,17 +18,11 @@ export default function EditMemberPage() {
   useEffect(() => {
     const fetchMember = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/IT/org-members/${id}`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setMember(data);
-          // Set the projects text for editing
-          setProjectsText(Array.isArray(data.projects) ? data.projects.join(", ") : "");
-        } else {
-          router.push("/admin/IT/members");
-        }
+        const response = await axios.get(`/IT/org-members/${id}`);
+        const data = response.data;
+        setMember(data);
+        // Set the projects text for editing
+        setProjectsText(Array.isArray(data.projects) ? data.projects.join(", ") : "");
       } catch (error) {
         console.error("Error fetching member:", error);
         router.push("/admin/IT/members");
@@ -92,29 +87,14 @@ export default function EditMemberPage() {
     setSuccess(null);
     
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/IT/org-members/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(memberToSubmit),
-        }
-      );
-
-      if (response.ok) {
-        setSuccess("Member updated successfully!");
-        setTimeout(() => {
-          router.push(`/admin/IT/members/${id}`);
-        }, 1500);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to update member");
-      }
-    } catch (error) {
+      await axios.put(`/IT/org-members/${id}`, memberToSubmit);
+      setSuccess("Member updated successfully!");
+      setTimeout(() => {
+        router.push(`/admin/IT/members/${id}`);
+      }, 1500);
+    } catch (error: any) {
       console.error("Error updating member:", error);
-      setError("Network error. Please try again.");
+      setError(error.response?.data?.message || "Failed to update member");
     } finally {
       setSaving(false);
     }

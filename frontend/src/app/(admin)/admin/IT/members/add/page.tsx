@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import axios from "@/lib/axiosInstance"
 import type { OrganizationMember } from "../../../types"
 
 export default function AddMemberPage() {
@@ -57,20 +58,9 @@ export default function AddMemberPage() {
     const formDataToSubmit = { ...formData, projects: projectsList };
     
     try {
-      const response = await fetch('http://localhost:5000/api/IT/org-members', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formDataToSubmit),
-      })
-
-      if (response.ok) {
-        console.log("Member added successfully")
-        router.push("/admin/IT/members")
-      } else {
-        console.error("Failed to add member")
-      }
+      await axios.post('/IT/org-members', formDataToSubmit);
+      console.log("Member added successfully")
+      router.push("/admin/IT/members")
     } catch (error) {
       console.error("Error adding member:", error)
     }
