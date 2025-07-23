@@ -70,6 +70,7 @@ export interface Project {
   riskAssessment?: "Low" | "Medium" | "High"
   projectLead?: string
   milestonesAchieved?: string[]
+  links?: string[]
   lessonsLearned?: string
   clientFeedback?: string
 }

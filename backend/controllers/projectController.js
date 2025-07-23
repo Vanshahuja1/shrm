@@ -30,7 +30,15 @@ exports.createProject = async (req, res) => {
 
 exports.updateProject = async (req, res) => {
   try {
-    const updated = await Project.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+    if (updateData.value !== undefined) updateData.amount = updateData.value;
+    if (updateData.managerAssigned !== undefined) updateData.managersInvolved = updateData.managerAssigned;
+    if (updateData.progressPercentage !== undefined) updateData.completionPercentage = updateData.progressPercentage;
+    if (updateData.description !== undefined) updateData.projectScope = updateData.description;
+    if (updateData.clientName !== undefined) updateData.client = updateData.clientName;
+    if (updateData.clientInputs === undefined) updateData.clientInputs = "";
+    if (updateData.effectAnalysis === undefined) updateData.effectAnalysis = "";
+    const updated = await Project.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     })

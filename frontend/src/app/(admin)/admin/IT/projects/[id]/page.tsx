@@ -11,18 +11,29 @@ import {
   Building2,
 } from "lucide-react";
 import type { Project } from "../../../types";
-import { sampleProjects } from "@/lib/sampleData";
+import axios from "@/lib/axiosInstance";
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const current = sampleProjects.find((p) => p.id === Number(id));
-    // console.log(current);
-    if (!current) router.push("/admin/IT/projects");
-    else setProject(current);
+    async function fetchProject() {
+      try {
+        const res = await axios.get(`/projects/${id}`);
+        if (!res.data) {
+          router.push("/admin/IT/projects");
+        } else {
+          setProject(res.data);
+        }
+      } catch (err) {
+        router.push("/admin/IT/projects");
+      }
+    }
+    if (id) fetchProject();
   }, [id, router]);
 
   if (!project) return null;
@@ -45,13 +56,59 @@ export default function ProjectDetailPage() {
             View Project <ExternalLink size={16} />
           </a>
         )}
-        <button
-          onClick={() => router.push(`/admin/IT/projects/${project.id}/edit`)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Edit
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push(`/admin/IT/projects/${id}/edit`)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+          >
+            Delete
+          </button>
+        </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full">
+            <h2 className="text-xl font-bold mb-4">Delete Project?</h2>
+            <p className="mb-6">Are you sure you want to delete this project? This action cannot be undone.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setDeleting(true);
+                  try {
+                    await axios.delete(`/projects/${id}`);
+                    console.log("Project deleted successfully");
+                    setShowDeleteModal(false);
+                    router.push("/admin/IT/projects");
+                  } catch (err) {
+                    alert("Failed to delete project. Please try again.");
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-8">
         <div>
@@ -65,25 +122,25 @@ export default function ProjectDetailPage() {
           <StatBlock
             icon={<DollarSign size={20} />}
             label="Value"
-            value={`$${project.amount.toLocaleString()}`}
+            value={`$${(project.amount ?? 0).toLocaleString()}`}
             color="green"
           />
           <StatBlock
             icon={<Calendar size={20} />}
             label="Deadline"
-            value={project.deadline}
+            value={project.deadline ? new Date(project.deadline).toLocaleDateString() : "-"}
             color="blue"
           />
           <StatBlock
             icon={<Users size={20} />}
             label="Members"
-            value={project.membersInvolved.length.toString()}
+            value={Array.isArray(project.membersInvolved) ? project.membersInvolved.length.toString() : "-"}
             color="purple"
           />
           <StatBlock
             icon={<CheckCircle size={20} />}
             label="Progress"
-            value={`${project.completionPercentage}%`}
+            value={typeof project.completionPercentage === "number" ? `${project.completionPercentage}%` : "-"}
             color="orange"
           />
         </div>
@@ -121,10 +178,34 @@ export default function ProjectDetailPage() {
             color="yellow"
           />
         </div>
+
+        {/* Project Links */}
+        {project.links && project.links.length > 0 && (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Project Links</h3>
+            <ul className="space-y-1">
+              {project.links.map((url, idx) => (
+                <li key={idx}>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    {url} <ExternalLink size={14} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+// ...existing code...
+
+
 
 function StatBlock({
   icon,
@@ -200,7 +281,7 @@ function TagGroup({
     <div>
       <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
       <div className="flex flex-wrap gap-2">
-        {items.map((item, idx) => (
+        {(items ?? []).map((item, idx) => (
           <span
             key={idx}
             className={`px-3 py-1 rounded-full text-sm font-medium ${colorMap[color]}`}
@@ -208,6 +289,7 @@ function TagGroup({
             {item}
           </span>
         ))}
+
       </div>
     </div>
   );
@@ -231,7 +313,7 @@ function AvatarList({
     <div>
       <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
       <div className="space-y-2">
-        {items.map((name, idx) => (
+        {(items ?? []).map((name, idx) => (
           <div
             key={idx}
             className="flex items-center gap-3 bg-gray-50 rounded-lg p-3"

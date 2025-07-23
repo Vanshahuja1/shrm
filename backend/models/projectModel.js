@@ -28,25 +28,25 @@ const projectSchema = new mongoose.Schema(
       type: Date,
     },
 
-    description: {
+    projectScope: {
       type: String,
       trim: true,
       default: "",
     },
 
-    clientName: {
+    client: {
       type: String,
       trim: true,
       default: "",
     },
 
-    value: {
+    amount: {
       type: Number,
       min: 0,
       default: 0,
     },
 
-    managerAssigned: [
+    managersInvolved: [
       {
         type: String,
         trim: true,
@@ -74,11 +74,27 @@ const projectSchema = new mongoose.Schema(
       },
     ],
 
-    progressPercentage: {
+    completionPercentage: {
       type: Number,
       min: 0,
       max: 100,
       default: 0,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "active", "completed", "on-hold", "cancelled"],
+      default: "pending",
+    },
+    clientInputs: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    effectAnalysis: {
+      type: String,
+      trim: true,
+      default: "",
     },
 
     teamRemarks: {

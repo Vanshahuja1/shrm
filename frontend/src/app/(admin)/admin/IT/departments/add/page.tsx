@@ -11,7 +11,8 @@ type FormData = {
   employees: any[];
   interns: any[];
 };
-import { ChevronDown, Plus, X } from "lucide-react"
+import { ChevronDown } from "lucide-react"
+import { MultiSelectDropdown } from "@/components/MultiSelectDropdown"
 import { sampleMembers } from "@/lib/sampleData"
 import { useRouter } from "next/navigation"
 import axios from "@/lib/axiosInstance"
@@ -111,7 +112,7 @@ export default function AddDepartmentPage() {
               onClick={async () => {
                 if (orgMembers.length === 0) {
                   try {
-                    const res = await axios.get("/organization-members");
+                    const res = await axios.get("/org-members");
                     setOrgMembers(res.data);
                   } catch (err) {
                     // fallback to sample data (only names of employees)
@@ -147,69 +148,33 @@ export default function AddDepartmentPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          {/* Managers */}
-          <div>
-            <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">Managers
-              <button type="button" className="ml-2 p-1" onClick={() => handleAddMember("Manager")}> <Plus size={18} /> </button>
-            </label>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {formData.managers.map((m: any, idx: number) => (
-                <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center text-xs">
-                  {m.name}
-                  <button type="button" className="ml-1" onClick={() => handleRemoveMember("Manager", idx)}><X size={12} /></button>
-                </span>
-              ))}
-            </div>
-            {showManagerDropdown && (
-              <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                {orgMembers.filter(m => m.role === "Manager").map((m: any) => (
-                  <div key={m.id} className="cursor-pointer hover:bg-blue-100 px-2 py-1" onClick={() => handleSelectMember("Manager", m)}>{m.name}</div>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Employees */}
-          <div>
-            <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">Employees
-              <button type="button" className="ml-2 p-1" onClick={() => handleAddMember("Employee")}> <Plus size={18} /> </button>
-            </label>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {formData.employees.map((m: any, idx: number) => (
-                <span key={idx} className="bg-green-100 text-green-800 px-2 py-1 rounded flex items-center text-xs">
-                  {m.name}
-                  <button type="button" className="ml-1" onClick={() => handleRemoveMember("Employee", idx)}><X size={12} /></button>
-                </span>
-              ))}
-            </div>
-            {showEmployeeDropdown && (
-              <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                {orgMembers.filter(m => m.role === "Employee").map((m: any) => (
-                  <div key={m.id} className="cursor-pointer hover:bg-green-100 px-2 py-1" onClick={() => handleSelectMember("Employee", m)}>{m.name}</div>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Interns */}
-          <div>
-            <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">Interns
-              <button type="button" className="ml-2 p-1" onClick={() => handleAddMember("Intern")}> <Plus size={18} /> </button>
-            </label>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {formData.interns.map((m: any, idx: number) => (
-                <span key={idx} className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex items-center text-xs">
-                  {m.name}
-                  <button type="button" className="ml-1" onClick={() => handleRemoveMember("Intern", idx)}><X size={12} /></button>
-                </span>
-              ))}
-            </div>
-            {showInternDropdown && (
-              <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1 max-h-40 overflow-y-auto">
-                {orgMembers.filter(m => m.role === "Intern").map((m: any) => (
-                  <div key={m.id} className="cursor-pointer hover:bg-yellow-100 px-2 py-1" onClick={() => handleSelectMember("Intern", m)}>{m.name}</div>
-                ))}
-              </div>
-            )}
-          </div>
+          <MultiSelectDropdown
+            label="Managers"
+            options={orgMembers.filter(m => m.role === "Manager")}
+            selected={formData.managers}
+            onAdd={m => setFormData(prev => ({ ...prev, managers: [...prev.managers, m] }))}
+            onRemove={idx => setFormData(prev => ({ ...prev, managers: prev.managers.filter((_, i) => i !== idx) }))}
+            getOptionLabel={m => m.name}
+            getOptionKey={m => m.id}
+          />
+          <MultiSelectDropdown
+            label="Employees"
+            options={orgMembers.filter(m => m.role === "Employee")}
+            selected={formData.employees}
+            onAdd={m => setFormData(prev => ({ ...prev, employees: [...prev.employees, m] }))}
+            onRemove={idx => setFormData(prev => ({ ...prev, employees: prev.employees.filter((_, i) => i !== idx) }))}
+            getOptionLabel={m => m.name}
+            getOptionKey={m => m.id}
+          />
+          <MultiSelectDropdown
+            label="Interns"
+            options={orgMembers.filter(m => m.role === "Intern")}
+            selected={formData.interns}
+            onAdd={m => setFormData(prev => ({ ...prev, interns: [...prev.interns, m] }))}
+            onRemove={idx => setFormData(prev => ({ ...prev, interns: prev.interns.filter((_, i) => i !== idx) }))}
+            getOptionLabel={m => m.name}
+            getOptionKey={m => m.id}
+          />
         </div>
 
         <div className="flex gap-4 pt-4">

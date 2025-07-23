@@ -1,7 +1,12 @@
+
+
+
+
+
 "use client"
 
-import { JSX, useState } from "react"
-import { useRouter } from "next/navigation"
+import { JSX, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Search,
@@ -12,18 +17,31 @@ import {
   Users,
   Building2,
   AlertCircle,
-} from "lucide-react"
-import { motion } from "framer-motion"
-import { sampleProjects } from "@/lib/sampleData"
-import type { Project } from "../../types"
+  ExternalLink,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import axios from "@/lib/axiosInstance";
+import type { Project } from "../../types";
+
+
 
 export default function ProjectPage() {
-  const [projects] = useState<Project[]>(sampleProjects)
+  const [projects, setProjects] = useState<Project[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const router = useRouter()
 
-  const ongoingProjects = projects.filter((p) => p.status !== "completed" && matches(p))
-  const completedProjects = projects.filter((p) => p.status === "completed" && matches(p))
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const res = await axios.get("/projects");
+        console.log("projects fetched");
+        setProjects(res.data);
+      } catch (err) {
+        setProjects([]);
+      }
+    }
+    fetchProjects();
+  }, []);
 
   function matches(p: Project) {
     return (
@@ -31,6 +49,9 @@ export default function ProjectPage() {
       p.client.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }
+
+  const ongoingProjects = projects.filter((p) => (p.status !== "completed" && p.completionPercentage !== 100) && matches(p))
+  const completedProjects = projects.filter((p) => (p.status === "completed" || p.completionPercentage === 100) && matches(p))
 
   const getStatusIcon = (status: Project["status"]) => {
     switch (status) {
@@ -168,38 +189,46 @@ function ProjectList({
 
               <div className="text-sm text-gray-600 space-y-1">
                 <p><span className="font-medium text-gray-700">Client:</span> {p.client}</p>
-                <p><span className="font-medium text-gray-700">Deadline:</span> {p.deadline}</p>
+                <p><span className="font-medium text-gray-700">Deadline:</span> {p.deadline ? (() => {
+                  const d = new Date(p.deadline);
+                  const day = String(d.getDate()).padStart(2, '0');
+                  const month = String(d.getMonth() + 1).padStart(2, '0');
+                  const year = d.getFullYear();
+                  return `${day}/${month}/${year}`;
+                })() : "-"}</p>
               </div>
 
-              <div className="mb-2">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-gray-600">Progress</span>
-                  <span className="text-sm font-medium text-blue-600">{p.completionPercentage}%</span>
+              {p.status !== "completed" && (
+                <div className="mb-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm text-gray-600">Progress</span>
+                    <span className="text-sm font-medium text-blue-600">{p.completionPercentage}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${p.completionPercentage}%` }}></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${p.completionPercentage}%` }}></div>
-                </div>
-              </div>
+              )}
 
               <div className="flex flex-wrap gap-2">
-                {p.departmentsInvolved.slice(0, 3).map((dept, idx) => (
+                {(p.departmentsInvolved ?? []).slice(0, 3).map((dept, idx) => (
                   <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
                     {dept}
                   </span>
                 ))}
-                {p.departmentsInvolved.length > 3 && (
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">+{p.departmentsInvolved.length - 3}</span>
+                {(p.departmentsInvolved ?? []).length > 3 && (
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">+{(p.departmentsInvolved ?? []).length - 3}</span>
                 )}
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {p.skillsRequired.slice(0, 3).map((skill, idx) => (
+                {(p.skillsRequired ?? []).slice(0, 3).map((skill, idx) => (
                   <span key={idx} className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
                     {skill}
                   </span>
                 ))}
-                {p.skillsRequired.length > 3 && (
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">+{p.skillsRequired.length - 3}</span>
+                {(p.skillsRequired ?? []).length > 3 && (
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">+{(p.skillsRequired ?? []).length - 3}</span>
                 )}
               </div>
 
@@ -207,13 +236,32 @@ function ProjectList({
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-sm text-gray-600">
                     <Users size={16} className="text-gray-400" />
-                    {p.membersInvolved.length} members
+                    {(p.membersInvolved ?? []).length} members
                   </div>
                   <div className="flex items-center gap-1 text-sm text-gray-600">
                     <Building2 size={16} className="text-gray-400" />
-                    {p.managersInvolved.length} managers
+                    {(p.managersInvolved ?? []).length} managers
                   </div>
                 </div>
+                {/* Project Links in Card */}
+                {p.links && p.links.length > 0 && (
+                  <div className="flex gap-2">
+                    {p.links.slice(0, 2).map((url, idx) => (
+                      <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-1 text-xs"
+                      >
+                        Link <ExternalLink size={12} />
+                      </a>
+                    ))}
+                    {p.links.length > 2 && (
+                      <span className="text-xs text-gray-500">+{p.links.length - 2} more</span>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}

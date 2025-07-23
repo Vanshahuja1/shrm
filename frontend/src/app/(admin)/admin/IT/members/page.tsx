@@ -8,7 +8,6 @@ import type { OrganizationMember } from "../../types/index"
 export default function MembersPage() {
 
   const fetchMembers = async () => {
-    // Fetch members from the backend API
     const response = await fetch(`http://localhost:5000/api/IT/org-members`)
     if (!response.ok) {
       throw new Error("Failed to fetch members")
