@@ -8,9 +8,8 @@ import {
   DollarSign,
   Users,
   CheckCircle,
-  Building2,
 } from "lucide-react";
-import type { Project } from "../../../types";
+import type { Project } from "@/types/index";
 import axios from "@/lib/axiosInstance";
 
 export default function ProjectDetailPage() {
@@ -29,7 +28,7 @@ export default function ProjectDetailPage() {
         } else {
           setProject(res.data);
         }
-      } catch (err) {
+      } catch {
         router.push("/admin/IT/projects");
       }
     }
@@ -94,7 +93,7 @@ export default function ProjectDetailPage() {
                     console.log("Project deleted successfully");
                     setShowDeleteModal(false);
                     router.push("/admin/IT/projects");
-                  } catch (err) {
+                  } catch {
                     alert("Failed to delete project. Please try again.");
                   } finally {
                     setDeleting(false);

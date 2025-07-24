@@ -8,6 +8,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const departmentRoutes = require("./routes/departmentRoutes");
+const overviewRoutes = require("./routes/overviewRoutes")
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -37,6 +38,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/api/overview", overviewRoutes);
 app.use("/api/:orgName/org-members", (req, res, next) => {
   req.orgName = req.params.orgName;
   next();

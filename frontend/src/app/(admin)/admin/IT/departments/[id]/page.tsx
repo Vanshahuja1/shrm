@@ -18,8 +18,17 @@ import EditForm from "./EditForm";
 export default function DepartmentDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [dept, setDept] = useState<any>(null);
-  const [editData, setEditData] = useState<any>(null);
+  type Member = { id?: string; _id?: string; name?: string };
+  type Department = {
+    name: string;
+    head: string;
+    managers?: Member[];
+    employees?: Member[];
+    interns?: Member[];
+    budget?: number;
+  };
+  const [dept, setDept] = useState<Department | null>(null);
+  const [editData, setEditData] = useState<Department | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -169,7 +178,7 @@ export default function DepartmentDetailPage() {
 
                   {dept.managers && dept.managers.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {dept.managers.map((manager: any, index: number) => (
+                      {dept.managers.map((manager: Member, index: number) => (
                         <div
                           key={index}
                           className="bg-white rounded-lg p-5 border border-blue-200 cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-300 group"
@@ -182,14 +191,12 @@ export default function DepartmentDetailPage() {
                           <div className="flex items-start space-x-4">
                             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors">
                               <span className="text-blue-700 font-bold text-lg">
-                                {(manager.name || manager)
-                                  .charAt(0)
-                                  .toUpperCase()}
+                                {(typeof manager.name === 'string' ? manager.name : '').charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-blue-700 transition-colors">
-                                {manager.name || manager}
+                                {typeof manager.name === 'string' ? manager.name : ''}
                               </h4>
                             </div>
                           </div>
@@ -227,7 +234,7 @@ export default function DepartmentDetailPage() {
 
                   {dept.employees && dept.employees.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {dept.employees.map((employee: any, index: number) => (
+                      {dept.employees.map((employee: Member, index: number) => (
                         <div
                           key={index}
                           className="bg-white rounded-lg p-5 border border-green-200 cursor-pointer hover:border-green-400 hover:shadow-lg transition-all duration-300 group"
@@ -240,14 +247,12 @@ export default function DepartmentDetailPage() {
                           <div className="flex items-start space-x-4">
                             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 transition-colors">
                               <span className="text-green-700 font-bold text-lg">
-                                {(employee.name || employee)
-                                  .charAt(0)
-                                  .toUpperCase()}
+                                {(typeof employee.name === 'string' ? employee.name : '').charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-green-700 transition-colors">
-                                {employee.name || employee}
+                                {typeof employee.name === 'string' ? employee.name : ''}
                               </h4>
                             </div>
                           </div>
@@ -285,7 +290,7 @@ export default function DepartmentDetailPage() {
 
                   {dept.interns && dept.interns.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {dept.interns.map((intern: any, index: number) => (
+                      {dept.interns.map((intern: Member, index: number) => (
                         <div
                           key={index}
                           className="bg-white rounded-lg p-5 border border-yellow-200 cursor-pointer hover:border-yellow-400 hover:shadow-lg transition-all duration-300 group"
@@ -298,14 +303,12 @@ export default function DepartmentDetailPage() {
                           <div className="flex items-start space-x-4">
                             <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-yellow-200 transition-colors">
                               <span className="text-yellow-700 font-bold text-lg">
-                                {(intern.name || intern)
-                                  .charAt(0)
-                                  .toUpperCase()}
+                                {(typeof intern.name === 'string' ? intern.name : '').charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-yellow-700 transition-colors">
-                                {intern.name || intern}
+                                {typeof intern.name === 'string' ? intern.name : ''}
                               </h4>
                             </div>
                           </div>
@@ -341,7 +344,7 @@ function StatCard({
   color,
 }: {
   label: string;
-  value: any;
+  value: string | number;
   color: string;
 }) {
   const colorMap = {

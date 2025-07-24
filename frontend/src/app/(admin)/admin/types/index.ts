@@ -31,12 +31,13 @@ export interface OrganizationMember {
 
 export interface Department {
   id: number | string
+  _id?: string
   name: string
   head: string
   budget: number
-  managers: any[]
-  employees: any[]
-  interns: any[]
+  managers: OrganizationMember[]
+  employees: OrganizationMember[]
+  interns: OrganizationMember[]
   members: OrganizationMember[]
 }
 

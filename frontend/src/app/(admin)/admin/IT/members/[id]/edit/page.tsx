@@ -44,7 +44,7 @@ export default function EditMemberPage() {
         const response = await axios.get('/IT/org-members/empInfo');
         const employees = response.data;
         // Filter to get potential supervisors (managers and hr, excluding current member)
-        const potentialSupervisors = employees.filter((emp: any) => 
+        const potentialSupervisors = employees.filter((emp: {id: string, name: string, role: string, department: string}) => 
           (emp.role === 'manager' || emp.role === 'hr' ) && emp.id !== id
         );
         setSupervisors(potentialSupervisors);
@@ -59,7 +59,7 @@ export default function EditMemberPage() {
     }
   }, [id, router]);
 
-  const handleChange = (key: keyof OrganizationMember, value: any) => {
+  const handleChange = (key: keyof OrganizationMember, value: string | number | string[]) => {
     if (!member) return;
     setMember({ ...member, [key]: value });
   };
@@ -115,9 +115,9 @@ export default function EditMemberPage() {
       setTimeout(() => {
         router.push(`/admin/IT/members/${id}`);
       }, 1500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating member:", error);
-      setError(error.response?.data?.message || "Failed to update member");
+      setError((error as {response?: {data?: {message?: string}}})?.response?.data?.message || "Failed to update member");
     } finally {
       setSaving(false);
     }
@@ -270,7 +270,7 @@ export default function EditMemberPage() {
             onChange={handleProjectsChange}
             onBlur={handleProjectsBlur}
           />
-          <p className="text-xs text-gray-500">Enter project names separated by commas (e.g., "Project A, Project B, Project C")</p>
+          <p className="text-xs text-gray-500">Enter project names separated by commas (e.g., &quot;Project A, Project B, Project C&quot;)</p>
         </div>
       </div>
     </div>

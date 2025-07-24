@@ -4,15 +4,16 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import type { Project } from "../../../../types";
+import type { Department, OrganizationMember } from "@/types/index";
 import axios from "@/lib/axiosInstance";
 
 export default function EditProjectPage() {
   const { id } = useParams();
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
-  const [allDepartments, setAllDepartments] = useState<any[]>([]);
-  const [allMembers, setAllMembers] = useState<any[]>([]);
-  const [allManagers, setAllManagers] = useState<any[]>([]);
+  const [allDepartments, setAllDepartments] = useState<Department[]>([]);
+  const [allMembers, setAllMembers] = useState<OrganizationMember[]>([]);
+  const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
   // Local state for skills text
   const [skillsText, setSkillsText] = useState<string>("");
 
@@ -30,7 +31,7 @@ export default function EditProjectPage() {
               : ""
           );
         }
-      } catch (err) {
+      } catch {
         router.push("/admin/IT/projects");
       }
     }
@@ -38,8 +39,8 @@ export default function EditProjectPage() {
       try {
         const deptRes = await axios.get("/departments");
         setAllDepartments(
-          (deptRes.data || []).map((d: any) => ({
-            id: d._id || d.id,
+          (deptRes.data || []).map((d: { _id?: string; id?: string; name: string }) => ({
+            id: d._id ?? d.id,
             name: d.name,
           }))
         );
@@ -48,11 +49,11 @@ export default function EditProjectPage() {
         setAllMembers(members);
         setAllManagers(
           members.filter(
-            (m: any) =>
+            (m: { role?: string; name?: string }) =>
               m.role && m.role.toLowerCase().trim() === "manager" && m.name
           )
         );
-      } catch (err) {
+      } catch {
         setAllDepartments([]);
         setAllMembers([]);
         setAllManagers([]);
@@ -62,7 +63,7 @@ export default function EditProjectPage() {
     fetchOptions();
   }, [id, router]);
 
-  const handleChange = (key: keyof Project, value: any) => {
+  const handleChange = <K extends keyof Project>(key: K, value: Project[K]) => {
     if (!project) return;
     setProject({ ...project, [key]: value });
   };
@@ -73,7 +74,7 @@ export default function EditProjectPage() {
       await axios.put(`/projects/${id}`, project);
       console.log("Project updated successfully");
       router.push(`/admin/IT/projects/${id}`);
-    } catch (err) {
+    } catch {
       alert("Failed to update project. Please try again.");
     }
   };
@@ -143,7 +144,7 @@ export default function EditProjectPage() {
             type="number"
             placeholder="Enter price"
             onChange={(val) =>
-              handleChange("amount", val === "" ? null : Number(val))
+            handleChange("amount", val === "" ? 0 : Number(val))
             }
           />
           <Field
@@ -158,7 +159,7 @@ export default function EditProjectPage() {
             placeholder="Enter completion %"
             onChange={(val) => {
               if (val === "") {
-                handleChange("completionPercentage", undefined);
+              handleChange("completionPercentage", 0);
               } else {
                 const newVal = Number(val);
                 handleChange("completionPercentage", newVal);
@@ -171,7 +172,7 @@ export default function EditProjectPage() {
             </label>
             <select
               value={project.status || "pending"}
-              onChange={(e) => handleChange("status", e.target.value)}
+            onChange={(e) => handleChange("status", e.target.value as Project["status"])}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="pending">Pending</option>
@@ -227,7 +228,7 @@ export default function EditProjectPage() {
               handleChange(
                 "departmentsInvolved",
                 (project.departmentsInvolved ?? []).filter(
-                  (_: any, i: number) => i !== idx
+                  (_: unknown, i: number) => i !== idx
                 )
               )
             }
@@ -265,7 +266,7 @@ export default function EditProjectPage() {
               handleChange(
                 "membersInvolved",
                 (project.membersInvolved ?? []).filter(
-                  (_: any, i: number) => i !== idx
+                  (_: unknown, i: number) => i !== idx
                 )
               )
             }
@@ -289,7 +290,7 @@ export default function EditProjectPage() {
               handleChange(
                 "managersInvolved",
                 (project.managersInvolved ?? []).filter(
-                  (_: any, i: number) => i !== idx
+                  (_: unknown, i: number) => i !== idx
                 )
               )
             }

@@ -118,7 +118,7 @@ export default function MembersPage() {
                 onClick={() => setSearchTerm("")}
                 className="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-200"
               >
-                Clear search: "{searchTerm}"
+                Clear search: &quot;{searchTerm}&quot;
               </button>
             )}
             {selectedDepartment !== "all" && (

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Trash2, Edit, Search, Filter, Users, Building } from "lucide-react"
+import { Plus, Search, Users, Building } from "lucide-react"
 import { motion } from "framer-motion"
 import axios from "@/lib/axiosInstance"
-import type { Department } from "../../types"
+import type { Department, OrganizationMember } from "@/types/index"
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<Department[]>([])
@@ -14,22 +14,35 @@ export default function DepartmentsPage() {
 
   useEffect(() => {
     axios.get("/departments").then((res) => {
-      const normalized = res.data.map((d: any) => ({ ...d, id: d._id }))
+      const normalized = res.data.map((d: {
+        _id?: string;
+        id?: string;
+        name: string;
+        head: string;
+        budget: number;
+        managers: OrganizationMember[];
+        employees: OrganizationMember[];
+        interns: OrganizationMember[];
+        members: OrganizationMember[];
+      }) => ({
+        ...d,
+        id: d._id ?? d.id,
+      })) as Department[]
       setDepartments(normalized)
       console.log("Departments loaded")
     })
   }, [])
 
-  const handleDelete = async (id: string) => {
-    try {
-      await axios.delete(`/departments/${id}`)
-      setDepartments((prev) => prev.filter((d) => d.id !== id))
-      console.log("Department deleted successfully")
-    } catch (err) {
-      console.error("Delete failed:", err)
-      alert("Failed to delete department. Try again.")
-    }
-  }
+  // const handleDelete = async (id: string) => {
+  //   try {
+  //     await axios.delete(`/departments/${id}`)
+  //     setDepartments((prev) => prev.filter((d) => d.id !== id))
+  //     console.log("Department deleted successfully")
+  //   } catch (err) {
+  //     console.error("Delete failed:", err)
+  //     alert("Failed to delete department. Try again.")
+  //   }
+  // }
 
   const filtered = departments.filter((d) =>
     d.name.toLowerCase().includes(searchTerm.toLowerCase())

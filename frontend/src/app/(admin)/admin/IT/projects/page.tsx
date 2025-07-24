@@ -7,6 +7,7 @@
 
 import { JSX, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import {
   Plus,
   Search,
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "@/lib/axiosInstance";
-import type { Project } from "../../types";
+import type { Project } from "@/types/index";
 
 
 
@@ -36,7 +37,7 @@ export default function ProjectPage() {
         const res = await axios.get("/projects");
         console.log("projects fetched");
         setProjects(res.data);
-      } catch (err) {
+      } catch {
         setProjects([]);
       }
     }
@@ -150,7 +151,7 @@ function ProjectList({
 }: {
   title: string
   projects: Project[]
-  router: any
+  router: ReturnType<typeof useRouter>
   getStatusIcon: (status: Project["status"]) => JSX.Element
   getStatusColor: (status: Project["status"]) => string
 }) {

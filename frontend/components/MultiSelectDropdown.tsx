@@ -1,18 +1,19 @@
 import { Plus, X } from "lucide-react";
 import React, { useState } from "react";
 
-export type MultiSelectDropdownProps = {
+
+export type MultiSelectDropdownProps<T> = {
   label: string;
-  options: any[];
-  selected: any[];
-  onAdd: (item: any) => void;
+  options: T[];
+  selected: T[];
+  onAdd: (item: T) => void;
   onRemove: (idx: number) => void;
-  getOptionLabel: (item: any) => string;
-  getOptionKey: (item: any) => string | number;
+  getOptionLabel: (item: T) => string;
+  getOptionKey: (item: T) => string | number;
   buttonLabel?: string;
 };
 
-export function MultiSelectDropdown({
+export function MultiSelectDropdown<T>({
   label,
   options,
   selected,
@@ -21,7 +22,7 @@ export function MultiSelectDropdown({
   getOptionLabel,
   getOptionKey,
   buttonLabel = "Add",
-}: MultiSelectDropdownProps) {
+}: MultiSelectDropdownProps<T>) {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -58,12 +59,13 @@ export function MultiSelectDropdown({
         {label}
         <button
           type="button"
-          className="ml-2 p-1"
+          className="ml-2 p-1 flex items-center gap-1"
           onClick={() => setShowDropdown((v) => !v)}
           aria-haspopup="listbox"
           aria-expanded={showDropdown}
         >
           <Plus size={18} />
+          <span className="text-xs font-medium">{buttonLabel}</span>
         </button>
       </label>
       <div className="flex flex-wrap gap-1 mb-2">

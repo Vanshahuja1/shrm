@@ -4,7 +4,7 @@ import { MultiSelectDropdown } from "@/components/MultiSelectDropdown"
 import axios from "@/lib/axiosInstance"
 import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
-import { Project } from "../../../types"
+import type { Project, Department, OrganizationMember } from "@/types/index"
 
 
 
@@ -31,9 +31,9 @@ export default function AddProjectPage() {
   });
 
   // For dropdown options
-  const [allDepartments, setAllDepartments] = useState<any[]>([]);
-  const [allMembers, setAllMembers] = useState<any[]>([]);
-  const [allManagers, setAllManagers] = useState<any[]>([]);
+  const [allDepartments, setAllDepartments] = useState<Department[]>([]);
+  const [allMembers, setAllMembers] = useState<OrganizationMember[]>([]);
+  const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
 
   React.useEffect(() => {
     async function fetchOptions() {
@@ -42,13 +42,13 @@ export default function AddProjectPage() {
         const memberRes = await axios.get("/IT/org-members");
         const members = memberRes.data || [];
         setAllMembers(members);
-        setAllManagers(members.filter((m: any) => m.role && m.role.toLowerCase().trim() === "manager" && m.name));
+        setAllManagers(members.filter((m: OrganizationMember) => m.role && m.role.toLowerCase().trim() === "manager" && m.name));
 
         // Fetch all departments for real names and IDs
         const deptRes = await axios.get("/departments");
         const departments = deptRes.data || [];
-        setAllDepartments(departments.map((d: any) => ({ id: d._id || d.id, name: d.name })));
-      } catch (err) {
+        setAllDepartments(departments.map((d: Department) => ({ id: d._id ?? d.id, name: d.name })));
+      } catch {
         setAllDepartments([]);
         setAllMembers([]);
         setAllManagers([]);
@@ -68,9 +68,9 @@ export default function AddProjectPage() {
         description: formData.description,
         client: formData.client,
         amount: formData.amount === "" ? undefined : Number(formData.amount),
-        managersInvolved: formData.managersInvolved.map((m: any) => m.name),
-        departmentsInvolved: formData.departmentsInvolved.map((d: any) => d.name),
-        membersInvolved: formData.membersInvolved.map((m: any) => m.name),
+        managersInvolved: formData.managersInvolved.map((m) => typeof m === "string" ? m : (m as OrganizationMember).name),
+        departmentsInvolved: formData.departmentsInvolved.map((d) => typeof d === "string" ? d : (d as Department).name),
+        membersInvolved: formData.membersInvolved.map((m) => typeof m === "string" ? m : (m as OrganizationMember).name),
         skillsRequired: formData.skillsRequired,
         completionPercentage: formData.completionPercentage,
         projectScope: formData.projectScope,
@@ -172,32 +172,32 @@ export default function AddProjectPage() {
           onChange={(val) => setFormData({ ...formData, clientInputs: val })}
         />
 
-        <MultiSelectDropdown
+        <MultiSelectDropdown<Department>
           label="Departments"
           options={allDepartments}
-          selected={formData.departmentsInvolved}
-          onAdd={d => setFormData(prev => ({ ...prev, departmentsInvolved: [...prev.departmentsInvolved, d] }))}
-          onRemove={idx => setFormData(prev => ({ ...prev, departmentsInvolved: prev.departmentsInvolved.filter((_: any, i: number) => i !== idx) }))}
+          selected={allDepartments.filter(d => formData.departmentsInvolved.includes(d.name))}
+          onAdd={d => setFormData(prev => ({ ...prev, departmentsInvolved: [...prev.departmentsInvolved, d.name] }))}
+          onRemove={idx => setFormData(prev => ({ ...prev, departmentsInvolved: prev.departmentsInvolved.filter((_, i) => i !== idx) }))}
           getOptionLabel={d => d.name}
           getOptionKey={d => d.id}
         />
 
-        <MultiSelectDropdown
+        <MultiSelectDropdown<OrganizationMember>
           label="Members"
           options={allMembers}
-          selected={formData.membersInvolved}
-          onAdd={m => setFormData(prev => ({ ...prev, membersInvolved: [...prev.membersInvolved, m] }))}
-          onRemove={idx => setFormData(prev => ({ ...prev, membersInvolved: prev.membersInvolved.filter((_: any, i: number) => i !== idx) }))}
+          selected={allMembers.filter(m => formData.membersInvolved.includes(m.name))}
+          onAdd={m => setFormData(prev => ({ ...prev, membersInvolved: [...prev.membersInvolved, m.name] }))}
+          onRemove={idx => setFormData(prev => ({ ...prev, membersInvolved: prev.membersInvolved.filter((_, i) => i !== idx) }))}
           getOptionLabel={m => m.name}
           getOptionKey={m => m.id}
         />
 
-        <MultiSelectDropdown
+        <MultiSelectDropdown<OrganizationMember>
           label="Managers"
           options={allManagers}
-          selected={formData.managersInvolved}
-          onAdd={m => setFormData(prev => ({ ...prev, managersInvolved: [...prev.managersInvolved, m] }))}
-          onRemove={idx => setFormData(prev => ({ ...prev, managersInvolved: prev.managersInvolved.filter((_: any, i: number) => i !== idx) }))}
+          selected={allManagers.filter(m => formData.managersInvolved.includes(m.name))}
+          onAdd={m => setFormData(prev => ({ ...prev, managersInvolved: [...prev.managersInvolved, m.name] }))}
+          onRemove={idx => setFormData(prev => ({ ...prev, managersInvolved: prev.managersInvolved.filter((_, i) => i !== idx) }))}
           getOptionLabel={m => m.name}
           getOptionKey={m => m.id}
         />

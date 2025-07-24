@@ -1,27 +1,24 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronDown, Plus, X } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { sampleMembers } from "@/lib/sampleData"
 import { useRouter } from "next/navigation"
 import axios from "@/lib/axiosInstance"
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select"
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown"
 
-type RoleKey = "managers" | "employees" | "interns";
+type Member = {
+  id: string;
+  name: string;
+  role: string;
+};
 type FormData = {
   name: string;
   head: string;
   budget: string;
-  managers: any[];
-  employees: any[];
-  interns: any[];
+  managers: Member[];
+  employees: Member[];
+  interns: Member[];
 };
 
 export default function AddDepartmentPage() {
@@ -34,7 +31,7 @@ export default function AddDepartmentPage() {
     employees: [],
     interns: [],
   })
-  const [orgMembers, setOrgMembers] = useState<any[]>([])
+  const [orgMembers, setOrgMembers] = useState<Member[]>([])
 
   // Fetch organization members on component mount
   useEffect(() => {
@@ -45,54 +42,21 @@ export default function AddDepartmentPage() {
         setOrgMembers(res.data);
       } catch (err) {
         console.error("Failed to fetch organization members:", err);
-        setOrgMembers(sampleMembers);
+        setOrgMembers(sampleMembers.map(m => ({ id: String(m.id), name: m.name, role: m.role })));
       }
     };
     fetchMembers();
   }, []);
 
-  // Get all assigned member IDs across all roles
-  const getAssignedMemberIds = () => {
-    const assignedIds = new Set();
-    [...formData.managers, ...formData.employees, ...formData.interns].forEach(member => {
-      assignedIds.add(member.id);
-    });
-    return assignedIds;
-  };
-
-  // Get available members for a specific role (excluding already assigned ones)
-  const getAvailableMembersForRole = (targetRole: string) => {
-    const assignedIds = getAssignedMemberIds();
-    return orgMembers.filter(member => 
-      member.role.toLowerCase() === targetRole.toLowerCase() && 
-      !assignedIds.has(member.id)
-    );
-  };
-
-  const handleSelectMember = (role: string, member: any) => {
-    const key = (role.toLowerCase() + 's') as RoleKey;
-    setFormData(prev => ({
-      ...prev,
-      [key]: [...prev[key], member]
-    }));
-  };
-
-  const handleRemoveMember = (role: string, idx: number) => {
-    const key = (role.toLowerCase() + 's') as RoleKey;
-    setFormData(prev => ({
-      ...prev,
-      [key]: prev[key].filter((_: any, i: number) => i !== idx)
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const payload = {
       ...formData,
       budget: Number(formData.budget) || 0,
-      managers: formData.managers.map((m: any) => m.id),
-      employees: formData.employees.map((m: any) => m.id),
-      interns: formData.interns.map((m: any) => m.id),
+      managers: formData.managers.map((m: Member) => m.id),
+      employees: formData.employees.map((m: Member) => m.id),
+      interns: formData.interns.map((m: Member) => m.id),
     }
 
     try {
@@ -132,9 +96,9 @@ export default function AddDepartmentPage() {
                   try {
                     const res = await axios.get("/org-members");
                     setOrgMembers(res.data);
-                  } catch (err) {
+                  } catch {
                     // fallback to sample data (only names of employees)
-                    setOrgMembers(sampleMembers.filter(m => m.role === "Employee").map(m => ({ name: m.name })));
+                    setOrgMembers(sampleMembers.filter(m => m.role === "Employee").map(m => ({ id: String(m.id), name: m.name, role: m.role })));
                   }
                 }
               }}

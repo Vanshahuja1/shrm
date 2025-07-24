@@ -1,7 +1,17 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import axios from "@/lib/axiosInstance"
 import { motion } from "framer-motion"
-import { Users, Briefcase, TrendingUp, Building, Calendar, CheckCircle, type LucideIcon } from "lucide-react"
+import { 
+  Users, 
+  Briefcase, 
+  TrendingUp, 
+  Building, 
+  CheckCircle, 
+  DollarSign,
+  Clock
+} from "lucide-react"
 import {
   LineChart,
   Line,
@@ -14,44 +24,58 @@ import {
   Bar,
   PieChart,
   Cell,
+  Pie,
+  AreaChart,
+  Area
 } from "recharts"
 
-const monthlyData = [
-  { month: "Jan", revenue: 2100000, employees: 235, projects: 15, attendance: 92 },
-  { month: "Feb", revenue: 2300000, employees: 240, projects: 16, attendance: 94 },
-  { month: "Mar", revenue: 2200000, employees: 242, projects: 17, attendance: 89 },
-  { month: "Apr", revenue: 2500000, employees: 245, projects: 18, attendance: 96 },
-  { month: "May", revenue: 2400000, employees: 247, projects: 18, attendance: 93 },
-  { month: "Jun", revenue: 2600000, employees: 247, projects: 20, attendance: 95 },
-]
-
-const departmentData = [
-  { name: "IT Development", value: 35, color: "#3B82F6" },
-  { name: "HR", value: 15, color: "#10B981" },
-  { name: "Business Development", value: 25, color: "#8B5CF6" },
-  { name: "IT/CS Management", value: 25, color: "#F59E0B" },
-]
-
-// Define the color type
 type ColorType = "blue" | "green" | "purple" | "orange" | "emerald" | "red"
 
-// Define the stat interface
 interface StatItem {
   title: string
   value: string
   change: string
-  icon: LucideIcon
+  icon: React.ElementType
   color: ColorType
 }
 
 export default function Overview() {
+  const [monthlyData, setMonthlyData] = useState<Array<{ month: string; revenue: number; employees: number; activeProjects: number; completedProjects: number; attendance: number }>>([])
+  const [departmentData, setDepartmentData] = useState<Array<{ name: string; value: number; employees: number; color: string }>>([])
+  const [projectStatusData, setProjectStatusData] = useState<Array<{ name: string; value: number; color: string }>>([])
+  const [revenueByDepartment, setRevenueByDepartment] = useState<Array<{ department: string; revenue: number; projects: number }>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchOverview() {
+      setLoading(true)
+      try {
+        const res = await axios.get("/overview")
+        setMonthlyData(res.data.monthlyData)
+        setDepartmentData(res.data.departmentData)
+        setProjectStatusData(res.data.projectStatusData)
+        setRevenueByDepartment(res.data.revenueByDepartment)
+      } catch {
+        // handle error
+      }
+      setLoading(false)
+    }
+    fetchOverview()
+  }, [])
+
+  // Calculate totals
+  const totalRevenue = monthlyData.length ? monthlyData[monthlyData.length - 1].revenue : 0
+  const totalEmployees = monthlyData.length ? monthlyData[monthlyData.length - 1].employees : 0
+  const totalActiveProjects = monthlyData.length ? monthlyData[monthlyData.length - 1].activeProjects : 0
+  const totalCompletedProjects = monthlyData.reduce((sum, month) => sum + (month.completedProjects || 0), 0)
+  // const avgAttendance = monthlyData.length ? Math.round(monthlyData.reduce((sum, month) => sum + (month.attendance || 0), 0) / monthlyData.length) : 0
+
   const stats: StatItem[] = [
-    { title: "Total Employees", value: "247", change: "+12%", icon: Users, color: "blue" },
-    { title: "Active Projects", value: "20", change: "+5%", icon: Briefcase, color: "green" },
-    { title: "Monthly Revenue", value: "$2.6M", change: "+18%", icon: TrendingUp, color: "purple" },
-    { title: "Departments", value: "4", change: "0%", icon: Building, color: "orange" },
-    { title: "Tasks Completed", value: "156", change: "+23%", icon: CheckCircle, color: "emerald" },
-    { title: "Avg Attendance", value: "95%", change: "+2%", icon: Calendar, color: "red" },
+    { title: "Total Employees", value: totalEmployees.toString(), change: "+12%", icon: Users, color: "blue" },
+    { title: "Active Projects", value: totalActiveProjects.toString(), change: "+5%", icon: Briefcase, color: "green" },
+    { title: "Completed Projects", value: totalCompletedProjects.toString(), change: "+23%", icon: CheckCircle, color: "emerald" },
+    { title: "Total Revenue", value: `${(totalRevenue / 1000000).toFixed(1)}M`, change: "+18%", icon: DollarSign, color: "purple" },
+    { title: "Departments", value: departmentData.length.toString(), change: "0%", icon: Building, color: "orange" },
   ]
 
   const colorClasses: Record<ColorType, string> = {
@@ -75,8 +99,13 @@ export default function Overview() {
     return backgroundClasses[color]
   }
 
+  if (loading) {
+    return <div className="p-8 text-center text-lg text-gray-500">Loading overview...</div>
+  }
+
   return (
-    <div className="space-y-6">
+    <>
+    <div className="space-y-8 p-6 bg-gray-50 min-h-screen">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((stat, index) => {
@@ -84,42 +113,66 @@ export default function Overview() {
           return (
             <motion.div
               key={index}
-              whileHover={{ y: -2, scale: 1.01 }}
-              className={`p-6 rounded-xl border-2 ${colorClasses[stat.color]} bg-white shadow-sm`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ y: -4, scale: 1.02 }}
+              className={`p-6 rounded-xl border-2 ${colorClasses[stat.color]} bg-white shadow-lg hover:shadow-xl transition-all duration-300`}
             >
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg ${getIconBackgroundClass(stat.color)}`}>
+                <div className={`p-3 rounded-lg ${getIconBackgroundClass(stat.color)} shadow-sm`}>
                   <Icon size={24} />
                 </div>
                 <span
-                  className={`text-sm font-semibold px-2 py-1 rounded-full ${
-                    stat.change.startsWith("+") ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                  className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                    stat.change.startsWith("+") ? "bg-green-100 text-green-700" : 
+                    stat.change === "0%" ? "bg-gray-100 text-gray-600" : "bg-red-100 text-red-700"
                   }`}
                 >
                   {stat.change}
                 </span>
               </div>
               <p className="text-3xl font-bold mb-1 text-gray-900">{stat.value}</p>
-              <p className="text-sm text-gray-600">{stat.title}</p>
+              <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
             </motion.div>
           )
         })}
       </div>
 
-      {/* Charts Row */}
+      {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-xl font-bold mb-4 text-gray-900">Revenue & Growth Trend</h3>
+        {/* Revenue & Growth Trend */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        >
+          <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
+            <TrendingUp size={20} className="text-purple-600" />
+            Revenue & Attendance Trend
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={monthlyData}>
+            <AreaChart data={monthlyData}>
+              <defs>
+                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="month" stroke="#6b7280" />
               <YAxis stroke="#6b7280" />
               <Tooltip
                 formatter={(value, name) => [
-                  name === "revenue" ? `$${Number(value).toLocaleString()}` : value,
-                  name === "revenue" ? "Revenue" : name === "employees" ? "Employees" : "Attendance %",
+                  name === "revenue"
+                    ? `${(Number(value) / 1000000).toFixed(1)}M`
+                    : `${value}%`,
+                  name === "revenue" ? "Revenue" : "Attendance",
                 ]}
                 contentStyle={{
                   backgroundColor: "white",
@@ -128,50 +181,138 @@ export default function Overview() {
                   boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                 }}
               />
-              <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={3} />
-              <Line type="monotone" dataKey="attendance" stroke="#10B981" strokeWidth={2} />
-            </LineChart>
+              <Area type="monotone" dataKey="revenue" stroke="#8B5CF6" fillOpacity={1} fill="url(#revenueGradient)" strokeWidth={3} />
+              <Area type="monotone" dataKey="attendance" stroke="#10B981" fillOpacity={1} fill="url(#attendanceGradient)" strokeWidth={2} />
+            </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </motion.div>
 
-        {/* Department Distribution */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-xl font-bold mb-4 text-gray-900">Department Distribution</h3>
+        {/* Project Status Distribution */}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        >
+          <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
+            <CheckCircle size={20} className="text-green-600" />
+            Project Status Distribution
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <PieChart data={departmentData} cx="50%" cy="50%" outerRadius={80} dataKey="value">
-                {departmentData.map((entry, index) => (
+              <Pie 
+                data={projectStatusData} 
+                cx="50%" 
+                cy="50%" 
+                innerRadius={60}
+                outerRadius={100} 
+                dataKey="value"
+                startAngle={90}
+                endAngle={-270}
+              >
+                {projectStatusData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
-              </PieChart>
-              <Tooltip formatter={(value) => [`${value}%`, "Percentage"]} />
+              </Pie>
+              <Tooltip formatter={(value) => [`${value} projects`, "Count"]} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex flex-wrap gap-3 mt-4">
-            {departmentData.map((dept, index) => (
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            {projectStatusData.map((status, index) => (
               <div key={index} className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: dept.color }}></div>
-                <span className="text-sm text-gray-600">{dept.name}</span>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: status.color }}></div>
+                <span className="text-sm text-gray-600">{status.name} ({status.value})</span>
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Employee Performance Chart */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold mb-4 text-gray-900">Monthly Performance Metrics</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={monthlyData}>
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Department Distribution */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        >
+          <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
+            <Building size={20} className="text-blue-600" />
+            Employee Distribution by Department
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={departmentData} layout="horizontal">
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis type="number" stroke="#6b7280" />
+              <YAxis type="category" dataKey="name" stroke="#6b7280" width={120} />
+              <Tooltip formatter={(value) => [`${value} employees`, "Count"]} />
+              <Bar dataKey="employees" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Revenue by Department */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        >
+          <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
+            <DollarSign size={20} className="text-green-600" />
+            Revenue by Department
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={revenueByDepartment}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="department" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip 
+                formatter={(value, name) => [
+                  name === "revenue" ? `${(Number(value) / 1000).toFixed(0)}K` : value,
+                  name === "revenue" ? "Revenue" : "Projects"
+                ]}
+              />
+              <Bar dataKey="revenue" fill="#10B981" name="revenue" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </div>
+
+      {/* Full Width Chart */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+      >
+        <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
+          <Clock size={20} className="text-indigo-600" />
+          Monthly Performance Metrics
+        </h3>
+        <ResponsiveContainer width="100%" height={350}>
+          <LineChart data={monthlyData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="month" stroke="#6b7280" />
             <YAxis stroke="#6b7280" />
-            <Tooltip />
-            <Bar dataKey="employees" fill="#3B82F6" name="Employees" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="projects" fill="#8B5CF6" name="Projects" radius={[4, 4, 0, 0]} />
-          </BarChart>
+            <Tooltip 
+              formatter={(value, name) => {
+                if (name === "employees") return [value, "Employees"]
+                if (name === "activeProjects") return [value, "Active Projects"]
+                if (name === "completedProjects") return [value, "Completed Projects"]
+                if (name === "productivity") return [`${value}%`, "Productivity"]
+                return [value, name]
+              }}
+            />
+            <Line type="monotone" dataKey="employees" stroke="#3B82F6" strokeWidth={3} name="employees" />
+            <Line type="monotone" dataKey="activeProjects" stroke="#8B5CF6" strokeWidth={2} name="activeProjects" />
+            <Line type="monotone" dataKey="completedProjects" stroke="#10B981" strokeWidth={2} name="completedProjects" />
+            <Line type="monotone" dataKey="productivity" stroke="#F59E0B" strokeWidth={2} name="productivity" />
+          </LineChart>
         </ResponsiveContainer>
-      </div>
+      </motion.div>
     </div>
+    </>
   )
 }
