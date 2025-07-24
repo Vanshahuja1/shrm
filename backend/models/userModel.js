@@ -268,6 +268,8 @@ userSchema.index({ createdAt: -1 });
 userSchema.virtual("employeeInfo").get(function () {
   return {
     id: this.id,
+    email: this.email,
+    phone: this.phone,
     name: this.name,
     role: this.role,
     department: this.departmentName,

@@ -1,18 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Send } from "lucide-react"
 import { useRouter } from "next/navigation"
-
+import { Email } from "../types" // Assuming you have an Email type defined
 import axios from "@/lib/axiosInstance"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 
-interface Email {
-  type: "member_crud" | "increment" | "decrement" | "penalty" | "general"
-  recipient: string
-  sender: string
-  subject: string
-  message: string
-}
+
 
 export default function ComposeEmailPage() {
   const router = useRouter()
@@ -22,16 +17,37 @@ export default function ComposeEmailPage() {
     sender: "admin@oneaimit.com",
     subject: "",
     message: "",
+    recipientEmail: "",
   })
   const [loading, setLoading] = useState(false) // Add loading state
+
+  const [members, setMembers] = useState<{ id: string; email: string, name: string }[]>([])
+
+  const fetchMembers = async () => {
+    try {
+      const response = await axios.get("/IT/org-members//empInfo")
+      setMembers(response.data)
+    } catch (error) {
+      console.error("Error fetching members:", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchMembers()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true) // Start loading
 
+    const recipient =
+      formData.recipient === "other"
+        ? formData.recipientEmail
+        : formData.recipient;
+
     axios.post("/mail/send", {
       type: formData.type,
-      to: formData.recipient,
+      to: recipient,
       from: formData.sender,
       subject: formData.subject,
       text: formData.message,
@@ -90,13 +106,47 @@ export default function ComposeEmailPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
-            <input
-              type="email"
-              value={formData.recipient}
-              onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            <div className="flex gap-2">
+              <Select
+                value={formData.recipient}
+                onValueChange={(value) => setFormData({ ...formData, recipient: value })}
+              >
+                <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Select recipient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members.map((member) => (
+                    <SelectItem key={member.id} value={member.email}>
+                      {member.name ? (
+                        <>
+                          {member.name} ({member.email}){" "}
+                          <span className="text-gray-500">[{member.id}]</span>
+                        </>
+                      ) : (
+                        <>
+                          {member.email} <span className="text-gray-500">[{member.id}]</span>
+                        </>
+                      )}
+                    </SelectItem>
+
+                  ))}
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              {formData.recipient === "other" && (
+                <input
+                  type="email"
+                  placeholder="Enter recipient email"
+                  value={formData.recipientEmail || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, recipientEmail: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  autoComplete="off"
+                  required
+                />
+              )}
+            </div>
           </div>
 
           <div>

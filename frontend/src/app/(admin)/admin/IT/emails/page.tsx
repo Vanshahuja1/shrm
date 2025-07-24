@@ -30,12 +30,26 @@ export default function EmailsPage() {
       </div>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard icon={<Mail size={24} className="text-blue-600" />} label="Total" value={emails.length} color="blue" />
-        <StatCard icon={<Send size={24} className="text-green-600" />} label="Sent" value={emails?.filter(e => e.status === "sent").length} color="green" />
-        <StatCard icon={<Archive size={24} className="text-yellow-600" />} label="Unread" value={emails?.filter(e => !e.isRead).length} color="yellow" />
-        <StatCard icon={<Star size={24} className="text-purple-600" />} label="Starred" value={emails?.filter(e => e.isStarred).length} color="purple" />
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <StatCard
+    icon={<Mail size={24} className="text-blue-600" />}
+    label="Total"
+    value={emails.length}
+    color="blue"
+  />
+  <StatCard
+    icon={<Send size={24} className="text-green-600" />}
+    label="Sent"
+    value={emails.filter(e => e.status === "sent").length}
+    color="green"
+  />
+  <StatCard
+    icon={<Archive size={24} className="text-red-600" />}
+    label="Failed"
+    value={emails.filter(e => e.status === "failed").length}
+    color="yellow"
+  />
+</div>
 
       {/* Email List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-3">
@@ -51,7 +65,7 @@ export default function EmailsPage() {
               <div className="space-y-1">
                 <p className="font-semibold text-gray-900">{email.subject}</p>
                 <p className="text-sm text-gray-600">To: {email.recipient}</p>
-                <p className="text-sm text-gray-400">{email.sentAt.toLocaleString()}</p>
+                <p className="text-sm text-gray-400">{email?.sentAt?.toLocaleString()}</p>
               </div>
               {email.isStarred && <Star className="text-yellow-500 fill-current" size={18} />}
             </div>
