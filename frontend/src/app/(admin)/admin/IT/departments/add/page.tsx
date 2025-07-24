@@ -32,20 +32,18 @@ export default function AddDepartmentPage() {
     interns: [],
   })
   const [orgMembers, setOrgMembers] = useState<Member[]>([])
+  const fetchOrgMembers = async () => {
+    try {
+      const res = await axios.get("/IT/org-members");
+      setOrgMembers(res.data);
+    } catch{
+      setOrgMembers(sampleMembers.map(m => ({ id: String(m.id), name: m.name, role: m.role })));
+    }
+  };
 
   // Fetch organization members on component mount
   useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const res = await axios.get("/IT/org-members/empInfo");
-        console.log("Fetched employee info:", res.data);
-        setOrgMembers(res.data);
-      } catch (err) {
-        console.error("Failed to fetch organization members:", err);
-        setOrgMembers(sampleMembers.map(m => ({ id: String(m.id), name: m.name, role: m.role })));
-      }
-    };
-    fetchMembers();
+    fetchOrgMembers();
   }, []);
 
 
@@ -54,9 +52,9 @@ export default function AddDepartmentPage() {
     const payload = {
       ...formData,
       budget: Number(formData.budget) || 0,
-      managers: formData.managers.map((m: Member) => m.id),
-      employees: formData.employees.map((m: Member) => m.id),
-      interns: formData.interns.map((m: Member) => m.id),
+      managers: formData.managers,
+      employees: formData.employees,
+      interns: formData.interns,
     }
 
     try {
@@ -133,33 +131,38 @@ export default function AddDepartmentPage() {
         <div className="grid grid-cols-3 gap-4">
           <MultiSelectDropdown
             label="Managers"
-            options={orgMembers.filter(m => m.role === "Manager")}
+            options={orgMembers.filter(m => m.role === "manager")}
             selected={formData.managers}
             onAdd={m => setFormData(prev => ({ ...prev, managers: [...prev.managers, m] }))}
             onRemove={idx => setFormData(prev => ({ ...prev, managers: prev.managers.filter((_, i) => i !== idx) }))}
             getOptionLabel={m => m.name}
             getOptionKey={m => m.id}
+            buttonLabel="Add"
+            onDropdownOpen={fetchOrgMembers}
           />
           <MultiSelectDropdown
             label="Employees"
-            options={orgMembers.filter(m => m.role === "Employee")}
+            options={orgMembers.filter(m => m.role === "employee")}
             selected={formData.employees}
             onAdd={m => setFormData(prev => ({ ...prev, employees: [...prev.employees, m] }))}
             onRemove={idx => setFormData(prev => ({ ...prev, employees: prev.employees.filter((_, i) => i !== idx) }))}
             getOptionLabel={m => m.name}
             getOptionKey={m => m.id}
+            buttonLabel="Add"
+            onDropdownOpen={fetchOrgMembers}
           />
           <MultiSelectDropdown
             label="Interns"
-            options={orgMembers.filter(m => m.role === "Intern")}
+            options={orgMembers.filter(m => m.role === "intern")}
             selected={formData.interns}
             onAdd={m => setFormData(prev => ({ ...prev, interns: [...prev.interns, m] }))}
             onRemove={idx => setFormData(prev => ({ ...prev, interns: prev.interns.filter((_, i) => i !== idx) }))}
             getOptionLabel={m => m.name}
             getOptionKey={m => m.id}
+            buttonLabel="Add"
+            onDropdownOpen={fetchOrgMembers}
           />
         </div>
-
         <div className="flex gap-4 pt-4">
           <button
             type="submit"
@@ -177,6 +180,6 @@ export default function AddDepartmentPage() {
         </div>
       </form>
     </div>
-  )
+  );
 }
  

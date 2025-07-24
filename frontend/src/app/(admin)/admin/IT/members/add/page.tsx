@@ -14,37 +14,38 @@ import {
 
 export default function AddMemberPage() {
   const router = useRouter();
-  const [supervisors, setSupervisors] = useState<any[]>([]);
-
-  const [formData, setFormData] = useState<Omit<OrganizationMember, "id">>({
-    name: "",
-    role: "Employee",
-    department: "IT",
-    salary: 0,
-    projects: [],
-    experience: 0,
-    contactInfo: {
-      email: "",
-      phone: "",
-      address: "",
-    },
-    documents: {
-      pan: "",
-      aadhar: "",
-    },
-    joiningDate: "",
-    performanceMetrics: {
-      tasksPerDay: 0,
-      attendanceScore: 100,
-      managerReviewRating: 0,
-      combinedPercentage: 0,
-    },
-    attendance: {
-      last7Days: [true, true, true, true, true, false, false],
-      todayPresent: true,
-    },
-    upperManager: "",
-  });
+  const [supervisors, setSupervisors] = useState<OrganizationMember[]>([]);
+  const [formData, setFormData] = useState<Omit<OrganizationMember, "id" | "salary"> & { salary: string }>(
+    {
+      name: "",
+      role: "Employee",
+      department: "IT",
+      salary: "",
+      projects: [],
+      experience: 0,
+      contactInfo: {
+        email: "",
+        phone: "",
+        address: "",
+      },
+      documents: {
+        pan: "",
+        aadhar: "",
+      },
+      joiningDate: "",
+      performanceMetrics: {
+        tasksPerDay: 0,
+        attendanceScore: 100,
+        managerReviewRating: 0,
+        combinedPercentage: 0,
+      },
+      attendance: {
+        last7Days: [true, true, true, true, true, false, false],
+        todayPresent: true,
+      },
+      upperManager: "",
+    }
+  );
 
   const [projectsText, setProjectsText] = useState<string>("");
 
@@ -55,7 +56,7 @@ export default function AddMemberPage() {
         const response = await axios.get("/IT/org-members/empInfo");
         const allMembers = response.data;
         // Filter for managers, employees, and HR personnel
-        const eligibleSupervisors = allMembers.filter((member: any) =>
+        const eligibleSupervisors = allMembers.filter((member: OrganizationMember) =>
           ["manager", "hr"].includes(member.role.toLowerCase())
         );
         setSupervisors(eligibleSupervisors);
@@ -88,7 +89,16 @@ export default function AddMemberPage() {
       .split(",")
       .map((p) => p.trim())
       .filter((p) => p);
-    const formDataToSubmit = { ...formData, projects: projectsList };
+    const formDataToSubmit = {
+      ...formData,
+      projects: projectsList,
+      salary:
+        typeof formData.salary === "string"
+          ? (formData.salary as string).trim() === ""
+            ? undefined
+            : Number(formData.salary)
+          : formData.salary
+    };
 
     try {
       await axios.post("/IT/org-members", formDataToSubmit);
@@ -138,7 +148,7 @@ export default function AddMemberPage() {
               value={formData.salary}
               prefix="$"
               onChange={(val) =>
-                setFormData({ ...formData, salary: Number(val) })
+                setFormData({ ...formData, salary: String(val) })
               }
             />
             <Input
@@ -350,8 +360,8 @@ export default function AddMemberPage() {
             onBlur={handleProjectsBlur}
           />
           <p className="text-xs text-gray-500 mt-2">
-            Enter project names separated by commas (e.g., "Project A, Project
-            B, Project C")
+            Enter project names separated by commas (e.g., &quot;Project A, Project
+            B, Project C&quot;)
           </p>
         </div>
 

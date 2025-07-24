@@ -29,6 +29,8 @@ export default function AddProjectPage() {
     skillsRequired: [],
     status: "pending",
   });
+  // For tag input UX
+  const [skillInput, setSkillInput] = useState("");
 
   // For dropdown options
   const [allDepartments, setAllDepartments] = useState<Department[]>([]);
@@ -98,17 +100,20 @@ export default function AddProjectPage() {
             label="Project Name"
             value={formData.name}
             onChange={(val) => setFormData({ ...formData, name: val })}
+            placeholder="Enter project name"
           />
           <Field
             label="Client"
             value={formData.client}
             onChange={(val) => setFormData({ ...formData, client: val })}
+            placeholder="Enter client name"
           />
           <Field
             label="Assign Date"
             type="date"
             value={formData.assignDate}
             onChange={(val) => setFormData({ ...formData, assignDate: val })}
+            placeholder="Select assign date"
           />
         </div>
 
@@ -116,24 +121,53 @@ export default function AddProjectPage() {
           label="Description"
           value={formData.description}
           onChange={(val) => setFormData({ ...formData, description: val })}
+          placeholder="Enter project description"
         />
-         <TextArea
-          label="Skills Required (comma-separated)"
-          value={formData.skillsRequired.join(", ")}
-          onChange={val => setFormData(prev => ({
-            ...prev,
-            skillsRequired: val.split(",").map(s => s.trim()).filter(Boolean)
-          }))}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Skills Required</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {formData.skillsRequired.map((skill, idx) => (
+              <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                {skill}
+                <button type="button" className="ml-1 text-blue-500 hover:text-red-500" onClick={() => setFormData(prev => ({
+                  ...prev,
+                  skillsRequired: prev.skillsRequired.filter((_, i) => i !== idx)
+                }))}>
+                  &times;
+                </button>
+              </span>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={skillInput}
+            onChange={e => setSkillInput(e.target.value)}
+            onKeyDown={e => {
+              if ((e.key === "," || e.key === " ") && skillInput.trim().length > 0) {
+                e.preventDefault();
+                const newSkill = skillInput.trim();
+                if (!formData.skillsRequired.includes(newSkill)) {
+                  setFormData(prev => ({
+                    ...prev,
+                    skillsRequired: [...prev.skillsRequired, newSkill]
+                  }));
+                }
+                setSkillInput("");
+              }
+            }}
+            placeholder="Type a skill and hit comma or space (e.g. React, Node.js)"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Field
-            label="Amount"
-            type="number"
-            value={formData.amount}
-            placeholder="Enter amount"
-            onChange={(val) => setFormData({ ...formData, amount: val })}
-          />
+        <Field
+          label="Amount"
+          type="number"
+          value={formData.amount}
+          placeholder="Enter amount"
+          onChange={(val) => setFormData({ ...formData, amount: val })}
+        />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
             <select
@@ -164,12 +198,14 @@ export default function AddProjectPage() {
           label="Project Scope"
           value={formData.projectScope}
           onChange={(val) => setFormData({ ...formData, projectScope: val })}
+          placeholder="Describe the scope of the project"
         />
 
         <TextArea
           label="Client Inputs"
           value={formData.clientInputs}
           onChange={(val) => setFormData({ ...formData, clientInputs: val })}
+          placeholder="Enter any client inputs or requirements"
         />
 
         <MultiSelectDropdown<Department>
@@ -228,9 +264,10 @@ type TextAreaProps = {
   label: string;
   value: string;
   onChange: (val: string) => void;
+  placeholder?: string;
 };
 
-function TextArea({ label, value, onChange }: TextAreaProps) {
+function TextArea({ label, value, onChange, placeholder }: TextAreaProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
@@ -238,6 +275,7 @@ function TextArea({ label, value, onChange }: TextAreaProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
+        placeholder={placeholder || ""}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       />
     </div>

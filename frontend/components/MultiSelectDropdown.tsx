@@ -11,6 +11,7 @@ export type MultiSelectDropdownProps<T> = {
   getOptionLabel: (item: T) => string;
   getOptionKey: (item: T) => string | number;
   buttonLabel?: string;
+  onDropdownOpen?: () => void;
 };
 
 export function MultiSelectDropdown<T>({
