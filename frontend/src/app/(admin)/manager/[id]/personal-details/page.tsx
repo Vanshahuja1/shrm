@@ -1,11 +1,31 @@
+"use client"
 import { User, CreditCard, DollarSign, TrendingUp } from "lucide-react"
-import type { ManagerInfo } from "./types"
+import type { ManagerInfo } from "../types"
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { mockManagerInfo } from "../data/mockData"
+export default function PersonalDetails() {
+  const [managerInfo, setManagerInfo] = useState<ManagerInfo | null>(null)
+  const { id: managerId } = useParams()
+  const router = useRouter()
 
-interface PersonalDetailsProps {
-  managerInfo: ManagerInfo
-}
+  useEffect(() => {
+    const fetchManagerInfo = async () => {
+      try {
+        const response = await fetch(`/api/manager/${managerId}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch manager information")
+        }
+        const data = await response.json()
+        setManagerInfo(data)
+      } catch (error) {
+        setManagerInfo(mockManagerInfo) // Fallback to mock data
+      }
+    }
 
-export default function PersonalDetails({ managerInfo }: PersonalDetailsProps) {
+    fetchManagerInfo()
+  }, [managerId])
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Personal Details</h2>
@@ -19,35 +39,35 @@ export default function PersonalDetails({ managerInfo }: PersonalDetailsProps) {
         <div className="grid grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <p className="text-gray-900 font-medium">{managerInfo.name}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.name}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
-            <p className="text-gray-900 font-medium">{managerInfo.personalInfo.employeeId}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.personalInfo?.employeeId}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-            <p className="text-gray-900 font-medium">{managerInfo.department}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.department}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-            <p className="text-gray-900 font-medium">{managerInfo.personalInfo.dateOfBirth}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.personalInfo?.dateOfBirth}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <p className="text-gray-900 font-medium">{managerInfo.email}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.email}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-            <p className="text-gray-900 font-medium">{managerInfo.phone}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.phone}</p>
           </div>
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-            <p className="text-gray-900 font-medium">{managerInfo.personalInfo.address}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.personalInfo?.address}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
-            <p className="text-gray-900 font-medium">{managerInfo.personalInfo.emergencyContact}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.personalInfo?.emergencyContact}</p>
           </div>
         </div>
       </div>
@@ -61,19 +81,19 @@ export default function PersonalDetails({ managerInfo }: PersonalDetailsProps) {
         <div className="grid grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
-            <p className="text-gray-900 font-medium">{managerInfo.bankDetails.accountNumber}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.bankDetails.accountNumber}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
-            <p className="text-gray-900 font-medium">{managerInfo.bankDetails.bankName}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.bankDetails.bankName}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
-            <p className="text-gray-900 font-medium">{managerInfo.bankDetails.ifsc}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.bankDetails?.ifsc}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-            <p className="text-gray-900 font-medium">{managerInfo.bankDetails.branch}</p>
+            <p className="text-gray-900 font-medium">{managerInfo?.bankDetails?.branch}</p>
           </div>
         </div>
       </div>
@@ -87,20 +107,20 @@ export default function PersonalDetails({ managerInfo }: PersonalDetailsProps) {
         <div className="grid grid-cols-3 gap-6">
           <div className="text-center">
             <label className="block text-sm font-medium text-gray-700 mb-2">Basic Salary</label>
-            <p className="text-3xl font-bold text-gray-900">${managerInfo.salary.basic.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-gray-900">${managerInfo?.salary?.basic?.toLocaleString()}</p>
           </div>
           <div className="text-center">
             <label className="block text-sm font-medium text-gray-700 mb-2">Allowances</label>
-            <p className="text-3xl font-bold text-gray-900">${managerInfo.salary.allowances.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-gray-900">${managerInfo?.salary?.allowances?.toLocaleString()}</p>
           </div>
           <div className="text-center">
             <label className="block text-sm font-medium text-gray-700 mb-2">Total Salary</label>
-            <p className="text-3xl font-bold text-red-600">${managerInfo.salary.total.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-red-600">${managerInfo?.salary?.total?.toLocaleString()}</p>
           </div>
         </div>
         <div className="mt-4 pt-4 border-t border-red-100">
           <p className="text-sm text-gray-600">
-            Last Appraisal: <span className="font-medium">{managerInfo.salary.lastAppraisal}</span>
+            Last Appraisal: <span className="font-medium">{managerInfo?.salary?.lastAppraisal}</span>
           </p>
         </div>
       </div>

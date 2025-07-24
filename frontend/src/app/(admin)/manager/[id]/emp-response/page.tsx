@@ -1,20 +1,53 @@
+"use client"
 import { Eye, Download, Star } from "lucide-react"
-import type { ManagerInfo, Task } from "./types"
-import { calculatePerformanceMetrics } from "./utils/performance"
+import type { ManagerInfo, Task } from "../types"
+import { calculatePerformanceMetrics } from "../utils/performance"
+import { use, useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { mockTasks, mockManagerInfo } from "../data/mockData"
 
-interface EmployeeResponseProps {
-  managerInfo: ManagerInfo
-  tasks: Task[]
-}
 
-export default function EmployeeResponse({ managerInfo, tasks }: EmployeeResponseProps) {
+export default function EmployeeResponse() {
+
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [managerInfo, setManagerInfo] = useState<ManagerInfo | null>(null)
+  const { id: managerId } = useParams()
+  const router = useRouter()
+  useEffect(() => {
+    // Fetch tasks and manager info for the manager
+    const fetchData = async () => {
+      try {
+        const [tasksResponse, managerInfoResponse] = await Promise.all([
+          fetch(`/api/manager/${managerId}/tasks`),
+          fetch(`/api/manager/${managerId}/info`)
+        ])
+
+        if (!tasksResponse.ok || !managerInfoResponse.ok) {
+          throw new Error("Failed to fetch data")
+        }
+
+        const tasksData = await tasksResponse.json()
+        const managerInfoData = await managerInfoResponse.json()
+
+        setTasks(tasksData)
+        setManagerInfo(managerInfoData)
+      } catch (error) {
+        setTasks(mockTasks) // Fallback to mock data
+        setManagerInfo(mockManagerInfo) // Fallback to mock data
+
+      }
+    }
+
+    fetchData()
+  }, [managerId])
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Employee Response & Performance Tracking</h2>
 
       {/* Performance Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {managerInfo.employees.map((employee) => {
+        {managerInfo?.employees.map((employee) => {
           const metrics = calculatePerformanceMetrics(employee)
           return (
             <div key={employee.id} className="bg-white rounded-lg shadow-sm border border-red-200 p-4">

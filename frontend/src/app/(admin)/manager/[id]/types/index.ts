@@ -1,3 +1,5 @@
+
+
 export type Employee = {
   id: number
   name: string
@@ -147,3 +149,4 @@ export type AdminData = {
   attendanceData: AttendanceData[]
   performanceMetrics: unknown[]
 }
+

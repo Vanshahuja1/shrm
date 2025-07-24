@@ -1,15 +1,44 @@
 "use client"
-
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { Plus, Database, Edit, FileText } from "lucide-react"
-import type { Project } from "./types"
+import type { Project } from "../types"
+import { mock } from "node:test"
+import { mockOngoingProjects } from "../data/mockData"
 
-interface OngoingProjectsProps {
-  projects: Project[]
-  onProgressChange: (projectId: number, newProgress: number) => void
-  onShowNewProject: () => void
-}
 
-export default function OngoingProjects({ projects, onProgressChange, onShowNewProject }: OngoingProjectsProps) {
+export default function OngoingProjects() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const { id: managerId } = useParams()
+  const router = useRouter()
+  useEffect(() => {
+    // Fetch ongoing projects for the manager
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch(`/api/manager/${managerId}/projects`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch projects")
+        }
+        const data = await response.json()
+        setProjects(data)
+      } catch (error) {
+        console.error("Error fetching projects:", error)
+        setProjects(mockOngoingProjects as Project[]) // Fallback to mock data in case of error
+      }
+    }
+
+    fetchProjects()
+  }, [managerId])
+  const onProgressChange = (projectId: number, newProgress: number) => {
+    setProjects((prev) =>
+      prev.map((project) =>
+        project.id === projectId ? { ...project, progress: newProgress } : project
+      )
+    )
+  }
+  const onShowNewProject = () => {
+    router.push(`/manager/${managerId}/ongoing-projects/add`)
+  }
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">

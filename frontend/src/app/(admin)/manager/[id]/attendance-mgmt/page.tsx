@@ -2,22 +2,36 @@
 
 import { Clock, Edit, CheckCircle, LogIn, LogOut } from "lucide-react"
 import { useState, useEffect } from "react"
-import type { AttendanceRecord } from "./types"
-
-interface AttendanceManagementProps {
-  attendanceRecords: AttendanceRecord[]
-  onAttendanceEdit: (record: AttendanceRecord) => void
-  onRegularization: (record: AttendanceRecord, reason: string) => void
-}
-
-export default function AttendanceManagement({
-  attendanceRecords,
-  onAttendanceEdit,
-  onRegularization,
-}: AttendanceManagementProps) {
+import type { AttendanceRecord } from "../types/index"
+import { useParams, useRouter } from "next/navigation"
+import { mockAttendanceRecords } from "../data/mockData"
+export default function AttendanceManagement() {
   const [isPunchedIn, setIsPunchedIn] = useState(false)
   const [punchTime, setPunchTime] = useState<string>("")
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
+
+  const { id: managerId } = useParams()
+  const router = useRouter()
+
+  useEffect(() => {
+    // Fetch attendance records for the manager
+    const fetchAttendanceRecords = async () => {
+      try {
+        const response = await fetch(`/api/manager/${managerId}/attendance`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch attendance records")
+        }
+        const data = await response.json()
+        setAttendanceRecords(data)
+      } catch (error) {
+        console.error("Error fetching attendance records:", error)
+        setAttendanceRecords(mockAttendanceRecords) // Fallback to mock records
+      }
+    }
+
+    fetchAttendanceRecords()
+  }, [managerId, attendanceRecords])  
 
   // Update current time every second
   useEffect(() => {
@@ -36,6 +50,30 @@ export default function AttendanceManagement({
       setIsPunchedIn(false)
       setPunchTime("")
     }
+  }
+
+  function onAttendanceEdit(record: AttendanceRecord): void {
+    // Navigate to the attendance edit page for the selected record
+    router.push(`/manager/${managerId}/attendance/${record.id}/edit`)
+  }
+
+  function onRegularization(record: AttendanceRecord, reason: string): void {
+    // Mark the record as regularized and update the attendanceRecords state
+    setAttendanceRecords(prevRecords =>
+      prevRecords.map(r =>
+        r.id === record.id
+          ? { ...r, regularized: true, regularizationReason: reason }
+          : r
+      )
+    )
+    // Optionally, send a request to the backend to persist the regularization
+    fetch(`/api/manager/${managerId}/attendance/${record.id}/regularize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    }).catch(error => {
+      console.error("Failed to regularize attendance:", error)
+    })
   }
 
   return (
@@ -59,7 +97,7 @@ export default function AttendanceManagement({
               </tr>
             </thead>
             <tbody>
-              {attendanceRecords.map((record, index) => (
+              {attendanceRecords?.map((record : AttendanceRecord, index: number) => (
                 <tr key={index} className="border-b border-gray-100 hover:bg-red-50">
                   <td className="py-3 px-4">{record.date}</td>
                   <td className="py-3 px-4 font-medium">{record.employee}</td>

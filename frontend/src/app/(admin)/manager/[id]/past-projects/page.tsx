@@ -1,10 +1,37 @@
-import type { Project } from "./types"
+"use client"
+import { useParams } from "next/dist/client/components/navigation"
 
-interface PastProjectsProps {
-  projects: Project[]
-}
+import { useEffect, useState } from "react"
+import { mockPastProjects } from "../data/mockData"
+import type { Project } from "../types"
+export default function PastProjects() {
 
-export default function PastProjects({ projects }: PastProjectsProps) {
+  const {id: managerId} = useParams()
+  const [projects, setProjects] = useState<Project[]>([])
+
+  useEffect(() => {
+    // Fetch past projects for the manager
+    async function fetchProjects() {
+      try {
+        const response = await fetch(`/api/managers/${managerId}/projects?status=past`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch projects")
+        }
+        const data = await response.json()
+        setProjects(data.projects)
+        
+      }
+      catch (error) {
+        console.error("Error fetching projects:", error)
+        // Fallback to mock data in case of error
+        setProjects(mockPastProjects as Project[])
+      }
+    }
+
+    fetchProjects()
+  }, [managerId])
+
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Past Projects</h2>

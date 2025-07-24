@@ -1,21 +1,60 @@
 "use client"
 
 import { Plus, Mail, MessageSquare, FileText, Star } from "lucide-react"
-import type { Task } from "./types";
+import { useParams, useRouter } from "next/navigation"
+import type { Task } from "../types";
+import { useEffect, useState } from "react";
+import { mockTasks } from "../data/mockData";
+export default function TaskAssignment() {
+  const [tasks, setTasks] = useState<Task[]>([])
+  const { id: managerId } = useParams()
+  const router = useRouter()
 
-interface TaskAssignmentProps {
-  tasks: Task[]
-  onShowNewTask: () => void
-  onTaskRating: (taskId: number, responseId: number, rating: number) => void
-}
+  useEffect(() => {
+    // Fetch tasks for the manager
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`/api/manager/${managerId}/tasks`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch tasks")
+        }
+        const data = await response.json()
+        setTasks(data)
+      } catch (error) {
+        console.error("Error fetching tasks:", error)
+        setTasks(mockTasks) 
+      }
+    }
 
-export default function TaskAssignment({ tasks, onShowNewTask, onTaskRating }: TaskAssignmentProps) {
+    fetchTasks()
+  }, [managerId])
+
+
+  function onTaskRating(taskId: number, responseId: number, star: number): void {
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              responses: task.responses.map(response =>
+                response.id === responseId
+                  ? { ...response, rating: star }
+                  : response
+              ),
+            }
+          : task
+      )
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Task Assignment</h2>
         <button
-          onClick={onShowNewTask}
+          onClick={()=>{
+            router.push(`/manager/${managerId}/task-assignment/add`)
+          }}
           className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-2 font-medium"
         >
           <Plus className="w-5 h-5" />
