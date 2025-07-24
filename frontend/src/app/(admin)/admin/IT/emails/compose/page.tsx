@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Send } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+import axios from "@/lib/axiosInstance"
+
 interface Email {
   type: "member_crud" | "increment" | "decrement" | "penalty" | "general"
   recipient: string
@@ -21,11 +23,28 @@ export default function ComposeEmailPage() {
     subject: "",
     message: "",
   })
+  const [loading, setLoading] = useState(false) // Add loading state
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Sending email:", formData)
-    router.push("/admin/IT/emails")
+    setLoading(true) // Start loading
+
+    axios.post("/mail/send", {
+      type: formData.type,
+      to: formData.recipient,
+      from: formData.sender,
+      subject: formData.subject,
+      text: formData.message,
+    })
+      .then(() => {
+        router.push("/admin/IT/emails")
+      })
+      .catch((error) => {
+        console.error("Error sending email:", error)
+      })
+      .finally(() => {
+        setLoading(false) // Stop loading
+      })
   }
 
   return (
@@ -106,14 +125,28 @@ export default function ComposeEmailPage() {
             <button
               type="submit"
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              disabled={loading} // Disable while loading
             >
-              <Send size={16} />
-              Send Email
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send size={16} />
+                  Send Email
+                </>
+              )}
             </button>
             <button
               type="button"
               onClick={() => router.push("/admin/IT/emails")}
               className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+              disabled={loading} // Optionally disable cancel while loading
             >
               Cancel
             </button>

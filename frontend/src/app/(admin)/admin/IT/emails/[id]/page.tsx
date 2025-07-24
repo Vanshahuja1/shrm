@@ -3,47 +3,9 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Archive, Forward, Reply, Star, Trash2 } from "lucide-react";
+import axios from "@/lib/axiosInstance";
+import { Email } from "../types"; // Adjust the import based on your project structure
 
-interface Email {
-  id: number;
-  type: "member_crud" | "increment" | "decrement" | "penalty" | "general";
-  recipient: string;
-  sender: string;
-  subject: string;
-  message: string;
-  timestamp: string;
-  status: "sent" | "pending" | "failed" | "draft";
-  isRead: boolean;
-  isStarred: boolean;
-  attachments?: string[];
-}
-
-const sampleEmails: Email[] = [
-  {
-    id: 1,
-    type: "increment",
-    recipient: "john.doe@oneaimit.com",
-    sender: "hr@oneaimit.com",
-    subject: "Salary Increment Notification",
-    message: "Your salary has been increased by $5,000.",
-    timestamp: "2024-01-15T10:30:00Z",
-    status: "sent",
-    isRead: true,
-    isStarred: false,
-  },
-  {
-    id: 2,
-    type: "member_crud",
-    recipient: "hr@oneaimit.com",
-    sender: "admin@oneaimit.com",
-    subject: "New Employee Added",
-    message: "A new employee Jane Smith has been added.",
-    timestamp: "2024-01-14T14:20:00Z",
-    status: "sent",
-    isRead: false,
-    isStarred: true,
-  },
-];
 
 export default function EmailDetailPage() {
   const { id } = useParams();
@@ -51,16 +13,20 @@ export default function EmailDetailPage() {
   const [email, setEmail] = useState<Email | null>(null);
 
   useEffect(() => {
-    const found = sampleEmails.find((e) => e.id === Number(id));
-    if (found) setEmail(found);
-  }, [id]);
-
+    axios.get(`/mail/${id}`).then(response => {
+      console.log("Fetched email:", response.data);
+      setEmail(response.data.email);
+    }).catch(error => {
+      console.error("Error fetching email:", error);
+    });
+  }, []);
   if (!email) {
     return <p className="text-center mt-12 text-gray-500">Email not found</p>;
   }
 
   return (
     <div className="space-y-6">
+      
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.push("/admin/IT/emails")}
@@ -100,7 +66,7 @@ export default function EmailDetailPage() {
             <div>
               <span className="font-semibold text-gray-700">Date:</span>
               <p className="text-gray-900">
-                {new Date(email.timestamp).toLocaleDateString()} at {new Date(email.timestamp).toLocaleTimeString()}
+                {new Date(email.sentAt).toLocaleDateString()} at {new Date(email.sentAt).toLocaleTimeString()}
               </p>
             </div>
             <div>
