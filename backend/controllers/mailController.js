@@ -12,11 +12,14 @@ async function sendEmail(req, res) {
         `You have a new notification from ${req.body.from} under OneAim Organisation, Kindly check your dashboard for more details.`,
     });
 
+
     // Store email data in DB
     const emailDoc = new Email({
       type: req.body.type,
       sender: req.body.from,
       recipient: req.body.to,
+      senderId: req.body.senderId,
+      recipientId: req.body.recipientId,
       subject: req.body.subject || "Notification from OneAim Organisation",
       message:
         req.body.text ||
@@ -27,9 +30,8 @@ async function sendEmail(req, res) {
 
     res.json({ success: true, message: "Email sent" });
   } catch (err) {
-   
     await Email.create({
-     type: req.body.type,
+      type: req.body.type,
       sender: req.body.from,
       recipient: req.body.to,
       subject: req.body.subject || "Notification from OneAim Organisation",
@@ -48,7 +50,9 @@ async function sendEmail(req, res) {
 async function sendEmailToMultipleRecipients(req, res) {
   const { recipients, subject, text } = req.body;
   if (!Array.isArray(recipients) || recipients.length === 0) {
-    return res.status(400).json({ success: false, message: "No recipients provided" });
+    return res
+      .status(400)
+      .json({ success: false, message: "No recipients provided" });
   }
   try {
     const emailPromises = recipients.map((recipient) => {
@@ -79,7 +83,9 @@ async function sendEmailToMultipleRecipients(req, res) {
 
     res.json({ success: true, message: "Emails sent" });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Email failed", error: err.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Email failed", error: err.message });
   }
 }
 
@@ -88,7 +94,13 @@ async function getAllEmails(req, res) {
     const emails = await Email.find().sort({ sentAt: -1 });
     res.json({ success: true, emails });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Failed to fetch emails", error: err.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to fetch emails",
+        error: err.message,
+      });
   }
 }
 
@@ -96,18 +108,59 @@ async function getById(req, res) {
   try {
     const email = await Email.findById(req.params.id);
     if (!email) {
-      return res.status(404).json({ success: false, message: "Email not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Email not found" });
     }
     res.json({ success: true, email });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Failed to fetch email", error: err.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to fetch email",
+        error: err.message,
+      });
   }
 }
 
+async function getSentEmailsByEmployeeId(req, res) {
+  const empId = req.params.empId;
+  try {
+    const emails = await Email.find({ sender: empId }).sort({ sentAt: -1 });
+    res.json({ success: true, emails });
+  } catch (err) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to fetch emails",
+        error: err.message,
+      });
+  }
+}
+
+async function getReceivedEmailsByEmployeeId(req, res) {
+  const empId = req.params.empId;
+  try {
+    const emails = await Email.find({ recipient: empId }).sort({ sentAt: -1 });
+    res.json({ success: true, emails });
+  } catch (err) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to fetch emails",
+        error: err.message,
+      });
+  }
+}
 
 module.exports = {
   sendEmail,
   sendEmailToMultipleRecipients,
   getAllEmails,
   getById,
+  getSentEmailsByEmployeeId,
+  getReceivedEmailsByEmployeeId,
 };

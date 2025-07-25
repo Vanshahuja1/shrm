@@ -10,6 +10,7 @@ const taskRoutes = require("./routes/taskRoutes");
 const departmentRoutes = require("./routes/departmentRoutes");
 const overviewRoutes = require("./routes/overviewRoutes")
 const mailRoutes = require("./routes/mailRoutes");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -31,8 +32,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
@@ -41,7 +40,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/overview", overviewRoutes);
-app.use("/api/mail/",mailRoutes)
+app.use("/api/mail/", mailRoutes);
 app.use("/api/:orgName/org-members", (req, res, next) => {
   req.orgName = req.params.orgName;
   next();

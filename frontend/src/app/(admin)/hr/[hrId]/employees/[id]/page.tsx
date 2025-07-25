@@ -10,67 +10,102 @@ import {
   Calendar,
   CreditCard,
   Mail,
-  Phone,
   Shield,
   Award,
   Building,
   Clock,
   FileText,
   Star,
-  ClipboardList,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import axios from "@/lib/axiosInstance"
+import EditModal from "./editModal";
 interface EmployeeDetails {
-  personalInfo: {
-    name: string;
+  _id: string;
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  gender: string;
+  address: string;
+  dateOfBirth: string;
+  performance: number;
+  joiningDate: string;
+  currentProjects: string[];
+  pastProjects: string[];
+  attendanceCount30Days: number;
+  taskCountPerDay: number;
+  tasks: any[];
+  responses: any[];
+  managers: string[];
+  photo: string;
+  upperManager: string;
+  salary: number;
+  adharCard: string;
+  panCard: string;
+  experience: string;
+  projects: string[];
+  organizationName: string;
+  departmentName: string;
+  isActive: boolean;
+  documents: any[];
+  bankDetails: {
+    accountHolder: string;
+    accountNumber: string;
+    ifsc: string;
+    branch: string;
+    accountType: string;
+  };
+  workLog: {
+    hoursWorked: number;
+  };
+  employeeInfo: {
+    id: string;
     email: string;
     phone: string;
-    dob: string;
-    gender: string;
-    aadhar: string;
-    pan: string;
-    address: string;
-    emergencyContact: string;
-  };
-  financialInfo: {
-    salary: string;
-    bankInfo: {
-      accountHolderName: string;
-      accountType: string;
-      accountNumber: string;
-      bankName: string;
-      ifscCode: string;
-      branch: string;
-    };
-  };
-  departmentInfo: {
+    name: string;
+    role: string;
     department: string;
-    designation: string;
-    managerName: string;
-    performanceRating: number;
+    organization: string;
   };
-  joiningDetails: {
+  OrgMemberInfo: {
+    id: string;
+    name: string;
+    role: string;
+    department: string;
+    salary: number;
+    projects: string[];
+    experience: string;
+    contactInfo: {
+      email: string;
+      phone: string;
+      address: string;
+    };
+    documents: {
+      pan: string;
+      aadhar: string;
+    };
     joiningDate: string;
-    employeeId: string;
-  };
-  pastOrganizations: Array<{
-    companyName: string;
-    designation: string;
-    duration: string;
-    type: string; // Full Time / Part Time
-    workMode: string; // Onsite / Remote
-    contactInfo: string;
-    expLetterUrl?: string;
-    resignationLetterUrl?: string;
-  }>;
-  taskInfo: {
-    taskName: string;
-    assignedOn: string;
-    assignedBy: string;
-  };
-  payrollInfo: {
-    taxCode: string;
-    benefits: string;
+    performanceMetrics: {
+      tasksPerDay: number;
+      attendanceScore: number;
+      managerReviewRating: number;
+      combinedPercentage: number;
+    };
+    attendance: {
+      last7Days: boolean[];
+      todayPresent: boolean;
+    };
   };
 }
 
@@ -78,98 +113,47 @@ export default function EmployeeDetailsPage() {
   const [details, setDetails] = useState<EmployeeDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const params = useParams();
   const router = useRouter();
+
+  const { hrId, id } = params;
+
+
+  const handleEditSave = async (updatedData: EmployeeDetails) => {
+    try {
+      const response = await axios.put(`/user/${details?.id}`, updatedData);
+      if (response.status === 200) {
+        alert('Employee details updated successfully!');
+        setIsEditModalOpen(false);
+        // Refresh employee details
+        const updatedDetails = await axios.get(`/user/${id}`);
+        setDetails(updatedDetails.data.data);
+      }
+    } catch (error) {
+      alert('Failed to update employee details. Please try again.');
+      console.error('Error updating employee:', error);
+    }
+  }
 
   useEffect(() => {
     const fetchEmployeeDetails = async () => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        const response = await axios.get(`/user/${id}`);
+        const employee = response.data.data;
+        setDetails(employee);
 
-        // Try to get employee from localStorage first
-        const employeeId = params.id as string;
-        const storedEmployees = JSON.parse(localStorage.getItem("employeeList") || "[]");
-        const employee = storedEmployees.find((emp: any) => emp.employeeId === employeeId);
-
-        if (employee && employee._details) {
-          // Use the stored employee data
-          setDetails(employee._details);
-        } else {
-          // Fallback to mock data
-          setDetails({
-            personalInfo: {
-              name: "John Doe",
-              email: "john.doe@company.com",
-              phone: "1234567890",
-              dob: "1990-05-15",
-              gender: "Male",
-              aadhar: "1234-5678-9012",
-              pan: "ABCDE1234F",
-              address: "123 Main Street, City, State, PIN - 123456",
-              emergencyContact: "9876543210",
-            },
-            financialInfo: {
-              salary: "$4000",
-              bankInfo: {
-                accountHolderName: "John Doe",
-                accountType: "Savings",
-                accountNumber: "9876543210",
-                bankName: "State Bank of India",
-                ifscCode: "SBIN0001234",
-                branch: "Main Branch",
-              },
-            },
-            departmentInfo: {
-              department: "Engineering",
-              designation: "Software Engineer",
-              managerName: "Jane Smith",
-              performanceRating: 4.8,
-            },
-            joiningDetails: {
-              joiningDate: "2021-06-01",
-              employeeId: employeeId,
-            },
-            taskInfo: {
-              taskName: "Setup Development Environment",
-              assignedOn: "2021-06-01",
-              assignedBy: "Jane Smith",
-            },
-            payrollInfo: {
-              taxCode: "TX456",
-              benefits: "Health Insurance, Paid Leave",
-            },
-            pastOrganizations: [
-              {
-                companyName: "TechSolutions Inc.",
-                designation: "Software Developer",
-                duration: "Jan 2018 - Dec 2019",
-                type: "Full Time",
-                workMode: "Onsite",
-                contactInfo: "+91 9876543222 (HR Department)",
-                expLetterUrl: "#",
-                resignationLetterUrl: "#"
-              },
-              {
-                companyName: "Digital Innovations Ltd.",
-                designation: "Junior Developer",
-                duration: "Jun 2016 - Dec 2017",
-                type: "Full Time",
-                workMode: "Hybrid",
-                contactInfo: "hr@digitalinnovations.com",
-                expLetterUrl: "#"
-              }
-            ],
-          });
-        }
       } catch (error) {
         console.error("Failed to fetch employee details:", error);
+        setDetails(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchEmployeeDetails();
-  }, [params.id]);
+  }, [id]);
 
   const calculateYearsWithCompany = (joiningDate: string) => {
     const start = new Date(joiningDate);
@@ -196,13 +180,18 @@ export default function EmployeeDetailsPage() {
       .toUpperCase();
   };
 
-  const benefitsList =
-    details?.payrollInfo.benefits.split(",").map((b) => b.trim()) || [];
+  const formatSalary = (salary: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(salary);
+  };
 
   const tabs = [
     { id: "overview", label: "Overview", icon: User },
     { id: "details", label: "Details", icon: FileText },
-    { id: "pastorg", label: "Past Organizations", icon: Building },
+    { id: "projects", label: "Projects", icon: Building },
     { id: "payroll", label: "Payroll", icon: CreditCard },
   ];
 
@@ -232,7 +221,7 @@ export default function EmployeeDetailsPage() {
               <button
                 className="flex items-center text-gray-600 cursor-pointer hover:text-red-600 transition"
                 onClick={() => {
-                  router.push("/hr/employees");
+                  router.push(`/hr/${hrId}/employees`);
                 }}
               >
                 <ArrowLeft size={18} className="mr-2" />
@@ -244,12 +233,57 @@ export default function EmployeeDetailsPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-3">
-              <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">
                 Edit
               </button>
-              <button className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
-                Actions
+              <button
+
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-500 cursor-pointer">
+                Delete
               </button>
+
+              <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete Employee</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete this employee? This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={async () => {
+                        try {
+                          const response = await axios.delete(`/user/${details?.id}`);
+                          if (response.status === 200) {
+                            alert('Employee deleted successfully!');
+                            router.push(`/hr/${hrId}/employees`);
+                          }
+                        } catch (error) {
+                          alert('Failed to delete employee. Please try again.');
+                          console.error('Error deleting employee:', error);
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <EditModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                employee={details}
+                onSave={handleEditSave}
+              />
             </div>
           </div>
         </div>
@@ -263,43 +297,46 @@ export default function EmployeeDetailsPage() {
               <div className="flex items-center space-x-6">
                 <div className="relative">
                   <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-red-600 text-2xl font-bold">
-                    {getInitials(details.personalInfo.name)}
+                    {getInitials(details.name)}
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
+                  <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white ${details.isActive ? 'bg-green-500' : 'bg-gray-500'
+                    }`}></div>
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                    {details.personalInfo.name}
+                    {details.name}
                   </h2>
-                  <p className="text-gray-600 text-lg mb-2">
-                    {details.departmentInfo.designation}
+                  <p className="text-gray-600 text-lg mb-2 capitalize">
+                    {details.role}
                   </p>
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     <span className="flex items-center">
                       <Building size={14} className="mr-1" />
-                      {details.departmentInfo.department}
+                      {details.departmentName}
                     </span>
                     <span className="flex items-center">
                       <Calendar size={14} className="mr-1" />
-                      Since {formatDate(details.joiningDetails.joiningDate)}
+                      Since {formatDate(details.joiningDate)}
                     </span>
                     <span className="flex items-center">
                       <Star size={14} className="mr-1" />
-                      {details.joiningDetails.employeeId}
+                      {details.id}
                     </span>
                   </div>
                 </div>
               </div>
               <div className="mt-6 lg:mt-0 flex flex-col lg:items-end space-y-2">
                 <div className="flex items-center space-x-2">
-                  <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium">
-                    Active
+                  <span className={`px-3 py-1 text-sm rounded-full font-medium ${details.isActive
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                    }`}>
+                    {details.isActive ? 'Active' : 'Inactive'}
                   </span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
-                    Full-time
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium capitalize">
+                    {details.role}
                   </span>
                 </div>
-                
               </div>
             </div>
           </div>
@@ -315,11 +352,10 @@ export default function EmployeeDetailsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === tab.id
-                        ? "border-red-500 text-red-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
+                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                      ? "border-red-500 text-red-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
                   >
                     <Icon size={16} />
                     <span>{tab.label}</span>
@@ -342,7 +378,7 @@ export default function EmployeeDetailsPage() {
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Department</span>
                       <span className="text-sm font-medium text-gray-900">
-                        {details.departmentInfo.department}
+                        {details.departmentName}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -350,18 +386,15 @@ export default function EmployeeDetailsPage() {
                         Years with company
                       </span>
                       <span className="text-sm font-medium text-gray-900">
-                        {calculateYearsWithCompany(
-                          details.joiningDetails.joiningDate
-                        )}{" "}
-                        years
+                        {calculateYearsWithCompany(details.joiningDate)} years
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">
-                        Performance rating
+                        Performance Score
                       </span>
                       <span className="text-sm font-medium text-gray-900">
-                        {details.departmentInfo.performanceRating}/5.0
+                        {details.performance}%
                       </span>
                     </div>
                   </div>
@@ -378,62 +411,66 @@ export default function EmployeeDetailsPage() {
                     <div>
                       <p className="text-sm text-gray-600">Email</p>
                       <p className="text-sm font-medium text-gray-900">
-                        {details.personalInfo.email}
+                        {details.email}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Phone</p>
                       <p className="text-sm font-medium text-gray-900">
-                        {details.personalInfo.phone}
+                        {details.phone}
                       </p>
                     </div>
+
                   </div>
                 </div>
 
                 <div className="bg-green-50 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold text-gray-900">
-                      Current Benefits
+                      Current Projects
                     </h3>
                     <Award size={16} className="text-green-500" />
                   </div>
                   <div className="space-y-2">
-                    {benefitsList.map((benefit, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-900">{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900">
-                      Employment History
-                    </h3>
-                    <Building size={16} className="text-blue-500" />
-                  </div>
-                  <div className="space-y-2">
-                    {details.pastOrganizations && details.pastOrganizations.length > 0 ? (
-                      details.pastOrganizations.slice(0, 2).map((org, index) => (
-                        <div key={index} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <span className="text-sm text-gray-900">{org.companyName}</span>
-                          </div>
-                          <span className="text-xs text-gray-500">{org.duration}</span>
+                    {details.projects && details.projects.length > 0 ? (
+                      details.projects.map((project, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-gray-900 capitalize">{project}</span>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">No previous employment records</p>
+                      <p className="text-sm text-gray-500">No active projects</p>
                     )}
-                    
-                    {details.pastOrganizations && details.pastOrganizations.length > 2 && (
-                      <div className="text-xs text-blue-600 mt-1 hover:underline cursor-pointer" onClick={() => setActiveTab("pastorg")}>
-                        + {details.pastOrganizations.length - 2} more
-                      </div>
-                    )}
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900">
+                      Performance Metrics
+                    </h3>
+                    <Star size={16} className="text-yellow-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Tasks/Day</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {details.taskCountPerDay}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Attendance</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {details.attendanceCount30Days}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Experience</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {details.experience} years
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -456,7 +493,7 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {details.personalInfo.name}
+                            {details.name}
                           </p>
                         </div>
                       </div>
@@ -468,7 +505,7 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {details.personalInfo.email}
+                            {details.email}
                           </p>
                         </div>
                       </div>
@@ -478,21 +515,23 @@ export default function EmployeeDetailsPage() {
                             Phone
                           </p>
                         </div>
+
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {details.personalInfo.phone}
+                            {details.phone}
                           </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-1">
                           <p className="text-sm font-medium text-gray-600">
-                            Date of Birth
+                            Date Of Birth
                           </p>
                         </div>
+
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {formatDate(details.personalInfo.dob)}
+                            {formatDate(details.dateOfBirth)}
                           </p>
                         </div>
                       </div>
@@ -502,9 +541,10 @@ export default function EmployeeDetailsPage() {
                             Gender
                           </p>
                         </div>
+
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {details.personalInfo.gender}
+                            {details.gender}
                           </p>
                         </div>
                       </div>
@@ -516,7 +556,7 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900 font-mono">
-                            {details.personalInfo.aadhar}
+                            {details.adharCard}
                           </p>
                         </div>
                       </div>
@@ -528,7 +568,7 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900 font-mono">
-                            {details.personalInfo.pan}
+                            {details.panCard}
                           </p>
                         </div>
                       </div>
@@ -540,19 +580,7 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {details.personalInfo.address}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-1">
-                          <p className="text-sm font-medium text-gray-600">
-                            Emergency Contact
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-900">
-                            {details.personalInfo.emergencyContact}
+                            {details.address}
                           </p>
                         </div>
                       </div>
@@ -573,31 +601,43 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {details.departmentInfo.department}
+                            {details.departmentName}
                           </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-1">
                           <p className="text-sm font-medium text-gray-600">
-                            Designation
+                            Role
                           </p>
                         </div>
                         <div className="col-span-2">
-                          <p className="text-sm text-gray-900">
-                            {details.departmentInfo.designation}
+                          <p className="text-sm text-gray-900 capitalize">
+                            {details.role}
                           </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-1">
                           <p className="text-sm font-medium text-gray-600">
-                            Manager Name
+                            Organization
                           </p>
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {details.departmentInfo.managerName}
+                            {details.organizationName}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Experience
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.experience} years
                           </p>
                         </div>
                       </div>
@@ -620,7 +660,7 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {formatDate(details.joiningDetails.joiningDate)}
+                            {formatDate(details.joiningDate)}
                           </p>
                         </div>
                       </div>
@@ -632,103 +672,26 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900 font-mono">
-                            {details.joiningDetails.employeeId}
+                            {details.id}
                           </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-1">
                           <p className="text-sm font-medium text-gray-600">
-                            Employment Type
+                            Status
                           </p>
                         </div>
                         <div className="col-span-2">
-                          <p className="text-sm text-gray-900">Full-time</p>
+                          <p className={`text-sm font-medium ${details.isActive ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                            {details.isActive ? 'Active' : 'Inactive'}
+                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-                      <ClipboardList size={16} className="mr-2 text-red-500" />
-                      Task Information
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-1">
-                          <p className="text-sm font-medium text-gray-600">
-                            Task Name
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-900">
-                            {details.taskInfo.taskName}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-1">
-                          <p className="text-sm font-medium text-gray-600">
-                            Assigned On
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-900">
-                            {formatDate(details.taskInfo.assignedOn)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-1">
-                          <p className="text-sm font-medium text-gray-600">
-                            Assigned By
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-900">
-                            {details.taskInfo.assignedBy}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-                      <Building size={16} className="mr-2 text-red-500" />
-                      Past Organizations
-                    </h3>
-                    <div className="space-y-4">
-                      {details.pastOrganizations && details.pastOrganizations.length > 0 ? (
-                        details.pastOrganizations.map((org, index) => (
-                          <div key={index} className="p-3 bg-white rounded border mb-3">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-medium text-gray-900">{org.companyName}</span>
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                                {org.type}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                              <div>
-                                <span className="text-gray-500">Role:</span>{" "}
-                                <span className="text-gray-900">{org.designation}</span>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">Duration:</span>{" "}
-                                <span className="text-gray-900">{org.duration}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-500">No past organization records available.</p>
-                      )}
-                    </div>
-                  </div>
-                  
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
                       <DollarSign size={16} className="mr-2 text-red-500" />
@@ -743,19 +706,19 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900 font-semibold">
-                            {details.financialInfo.salary}
+                            {formatSalary(details.salary)}
                           </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-1">
                           <p className="text-sm font-medium text-gray-600">
-                            Account Holder Name
+                            Account Holder
                           </p>
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
-                            {details.financialInfo.bankInfo.accountHolderName}
+                            {details.bankDetails.accountHolder || 'Not provided'}
                           </p>
                         </div>
                       </div>
@@ -766,32 +729,8 @@ export default function EmployeeDetailsPage() {
                           </p>
                         </div>
                         <div className="col-span-2">
-                          <p className="text-sm text-gray-900">
-                            {details.financialInfo.bankInfo.accountType}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-1">
-                          <p className="text-sm font-medium text-gray-600">
-                            Account Number
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-900 font-mono">
-                            ••••{details.financialInfo.bankInfo.accountNumber.slice(-4)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-1">
-                          <p className="text-sm font-medium text-gray-600">
-                            Bank Name
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-900">
-                            {details.financialInfo.bankInfo.bankName}
+                          <p className="text-sm text-gray-900 capitalize">
+                            {details.bankDetails.accountType.toLowerCase()}
                           </p>
                         </div>
                       </div>
@@ -803,19 +742,7 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900 font-mono">
-                            {details.financialInfo.bankInfo.ifscCode}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-1">
-                          <p className="text-sm font-medium text-gray-600">
-                            Branch
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-900">
-                            {details.financialInfo.bankInfo.branch}
+                            {details.bankDetails.ifsc || 'Not provided'}
                           </p>
                         </div>
                       </div>
@@ -825,88 +752,85 @@ export default function EmployeeDetailsPage() {
               </div>
             )}
 
-            {activeTab === "pastorg" && (
+            {activeTab === "projects" && (
               <div className="max-w-4xl">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <div className="flex items-center">
                     <Building size={16} className="text-blue-600 mr-2" />
                     <p className="text-sm text-blue-800">
-                      <strong>Employment History:</strong> This section contains the employee's work history prior to joining our organization.
+                      <strong>Project Information:</strong> Current and past project assignments for this employee.
                     </p>
                   </div>
                 </div>
 
-                {details?.pastOrganizations && details.pastOrganizations.length > 0 ? (
-                  <div className="space-y-6">
-                    {details.pastOrganizations.map((org, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-gray-900 flex items-center">
-                            <Building size={16} className="mr-2 text-blue-500" />
-                            {org.companyName}
-                          </h3>
-                          <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
-                            {org.type}
-                          </span>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium text-gray-500">Designation</p>
-                            <p className="text-sm text-gray-900">{org.designation}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Current Projects */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+                      <Building size={16} className="mr-2 text-green-500" />
+                      Current Projects
+                    </h3>
+                    <div className="space-y-3">
+                      {details.projects && details.projects.length > 0 ? (
+                        details.projects.map((project, index) => (
+                          <div key={index} className="p-3 bg-white rounded border">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-900 capitalize">{project}</span>
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                                Active
+                              </span>
+                            </div>
                           </div>
-                          
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium text-gray-500">Duration</p>
-                            <p className="text-sm text-gray-900">{org.duration}</p>
-                          </div>
-                          
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium text-gray-500">Work Mode</p>
-                            <p className="text-sm text-gray-900">{org.workMode}</p>
-                          </div>
-                          
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium text-gray-500">Contact Information</p>
-                            <p className="text-sm text-gray-900">{org.contactInfo}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-200">
-                          {org.expLetterUrl && (
-                            <a 
-                              href={org.expLetterUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-md text-gray-700 hover:bg-gray-50"
-                            >
-                              <FileText size={14} className="mr-1.5 text-blue-600" />
-                              Experience Letter
-                            </a>
-                          )}
-                          
-                          {org.resignationLetterUrl && (
-                            <a 
-                              href={org.resignationLetterUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-md text-gray-700 hover:bg-gray-50"
-                            >
-                              <FileText size={14} className="mr-1.5 text-red-600" />
-                              Resignation Letter
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No current projects assigned.</p>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center">
-                    <Building size={24} className="mx-auto mb-3 text-gray-400" />
-                    <h4 className="text-gray-600 font-medium mb-1">No Past Organization Records</h4>
-                    <p className="text-gray-500 text-sm">This employee has no previous work history records.</p>
+
+                  {/* Past Projects */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+                      <Building size={16} className="mr-2 text-blue-500" />
+                      Past Projects
+                    </h3>
+                    <div className="space-y-3">
+                      {details.pastProjects && details.pastProjects.length > 0 ? (
+                        details.pastProjects.map((project, index) => (
+                          <div key={index} className="p-3 bg-white rounded border">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-900 capitalize">{project}</span>
+                              <span className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full">
+                                Completed
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No past projects on record.</p>
+                      )}
+                    </div>
                   </div>
-                )}
+                </div>
+
+                {/* Work Stats */}
+                <div className="mt-8 bg-gray-50 rounded-lg p-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">Work Statistics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white p-4 rounded border text-center">
+                      <div className="text-2xl font-bold text-blue-600">{details.workLog.hoursWorked}</div>
+                      <div className="text-sm text-gray-600">Hours Worked</div>
+                    </div>
+                    <div className="bg-white p-4 rounded border text-center">
+                      <div className="text-2xl font-bold text-green-600">{details.taskCountPerDay}</div>
+                      <div className="text-sm text-gray-600">Tasks Per Day</div>
+                    </div>
+                    <div className="bg-white p-4 rounded border text-center">
+                      <div className="text-2xl font-bold text-purple-600">{details.performance}%</div>
+                      <div className="text-sm text-gray-600">Performance Score</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -926,59 +850,111 @@ export default function EmployeeDetailsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-                      <CreditCard size={16} className="mr-2 text-red-500" />
-                      Tax Information
+                      <DollarSign size={16} className="mr-2 text-red-500" />
+                      Salary Information
                     </h3>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center p-3 bg-white rounded border">
                         <span className="text-sm font-medium text-gray-600">
-                          Tax Code
+                          Monthly Salary
                         </span>
-                        <span className="text-sm text-gray-900 font-mono">
-                          {details.payrollInfo.taxCode}
+                        <span className="text-sm text-gray-900 font-bold">
+                          {formatSalary(details.salary)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-white rounded border">
                         <span className="text-sm font-medium text-gray-600">
-                          Tax Status
+                          Annual Salary
                         </span>
-                        <span className="text-sm text-gray-900">Single</span>
+                        <span className="text-sm text-gray-900 font-bold">
+                          {formatSalary(details.salary * 12)}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-white rounded border">
                         <span className="text-sm font-medium text-gray-600">
-                          Withholding Rate
+                          Payment Status
                         </span>
-                        <span className="text-sm text-gray-900">22%</span>
+                        <span className="text-sm text-green-600 font-medium">
+                          Current
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-                      <Award size={16} className="mr-2 text-red-500" />
-                      Benefits Package
+                      <CreditCard size={16} className="mr-2 text-red-500" />
+                      Bank Details
                     </h3>
-                    <div className="space-y-3">
-                      {benefitsList.map((benefit, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 bg-white rounded border"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <span className="text-sm text-gray-900">
-                              {benefit}
-                            </span>
-                          </div>
-                          <span className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">
-                            Active
-                          </span>
-                        </div>
-                      ))}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-white rounded border">
+                        <span className="text-sm font-medium text-gray-600">
+                          Account Holder
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {details.bankDetails.accountHolder || 'Not provided'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-white rounded border">
+                        <span className="text-sm font-medium text-gray-600">
+                          Account Type
+                        </span>
+                        <span className="text-sm text-gray-900 capitalize">
+                          {details.bankDetails.accountType.toLowerCase()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-white rounded border">
+                        <span className="text-sm font-medium text-gray-600">
+                          Account Number
+                        </span>
+                        <span className="text-sm text-gray-900 font-mono">
+                          {details.bankDetails.accountNumber
+                            ? `${details.bankDetails.accountNumber}`
+                            : 'Not provided'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-white rounded border">
+                        <span className="text-sm font-medium text-gray-600">
+                          IFSC Code
+                        </span>
+                        <span className="text-sm text-gray-900 font-mono">
+                          {details.bankDetails.ifsc || 'Not provided'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-white rounded border">
+                        <span className="text-sm font-medium text-gray-600">
+                          Branch
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {details.bankDetails.branch || 'Not provided'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
+                <div className="mt-8 bg-gray-50 rounded-lg p-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">
+                    Performance & Attendance
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white p-4 rounded border text-center">
+                      <div className="text-2xl font-bold text-blue-600">{details.performance}%</div>
+                      <div className="text-sm text-gray-600">Overall Performance</div>
+                    </div>
+                    <div className="bg-white p-4 rounded border text-center">
+                      <div className="text-2xl font-bold text-green-600">{details.attendanceCount30Days}%</div>
+                      <div className="text-sm text-gray-600">Attendance (30 days)</div>
+                    </div>
+                    <div className="bg-white p-4 rounded border text-center">
+                      <div className="text-2xl font-bold text-purple-600">{details.taskCountPerDay}</div>
+                      <div className="text-sm text-gray-600">Avg Tasks/Day</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mock Payroll History */}
                 <div className="mt-8 bg-gray-50 rounded-lg p-6">
                   <h3 className="font-semibold text-gray-900 mb-4">
                     Recent Payroll History
@@ -1006,11 +982,11 @@ export default function EmployeeDetailsPage() {
                       </thead>
                       <tbody>
                         <tr className="border-b border-gray-100">
-                          <td className="py-3 text-gray-900">Dec 1-15, 2024</td>
-                          <td className="py-3 text-gray-900">$2,000</td>
-                          <td className="py-3 text-gray-900">$440</td>
+                          <td className="py-3 text-gray-900">July 2025</td>
+                          <td className="py-3 text-gray-900">{formatSalary(details.salary)}</td>
+                          <td className="py-3 text-gray-900">{formatSalary(Math.round(details.salary * 0.22))}</td>
                           <td className="py-3 text-gray-900 font-semibold">
-                            $1,560
+                            {formatSalary(Math.round(details.salary * 0.78))}
                           </td>
                           <td className="py-3">
                             <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
@@ -1019,13 +995,24 @@ export default function EmployeeDetailsPage() {
                           </td>
                         </tr>
                         <tr className="border-b border-gray-100">
-                          <td className="py-3 text-gray-900">
-                            Nov 16-30, 2024
-                          </td>
-                          <td className="py-3 text-gray-900">$2,000</td>
-                          <td className="py-3 text-gray-900">$440</td>
+                          <td className="py-3 text-gray-900">June 2025</td>
+                          <td className="py-3 text-gray-900">{formatSalary(details.salary)}</td>
+                          <td className="py-3 text-gray-900">{formatSalary(Math.round(details.salary * 0.22))}</td>
                           <td className="py-3 text-gray-900 font-semibold">
-                            $1,560
+                            {formatSalary(Math.round(details.salary * 0.78))}
+                          </td>
+                          <td className="py-3">
+                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                              Paid
+                            </span>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-gray-100">
+                          <td className="py-3 text-gray-900">May 2025</td>
+                          <td className="py-3 text-gray-900">{formatSalary(details.salary)}</td>
+                          <td className="py-3 text-gray-900">{formatSalary(Math.round(details.salary * 0.22))}</td>
+                          <td className="py-3 text-gray-900 font-semibold">
+                            {formatSalary(Math.round(details.salary * 0.78))}
                           </td>
                           <td className="py-3">
                             <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">

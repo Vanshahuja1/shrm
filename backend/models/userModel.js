@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema(
       // },
       default: "",
     },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+    },
     phone: {
       type: String,
       trim: true,
@@ -46,6 +50,11 @@ const userSchema = new mongoose.Schema(
       // required: [true, "Role is required"],
       enum: ["admin", "manager", "employee", "sales", "intern", "hr"],
       lowercase: true,
+    },
+    designation: {
+      type: String,
+      trim: true,
+      default: "",
     },
 
     dateOfBirth: {
@@ -276,7 +285,6 @@ userSchema.virtual("employeeInfo").get(function () {
   };
 });
 
-
 userSchema.virtual("OrgMemberInfo").get(function () {
   return {
     id: this.id,
@@ -288,7 +296,7 @@ userSchema.virtual("OrgMemberInfo").get(function () {
     experience: (() => {
       const exp = (this.experience || "0").toString();
       // Remove any existing "years" and clean up, then add single "years"
-      const cleanExp = exp.replace(/\s*years?\s*/gi, '').trim();
+      const cleanExp = exp.replace(/\s*years?\s*/gi, "").trim();
       return `${cleanExp} years`;
     })(),
     contactInfo: {
@@ -300,7 +308,9 @@ userSchema.virtual("OrgMemberInfo").get(function () {
       pan: this.panCard || "",
       aadhar: this.adharCard || "",
     },
-    joiningDate: this.joiningDate ? this.joiningDate.toISOString().split('T')[0] : "",
+    joiningDate: this.joiningDate
+      ? this.joiningDate.toISOString().split("T")[0]
+      : "",
     performanceMetrics: {
       tasksPerDay: this.taskCountPerDay || 0,
       attendanceScore: this.attendanceCount30Days || 0,

@@ -13,12 +13,7 @@ import {
   Eye,
   Plus,
   X,
-  Building,
-  Calendar,
-  DollarSign,
   Download,
-  UserCheck,
-  UserMinus,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -56,6 +51,7 @@ import { formatCurrency } from "@/src/app/components/lib/utils";
 import FunctionalPayslipPage from "@/src/app/components/FunctionalPayslipPage";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
+import { useParams } from "next/navigation";
 
 interface EmployeeRecord {
   id: string;
@@ -109,40 +105,45 @@ const periods = [
   { label: "Oct 2020", range: "SEP 26 - OCT 25", status: "upcoming" },
 ];
 
-const modules = [
+
+
+export default function PayrollPage() {
+
+  const { hrId } = useParams();
+  const modules = [
   {
     title: "Leave, attendance & daily wages",
-    href: "/hr/payroll/leave-deductions",
+    href: `/hr/${hrId}/payroll/leave-deductions`,
     icon: <CalendarDays size={18} />,
   },
   {
     title: "New joinees & exits",
-    href: "/hr/payroll/joinees-exit",
+    href: `/hr/${hrId}/payroll/joinees-exit`,
     icon: <Users size={18} />,
   },
   {
     title: "Bonus, salary revisions & overtime",
-    href: "/hr/payroll/bonuses-revisions",
+    href: `/hr/${hrId}/payroll/bonuses-revisions`,
     icon: <FileText size={18} />,
   },
   {
     title: "Reimbursement, adhoc payments, deductions",
-    href: "/hr/payroll/adhoc-expenses",
+    href: `/hr/${hrId}/payroll/adhoc-expenses`,
     icon: <Info size={18} />,
   },
   {
     title: "Arrears & dues",
-    href: "/hr/payroll/arrears-dues",
+    href: `/hr/${hrId}/payroll/arrears-dues`,
     icon: <AlertTriangle size={18} />,
   },
   {
     title: "Review all employees",
-    href: "/hr/payroll/review-all-employees",
+    href: `/hr/${hrId}/payroll/review-all-employees`,
     icon: <CheckCircle size={18} />,
   },
 ];
 
-export default function PayrollPage() {
+
   const [showPayslip, setShowPayslip] = useState(false);
   const [showFullAndFinalDialog, setShowFullAndFinalDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] =
@@ -352,20 +353,138 @@ export default function PayrollPage() {
   const fetchPayrollData = async (url: string, fallback: EmployeeRecord[]) => {
     try {
       const res = await fetch(url);
-      const json = await res.json();
-      setEmployees(json);
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      if (data.status === 'success') {
+        // Transform the backend data to match frontend structure
+        const transformedData = data.data.map((item: any) => ({
+          id: item._id,
+          name: item.name,
+          payableDays: item.payableDays,
+          totalEarnings: item.totalEarnings,
+          totalDeductions: item.totalDeductions,
+          netPay: item.netPay,
+          department: item.departmentName,
+          dateOfJoining: new Date(item.dateOfJoining).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          }),
+          designation: item.designation
+        }));
+        setEmployees(transformedData);
+      } else {
+        throw new Error(data.message || 'Failed to fetch payroll data');
+      }
     } catch (err) {
       console.error(`${url} failed:`, err);
       setEmployees(fallback);
+      // Show error toast
+      const errorToast = document.createElement('div');
+      errorToast.className = 'fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md shadow-md';
+      errorToast.style.zIndex = '9999';
+      errorToast.innerHTML = `
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Failed to fetch payroll data. Using fallback data.</span>
+        </div>
+      `;
+      document.body.appendChild(errorToast);
+      setTimeout(() => document.body.removeChild(errorToast), 3000);
     }
   };
 
-  const handleRunPayroll = () => {
-    fetchPayrollData("/api/payroll/run", dummyEmployees);
+  const handleRunPayroll = async () => {
+    try {
+      const response = await fetch('/api/payroll/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employees: employees.map(emp => emp.id),
+          payrollPeriod: {
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear()
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to process payroll');
+      
+      const result = await response.json();
+      if (result.status === 'success') {
+        // Show success toast
+        const successToast = document.createElement('div');
+        successToast.className = 'fixed bottom-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md shadow-md';
+        successToast.style.zIndex = '9999';
+        successToast.innerHTML = `
+          <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Payroll processed successfully!</span>
+          </div>
+        `;
+        document.body.appendChild(successToast);
+        setTimeout(() => document.body.removeChild(successToast), 3000);
+        
+        // Refresh employee data
+        fetchPayrollData('/api/payroll/process', dummyEmployees);
+      }
+    } catch (error) {
+      console.error('Error processing payroll:', error);
+      // Show error toast
+      const errorToast = document.createElement('div');
+      errorToast.className = 'fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md shadow-md';
+      errorToast.style.zIndex = '9999';
+      errorToast.innerHTML = `
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Failed to process payroll. Please try again.</span>
+        </div>
+      `;
+      document.body.appendChild(errorToast);
+      setTimeout(() => document.body.removeChild(errorToast), 3000);
+    }
   };
 
-  const handlePreviewOutput = () => {
-    fetchPayrollData("/api/payroll/preview", dummyEmployees);
+  const handlePreviewOutput = async () => {
+    try {
+      const queryParams = new URLSearchParams({
+        employees: employees.map(emp => emp.id).join(','),
+        payrollPeriod: JSON.stringify({
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear()
+        })
+      });
+
+      const response = await fetch(`/api/payroll/preview?${queryParams}`);
+      if (!response.ok) throw new Error('Failed to preview payroll');
+
+      const result = await response.json();
+      if (result.status === 'success') {
+        const transformedData = result.data.map((item: any) => ({
+          id: item.employeeId,
+          name: item.name,
+          payableDays: item.payableDays || '0/0',
+          totalEarnings: item.totalEarnings,
+          totalDeductions: item.totalDeductions,
+          netPay: item.netPay,
+          department: item.departmentName,
+          designation: item.designation
+        }));
+        setEmployees(transformedData);
+      }
+    } catch (error) {
+      console.error('Error previewing payroll:', error);
+      // Fallback to dummy data
+      fetchPayrollData('/api/payroll/preview', dummyEmployees);
+    }
   };
 
   const handleAddEmployee = () => {
