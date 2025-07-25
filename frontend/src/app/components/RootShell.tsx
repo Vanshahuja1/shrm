@@ -30,11 +30,11 @@ export default function RootShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Header onToggleSidebar={() => setSidebarOpen((prev) => !prev)} toggleRef={toggleBtnRef} />
+      {/* <Header onToggleSidebar={() => setSidebarOpen((prev) => !prev)} toggleRef={toggleBtnRef} /> */}
       <div className="flex min-h-[calc(100vh-64px)] relative">
-        <div className="hidden md:block">
+        {/* <div className="hidden md:block">
           <Sidebar />
-        </div>
+        </div> */}
 
         {sidebarOpen && (
           <>
