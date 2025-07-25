@@ -54,7 +54,7 @@ export default function AttendanceManagement() {
 
   function onAttendanceEdit(record: AttendanceRecord): void {
     // Navigate to the attendance edit page for the selected record
-    router.push(`/manager/${managerId}/attendance/${record.id}/edit`)
+    router.push(`/admin/manager/${managerId}/attendance/${record.id}/edit`)
   }
 
   function onRegularization(record: AttendanceRecord, reason: string): void {

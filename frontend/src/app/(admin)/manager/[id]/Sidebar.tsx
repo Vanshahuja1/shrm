@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { Bell, User, Calendar, CheckCircle, Send, MessageSquare, Settings, Target } from "lucide-react"
+import { User, Calendar, CheckCircle, Send, MessageSquare, Settings, Target } from "lucide-react"
 import { Building, LogOut, X } from "lucide-react"
 
 interface SidebarProps {
@@ -58,7 +58,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName,
           <nav className="flex-1 p-4 space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon
-              const active = pathname.startsWith(`/manager/${managerId}/${item.id}`)
+              const active = pathname.startsWith(`/admin/manager/${managerId}/${item.id}`)
               return (
                 <button
                   key={item.id}
@@ -68,7 +68,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName,
                     // } else {
                     //   router.push(`/admin/IT/${item.id}`)
                     // }
-                    router.push(`/manager/${managerId}/${item.id}`)
+                    router.push(`/admin/manager/${managerId}/${item.id}`)
                     setIsSidebarOpen(false)
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left ${

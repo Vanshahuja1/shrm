@@ -2,17 +2,20 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useParams } from "next/navigation"
 import Sidebar from "./Sidebar"
 import TopHeader from "./TopHeader"
 
 export default function ManagerLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { id: managerId } = useParams()
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
+        managerId={managerId as string}
       />
 
       <div className="flex-1 flex flex-col min-w-0">

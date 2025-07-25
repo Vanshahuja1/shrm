@@ -8,7 +8,7 @@ export default function DashboardPage() {
   const { id: managerId } = useParams()
 
   useEffect(() => {
-    router.replace(`/manager/${managerId}/profile`) // Redirect to your main landing tab
+    router.replace(`/admin/manager/${managerId}/profile`) // Redirect to your main landing tab
   }, [router, managerId])
 
   return null

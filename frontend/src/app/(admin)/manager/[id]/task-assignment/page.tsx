@@ -53,7 +53,7 @@ export default function TaskAssignment() {
         <h2 className="text-2xl font-bold text-gray-900">Task Assignment</h2>
         <button
           onClick={()=>{
-            router.push(`/manager/${managerId}/task-assignment/add`)
+            router.push(`/admin/manager/${managerId}/task-assignment/add`)
           }}
           className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-2 font-medium"
         >
