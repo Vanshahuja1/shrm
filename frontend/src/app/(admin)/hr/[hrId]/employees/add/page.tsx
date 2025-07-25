@@ -1,7 +1,8 @@
 "use client";
 
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   User,
@@ -13,9 +14,10 @@ import {
   Check,
   ClipboardList,
 } from "lucide-react";
-import Link from "next/link";
+import axios from "@/lib/axiosInstance";
 
 interface EmployeeFormData {
+  organizationName: string;
   personalInfo: {
     name: string;
     email: string;
@@ -27,7 +29,6 @@ interface EmployeeFormData {
     address: string;
     emergencyContact: string;
   };
-
   financialInfo: {
     salary: string;
     bankInfo: {
@@ -40,19 +41,16 @@ interface EmployeeFormData {
     };
   };
   departmentInfo: {
-    department: string;
+    departmentName: string;
+    role: string;
     designation: string;
     managerName: string;
   };
   joiningDetails: {
     joiningDate: string;
-    employeeId: string;
+
   };
-  taskInfo: {
-    taskName: string;
-    assignedOn: string;
-    assignedBy: string;
-  };
+
   payrollInfo: {
     taxCode: string;
     benefits: string;
@@ -64,7 +62,6 @@ type TabType =
   | "financial"
   | "department"
   | "joining"
-  | "task"
   | "payroll"
   | "review";
 
@@ -72,8 +69,11 @@ export default function AddEmployeePage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("personal");
+  const { hrId } = useParams<{ hrId: string }>();
 
+  // Form state and handlers
   const [formData, setFormData] = useState<EmployeeFormData>({
+    organizationName: "IT",
     personalInfo: {
       name: "",
       email: "",
@@ -83,7 +83,7 @@ export default function AddEmployeePage() {
       aadhar: "",
       pan: "",
       address: "",
-      emergencyContact: "",
+      emergencyContact: ""
     },
     financialInfo: {
       salary: "",
@@ -93,40 +93,35 @@ export default function AddEmployeePage() {
         accountNumber: "",
         bankName: "",
         ifscCode: "",
-        branch: "",
-      },
+        branch: ""
+      }
     },
     departmentInfo: {
-      department: "",
+      departmentName: "",
       designation: "",
-      managerName: "",
+      role: "",
+      managerName: ""
     },
     joiningDetails: {
       joiningDate: "",
-      employeeId: "",
     },
-    taskInfo: {
-      taskName: "",
-      assignedOn: "",
-      assignedBy: "",
-    },
+
     payrollInfo: {
       taxCode: "",
-      benefits: "",
-    },
+      benefits: ""
+    }
   });
 
-  const handleChange = (
-    section: keyof EmployeeFormData,
-    field: string,
-    value: string
-  ) => {
+  // Form handlers
+  const handleChange = (section: keyof EmployeeFormData, field: string, value: string) => {
     setFormData({
       ...formData,
-      [section]: {
-        ...formData[section],
-        [field]: value,
-      },
+      [section]: typeof formData[section] === "object"
+        ? {
+            ...formData[section] as object,
+            [field]: value
+          }
+        : value
     });
   };
 
@@ -137,12 +132,13 @@ export default function AddEmployeePage() {
         ...formData.financialInfo,
         bankInfo: {
           ...formData.financialInfo.bankInfo,
-          [field]: value,
-        },
-      },
+          [field]: value
+        }
+      }
     });
   };
 
+  // Navigation handlers
   const nextTab = () => {
     switch (activeTab) {
       case "personal":
@@ -155,15 +151,10 @@ export default function AddEmployeePage() {
         setActiveTab("joining");
         break;
       case "joining":
-        setActiveTab("task");
-        break;
-      case "task":
         setActiveTab("payroll");
         break;
       case "payroll":
         setActiveTab("review");
-        break;
-      default:
         break;
     }
   };
@@ -179,18 +170,17 @@ export default function AddEmployeePage() {
       case "joining":
         setActiveTab("department");
         break;
-      case "task":
-        setActiveTab("joining");
-        break;
       case "payroll":
-        setActiveTab("task");
+        setActiveTab("joining");
         break;
       case "review":
         setActiveTab("payroll");
         break;
-      default:
-        break;
     }
+  };
+
+  const handleBack = () => {
+    router.push(`/hr/${hrId}/employees/`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -198,27 +188,11 @@ export default function AddEmployeePage() {
     setIsSubmitting(true);
 
     try {
-      // Save to localStorage for demo/mock purposes
-      const emps = JSON.parse(localStorage.getItem("employeeList") || "[]");
-      const newEmp = {
-        id: Date.now(),
-        name: formData.personalInfo.name,
-        employeeId: formData.joiningDetails.employeeId,
-        email: formData.personalInfo.email,
-        phone: formData.personalInfo.phone,
-        designation: formData.departmentInfo.designation,
-        department: formData.departmentInfo.department,
-        joinedDate: formData.joiningDetails.joiningDate,
-        status: "Active",
-        // Store the full formData for detailed view
-        _details: formData,
-      };
-      localStorage.setItem("employeeList", JSON.stringify([newEmp, ...emps]));
-
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      router.push("/hr/employees/records");
+      const response = await axios.post(`/user/addEmp`, formData);
+      if (response.status !== 200) {
+        throw new Error("Failed to add employee");
+      }
+      handleBack();
     } catch (error) {
       console.error("Failed to add employee:", error);
     } finally {
@@ -226,15 +200,18 @@ export default function AddEmployeePage() {
     }
   };
 
+  // Tab icons mapping
   const tabIcons = {
     personal: <User size={18} />,
     financial: <DollarSign size={18} />,
     department: <Briefcase size={18} />,
     joining: <Calendar size={18} />,
-    task: <ClipboardList size={18} />,
+
     payroll: <CreditCard size={18} />,
-    review: <Check size={18} />,
+    review: <Check size={18} />
   };
+
+  // ... Rest of the component code including renderTabContent() and JSX
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -427,9 +404,8 @@ export default function AddEmployeePage() {
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
               >
                 <option value="">Select Account Type</option>
-                <option value="Savings">Savings</option>
-                <option value="Current">Current</option>
-                <option value="Salary">Salary</option>
+                <option value="SAVING">Saving</option>
+                <option value="CURRENT">Current</option>
               </select>
             </div>
             <div className="space-y-4">
@@ -504,19 +480,44 @@ export default function AddEmployeePage() {
               </label>
               <select
                 required
-                value={formData.departmentInfo.department}
+                value={formData.departmentInfo.departmentName}
                 onChange={(e) =>
-                  handleChange("departmentInfo", "department", e.target.value)
+                  handleChange("departmentInfo", "departmentName", e.target.value)
                 }
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
               >
                 <option value="">Select Department</option>
-                <option value="Engineering">Engineering</option>
+                <option value="IT">IT</option>
                 <option value="HR">HR</option>
-                <option value="Finance">Finance</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Sales">Sales</option>
               </select>
+            </div>
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Role
+              </label>
+              <Select
+                value={formData.departmentInfo.role || ""}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    departmentInfo: {
+                      ...formData.departmentInfo,
+                      role: value,
+                    },
+                  })
+                }
+              >
+                <SelectTrigger className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="employee">Employee</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="intern">Intern</SelectItem>
+                  <SelectItem value="hr">HR</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-4">
               <label className="block text-sm font-medium text-gray-700">
@@ -530,7 +531,7 @@ export default function AddEmployeePage() {
                   handleChange("departmentInfo", "designation", e.target.value)
                 }
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                placeholder="Enter designation"
+                placeholder="Enter department designation"
               />
             </div>
             <div className="space-y-4">
@@ -568,73 +569,10 @@ export default function AddEmployeePage() {
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
               />
             </div>
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Employee ID
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.joiningDetails.employeeId}
-                onChange={(e) =>
-                  handleChange("joiningDetails", "employeeId", e.target.value)
-                }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                placeholder="Enter employee ID"
-              />
-            </div>
+
           </div>
         );
 
-      case "task":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Task Name
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.taskInfo.taskName}
-                onChange={(e) =>
-                  handleChange("taskInfo", "taskName", e.target.value)
-                }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                placeholder="Enter task name"
-              />
-            </div>
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Assigned On
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.taskInfo.assignedOn}
-                onChange={(e) =>
-                  handleChange("taskInfo", "assignedOn", e.target.value)
-                }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-              />
-            </div>
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Assigned By
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.taskInfo.assignedBy}
-                onChange={(e) =>
-                  handleChange("taskInfo", "assignedBy", e.target.value)
-                }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                placeholder="Enter who assigned the task"
-              />
-            </div>
-          </div>
-        );
 
       case "payroll":
         return (
@@ -805,15 +743,15 @@ export default function AddEmployeePage() {
                     Department
                   </p>
                   <p className="mt-1 text-base">
-                    {formData.departmentInfo.department || "Not provided"}
+                    {formData.departmentInfo.departmentName || "Not provided"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">
-                    Designation
+                    Role
                   </p>
                   <p className="mt-1 text-base">
-                    {formData.departmentInfo.designation || "Not provided"}
+                    {formData.departmentInfo.role || "Not provided"}
                   </p>
                 </div>
                 <div>
@@ -840,48 +778,11 @@ export default function AddEmployeePage() {
                     {formData.joiningDetails.joiningDate || "Not provided"}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Employee ID
-                  </p>
-                  <p className="mt-1 text-base">
-                    {formData.joiningDetails.employeeId || "Not provided"}
-                  </p>
-                </div>
+
               </div>
             </section>
 
-            <section className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Task Information
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="sm:col-span-2">
-                  <p className="text-sm font-medium text-gray-500">
-                    Task Name
-                  </p>
-                  <p className="mt-1 text-base">
-                    {formData.taskInfo.taskName || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Assigned On
-                  </p>
-                  <p className="mt-1 text-base">
-                    {formData.taskInfo.assignedOn || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Assigned By
-                  </p>
-                  <p className="mt-1 text-base">
-                    {formData.taskInfo.assignedBy || "Not provided"}
-                  </p>
-                </div>
-              </div>
-            </section>
+
 
             <section className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -916,13 +817,13 @@ export default function AddEmployeePage() {
         {/* Header with back button */}
         <div className="border-b px-6 py-4 flex items-center justify-between bg-white sticky top-0 z-10">
           <div className="flex items-center space-x-4">
-            <Link
-              href="/hr/employees/records"
+            <button
+              onClick={handleBack}
               className="flex items-center text-gray-600 hover:text-red-600 transition"
             >
               <ArrowLeft size={18} className="mr-1" />
               <span>Back</span>
-            </Link>
+            </button>
             <div className="h-4 w-px bg-gray-300"></div>
             <h2 className="text-xl font-semibold text-gray-800">
               Add New Employee
@@ -959,7 +860,7 @@ export default function AddEmployeePage() {
                 "financial",
                 "department",
                 "joining",
-                "task",
+
                 "payroll",
                 "review",
               ] as TabType[]
@@ -968,10 +869,9 @@ export default function AddEmployeePage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 min-w-[120px] px-6 py-4 flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors relative
-                  ${
-                    activeTab === tab
-                      ? "text-red-600 bg-red-50"
-                      : "text-gray-600 hover:text-red-500 hover:bg-gray-50"
+                  ${activeTab === tab
+                    ? "text-red-600 bg-red-50"
+                    : "text-gray-600 hover:text-red-500 hover:bg-gray-50"
                   }`}
               >
                 <span className="mr-2">{tabIcons[tab]}</span>
@@ -1001,9 +901,8 @@ export default function AddEmployeePage() {
             <button
               type="button"
               onClick={prevTab}
-              className={`px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors ${
-                activeTab === "personal" ? "invisible" : ""
-              }`}
+              className={`px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors ${activeTab === "personal" ? "invisible" : ""
+                }`}
             >
               Previous
             </button>
