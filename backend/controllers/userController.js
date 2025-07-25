@@ -21,7 +21,6 @@ const updateProfile = async (req, res) => {
       "address",
       "joiningDate",
       "photo",
-      "upperManager",
       "salary",
       "adharCard",
       "panCard",
@@ -69,7 +68,6 @@ const registerEmployee = async (req, res) => {
       address,
       joiningDate,
       photo,
-      upperManager,
       salary,
       adharCard,
       panCard,
@@ -99,7 +97,6 @@ const registerEmployee = async (req, res) => {
     if (address) userData.address = address
     if (joiningDate) userData.joiningDate = new Date(joiningDate)
     if (photo) userData.photo = photo
-    if (upperManager) userData.upperManager = upperManager
     if (salary) userData.salary = Number(salary)
     if (adharCard) userData.adharCard = adharCard
     if (panCard) userData.panCard = panCard

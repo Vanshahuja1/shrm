@@ -27,6 +27,7 @@ export interface OrganizationMember {
     todayPresent: boolean
   }
   upperManager?: string
+  upperManagerName?: string;
 }
 
 export interface Department {

@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import axios from "@/lib/axiosInstance"
+import { useParams} from "next/navigation"
 import { User, Users, Star, Award } from "lucide-react"
 import  { ManagerInfo } from "../types";
 import { calculatePerformanceMetrics } from "../utils/performance"
@@ -13,17 +14,33 @@ export default function ProfileSection() {
   const [manager, setManager] = useState<ManagerInfo | null>(null)
   const { id: managerId } = useParams()
   useEffect(() => {
-    // Fetch manager profile data
     const fetchManagerProfile = async () => {
       try {
-        const response = await fetch(`/api/manager/${managerId}/profile`)
-        if (!response.ok) {
-          throw new Error("Failed to fetch manager profile")
-        }
-        const managerData = await response.json()
-        setManager(managerData)
-      } catch (error) {
-        // console.error("Error fetching manager profile:", error)
+        const response = await axios.get(`/IT/org-members/${managerId}`)
+        const data = response.data
+        setManager({
+          ...data,
+          employees: data.employees || [],
+          interns: data.interns || [],
+          bankDetails: data.bankDetails || {
+            accountNumber: '',
+            bankName: '',
+            ifsc: '',
+            branch: ''
+          },
+          salary: typeof data.salary === 'object' ? data.salary : {
+            basic: 0,
+            allowances: 0,
+            total: typeof data.salary === 'number' ? data.salary : 0,
+            lastAppraisal: ''
+          },
+          email: data.contactInfo?.email || '',
+          phone: data.contactInfo?.phone || '',
+        })
+      } 
+      
+      catch {
+        console.error("Error fetching manager profile")
         setManager(mockManagerInfo) // Use mock data in case of error
       }
     }
@@ -40,11 +57,11 @@ export default function ProfileSection() {
             <User className="w-10 h-10 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{manager?.name}</h2>
-            <p className="text-red-600 font-medium text-lg">{manager?.department}</p>
-            <p className="text-gray-600">{manager?.email}</p>
-            <p className="text-gray-600">{manager?.phone}</p>
-            <p className="text-sm text-gray-500">Employee ID: {manager?.personalInfo?.employeeId}</p>
+            <h2 className="text-2xl font-bold text-gray-900">{String(manager?.name ?? '')}</h2>
+            <p className="text-red-600 font-medium text-lg">{String(manager?.department ?? '')}</p>
+            <p className="text-gray-600">{String(manager?.email ?? '')}</p>
+            <p className="text-gray-600">{String(manager?.phone ?? '')}</p>
+            {/* <p className="text-sm text-gray-500">Employee ID: {manager?.personalInfo?.employeeId}</p> */}
           </div>
         </div>
       </div>

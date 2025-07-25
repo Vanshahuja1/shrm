@@ -1,5 +1,3 @@
-
-
 export type Employee = {
   id: number
   name: string
@@ -78,12 +76,7 @@ export type AttendanceRecord = {
   totalHours: number
 }
 
-export type ManagerInfo = {
-  id: string
-  name: string
-  department: string
-  email: string
-  phone: string
+type ManagerCore = {
   employees: Employee[]
   interns: Intern[]
   bankDetails: {
@@ -98,12 +91,10 @@ export type ManagerInfo = {
     total: number
     lastAppraisal: string
   }
-  personalInfo: {
-    address: string
-    emergencyContact: string
-    dateOfBirth: string
-    employeeId: string
-  }
+}
+
+export type ManagerInfo = ManagerCore & {
+  [key: string]: unknown
 }
 
 export type EmailNotification = {

@@ -4,6 +4,10 @@ const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
+    upperManager: {
+      type: String,
+      default: "",
+    },
     id: {
       type: String,
       // required: true,
@@ -179,11 +183,6 @@ const userSchema = new mongoose.Schema(
       },
     },
 
-    upperManager: {
-      type: String,
-      trim: true,
-      default: "",
-    },
 
     salary: {
       type: Number,
@@ -312,7 +311,8 @@ userSchema.virtual("OrgMemberInfo").get(function () {
       last7Days: new Array(7).fill(true), // You can implement actual logic here
       todayPresent: this.isActive,
     },
-    upperManager: this.upperManager || undefined,
+    upperManager: this.upperManager || null,
+    upperManagerName: null,
   };
 });
 

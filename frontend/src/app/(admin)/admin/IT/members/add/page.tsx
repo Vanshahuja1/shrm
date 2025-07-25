@@ -2,79 +2,264 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import axios from "@/lib/axiosInstance";
-import type { OrganizationMember } from "../../../types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type { OrganizationMember } from "../../../../../../../types";
+import axiosInstance from "../../../../../../../lib/axiosInstance";
+
+// Component interfaces
+interface FieldProps {
+  label: string;
+  name?: string;
+  type?: string;
+  value: string | number;
+  onChange: (value: string) => void;
+  required?: boolean;
+  placeholder?: string;
+  min?: number;
+  max?: number;
+}
+
+interface SelectFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  required?: boolean;
+}
+
+// Custom form components
+const Input: React.FC<FieldProps> = ({ label, name, type = "text", value, onChange, required, placeholder }) => (
+  <div className="mb-4">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      required={required}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+    />
+  </div>
+);
+
+const SelectField: React.FC<SelectFieldProps> = ({ label, value, onChange, options, required }) => (
+  <div className="mb-4">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      required={required}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+    >
+      <option value="">Select {label}</option>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+const FieldWithPrefix: React.FC<FieldProps & { prefix: string }> = ({ label, name, type = "text", value, onChange, required, prefix }) => (
+  <div className="mb-4">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="flex">
+      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+        {prefix}
+      </span>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+  </div>
+);
+
+const FieldWithSuffix: React.FC<FieldProps & { suffix: string }> = ({ label, name, type = "text", value, onChange, required, suffix }) => (
+  <div className="mb-4">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="flex">
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+      />
+      <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+        {suffix}
+      </span>
+    </div>
+  </div>
+);
+
+const Textarea: React.FC<FieldProps> = ({ label, name, value, onChange, required, placeholder }) => (
+  <div className="mb-4">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <textarea
+      name={name}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      required={required}
+      rows={3}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+    />
+  </div>
+);
+
+
+// MultiSelectDropdown component interface
+interface MultiSelectDropdownProps {
+  items: OrganizationMember[];
+  selectedItems: OrganizationMember[];
+  onAdd: (item: OrganizationMember) => void;
+  onRemove: (index: number) => void;
+  getOptionLabel: (item: OrganizationMember) => string;
+  getOptionKey: (item: OrganizationMember) => string | number;
+  placeholder: string;
+}
+
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ 
+  items, selectedItems, onAdd, onRemove, getOptionLabel, getOptionKey, placeholder 
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <div className="min-h-[40px] p-2 border border-gray-300 rounded-md bg-white">
+        <div className="flex flex-wrap gap-1 mb-2">
+          {selectedItems.map((item, index) => (
+            <span 
+              key={getOptionKey(item)} 
+              className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm flex items-center"
+            >
+              {getOptionLabel(item)}
+              <button 
+                type="button"
+                onClick={() => onRemove(index)}
+                className="ml-1 text-blue-600 hover:text-blue-800"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-1 text-gray-500 text-sm"
+        >
+          <span className="text-lg font-bold">+</span>
+          {placeholder}
+        </button>
+      </div>
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {items.filter(item => !selectedItems.some(selected => getOptionKey(selected) === getOptionKey(item))).map((item) => (
+            <button
+              key={getOptionKey(item)}
+              type="button"
+              onClick={() => {
+                onAdd(item);
+                setIsOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-gray-100"
+            >
+              {getOptionLabel(item)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 export default function AddMemberPage() {
   const router = useRouter();
-  const [supervisors, setSupervisors] = useState<OrganizationMember[]>([]);
-  const [formData, setFormData] = useState<Omit<OrganizationMember, "id" | "salary"> & { salary: string }>(
-    {
-      name: "",
-      role: "Employee",
-      department: "IT",
-      salary: "",
-      projects: [],
-      experience: 0,
-      contactInfo: {
-        email: "",
-        phone: "",
-        address: "",
-      },
-      documents: {
-        pan: "",
-        aadhar: "",
-      },
-      joiningDate: "",
-      performanceMetrics: {
-        tasksPerDay: 0,
-        attendanceScore: 100,
-        managerReviewRating: 0,
-        combinedPercentage: 0,
-      },
-      attendance: {
-        last7Days: [true, true, true, true, true, false, false],
-        todayPresent: true,
-      },
-      upperManager: "",
+  // const [supervisors, setSupervisors] = useState<OrganizationMember[]>([]);
+  const [allEmployees, setAllEmployees] = useState<OrganizationMember[]>([]);
+  const [allInterns, setAllInterns] = useState<OrganizationMember[]>([]);
+  const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
+  const [selectedManager, setSelectedManager] = useState<string>("");
+  const [formData, setFormData] = useState<
+    (Omit<OrganizationMember, "id" | "salary" | "upperManager"> & { salary: string }) & {
+      employees?: OrganizationMember[];
+      interns?: OrganizationMember[];
     }
-  );
+  >({
+    name: "",
+    role: "Manager",
+    department: "IT",
+    salary: "",
+    projects: [],
+    experience: 0,
+    contactInfo: {
+      email: "",
+      phone: "",
+      address: "",
+    },
+    documents: {
+      pan: "",
+      aadhar: "",
+    },
+    joiningDate: "",
+    performanceMetrics: {
+      tasksPerDay: 0,
+      attendanceScore: 100,
+      managerReviewRating: 0,
+      combinedPercentage: 0,
+    },
+    attendance: {
+      last7Days: [true, true, true, true, true, false, false],
+      todayPresent: true,
+    },
+    employees: [],
+    interns: [],
+  });
 
   const [projectsText, setProjectsText] = useState<string>("");
 
-  // Fetch supervisors (managers, employees, hr) on component mount
+  // Fetch employees and interns on component mount
   useEffect(() => {
-    const fetchSupervisors = async () => {
+    const fetchMembers = async () => {
       try {
-        const response = await axios.get("/IT/org-members/empInfo");
+        const response = await axiosInstance.get("/IT/org-members/empInfo");
         const allMembers = response.data;
-        // Filter for managers, employees, and HR personnel
-        const eligibleSupervisors = allMembers.filter((member: OrganizationMember) =>
-          ["manager", "hr"].includes(member.role.toLowerCase())
-        );
-        setSupervisors(eligibleSupervisors);
+        setAllEmployees(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "employee"));
+        setAllInterns(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "intern"));
+        setAllManagers(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "manager"));
       } catch (error) {
-        console.error("Error fetching supervisors:", error);
-        setSupervisors([]);
+        console.error("Error fetching members:", error);
+        setAllEmployees([]);
+        setAllInterns([]);
+        setAllManagers([]);
       }
     };
-    fetchSupervisors();
+    fetchMembers();
   }, []);
 
   const handleProjectsChange = (val: string) => {
     setProjectsText(val);
-  };
-
-  const handleProjectsBlur = () => {
-    // Process projects when user finishes editing (on blur)
-    const projectsList = projectsText
+    // Process projects immediately
+    const projectsList = val
       .split(",")
       .map((p) => p.trim())
       .filter((p) => p);
@@ -89,7 +274,8 @@ export default function AddMemberPage() {
       .split(",")
       .map((p) => p.trim())
       .filter((p) => p);
-    const formDataToSubmit = {
+    
+    const formDataToSubmit: Record<string, unknown> = {
       ...formData,
       projects: projectsList,
       salary:
@@ -97,11 +283,30 @@ export default function AddMemberPage() {
           ? (formData.salary as string).trim() === ""
             ? undefined
             : Number(formData.salary)
-          : formData.salary
+          : formData.salary,
     };
+    
+    // Only add upperManager if employee/intern and a manager is selected
+    if (["employee", "intern"].includes(formData.role.toLowerCase()) && selectedManager) {
+      // Find the manager ID by name and use it as upperManager
+      const selectedManagerObj = allManagers.find(manager => manager.name === selectedManager);
+      formDataToSubmit.upperManager = selectedManagerObj?.id || selectedManager;
+    }
+     if (formData.role === "Manager") {
+    const employees = (formData.employees || []).map(e => ({
+      id: e.id,
+      upperManager: formDataToSubmit.id // or leave as undefined if not available yet
+    }));
+    const interns = (formData.interns || []).map(i => ({
+      id: i.id,
+      upperManager: formDataToSubmit.id // or leave as undefined if not available yet
+    }));
+    formDataToSubmit.employees = employees;
+    formDataToSubmit.interns = interns;
+  }
 
     try {
-      await axios.post("/IT/org-members", formDataToSubmit);
+      await axiosInstance.post("/IT/org-members", formDataToSubmit);
       console.log("Member added successfully");
       router.push("/admin/IT/members");
     } catch (error) {
@@ -128,14 +333,27 @@ export default function AddMemberPage() {
             <SelectField
               label="Role"
               value={formData.role}
-              options={["manager", "employee", "intern", "hr"]}
-              onChange={(val) =>
+              options={["Manager", "Employee", "Intern", "Head"]}
+              onChange={(val) => {
                 setFormData({
                   ...formData,
                   role: val as OrganizationMember["role"],
-                })
-              }
+                  employees: val === "Manager" ? formData.employees || [] : undefined,
+                  interns: val === "Manager" ? formData.interns || [] : undefined,
+                });
+                if (val === "Employee" || val === "Intern") setSelectedManager("");
+              }}
             />
+            {/* Show manager selection if role is employee or intern */}
+            {formData.role && ["Employee", "Intern"].includes(formData.role) && (
+              <SelectField
+                label="Manager"
+                value={selectedManager}
+                onChange={setSelectedManager}
+                options={allManagers.map(manager => manager.name)}
+                required={true}
+              />
+            )}
             <Input
               label="Department"
               value={formData.department}
@@ -164,43 +382,55 @@ export default function AddMemberPage() {
               value={formData.experience}
               suffix="Years"
               onChange={(val) =>
-                setFormData({ ...formData, experience: Number(val) })
-              }
+                setFormData({ ...formData, experience: Number(val) })}
             />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reports To
-              </label>
-              <Select
-                value={formData.upperManager || "none"}
-                onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    upperManager: value === "none" ? "" : value,
-                  })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select supervisor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">
-                    <span className="text-gray-500">No supervisor</span>
-                  </SelectItem>
-                  {supervisors.map((supervisor) => (
-                    <SelectItem key={supervisor.id} value={supervisor.name}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{supervisor.name}</span>
-                        <span className="text-xs text-gray-500 capitalize">
-                          {supervisor.role} • {supervisor.department}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
+
+          {/* Show employee/intern selection if role is manager */}
+          {formData.role === "Manager" && (
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Employees Under Manager
+                </label>
+                <MultiSelectDropdown
+                  items={allEmployees}
+                  selectedItems={formData.employees || []}
+                  onAdd={(emp) => setFormData({
+                    ...formData,
+                    employees: [...(formData.employees || []), emp],
+                  })}
+                  onRemove={(idx) => setFormData({
+                    ...formData,
+                    employees: (formData.employees || []).filter((_, i) => i !== idx),
+                  })}
+                  getOptionLabel={(item) => item.name}
+                  getOptionKey={(item) => item.id}
+                  placeholder="Add Employee"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Interns Under Manager
+                </label>
+                <MultiSelectDropdown
+                  items={allInterns}
+                  selectedItems={formData.interns || []}
+                  onAdd={(intern) => setFormData({
+                    ...formData,
+                    interns: [...(formData.interns || []), intern],
+                  })}
+                  onRemove={(idx) => setFormData({
+                    ...formData,
+                    interns: (formData.interns || []).filter((_, i) => i !== idx),
+                  })}
+                  getOptionLabel={(item) => item.name}
+                  getOptionKey={(item) => item.id}
+                  placeholder="Add Intern"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Contact Information */}
@@ -353,11 +583,11 @@ export default function AddMemberPage() {
         {/* Projects */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Projects</h2>
-          <TextareaWithBlur
+          <Textarea
             label="Projects (comma-separated)"
             value={projectsText}
             onChange={handleProjectsChange}
-            onBlur={handleProjectsBlur}
+            placeholder="Enter project names separated by commas..."
           />
           <p className="text-xs text-gray-500 mt-2">
             Enter project names separated by commas (e.g., &quot;Project A, Project
@@ -381,201 +611,6 @@ export default function AddMemberPage() {
           </button>
         </div>
       </form>
-    </div>
-  );
-}
-
-function Input({
-  label,
-  value,
-  min,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  min?: number;
-  value: string | number;
-  type?: string;
-  onChange: (val: string) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <input
-        min={min}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  );
-}
-
-function Textarea({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={3}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  );
-}
-
-function TextareaWithBlur({
-  label,
-  value,
-  onChange,
-  onBlur,
-}: {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-  onBlur: () => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={onBlur}
-        rows={3}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        placeholder="Enter project names separated by commas..."
-      />
-    </div>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (val: string) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function FieldWithPrefix({
-  label,
-  min,
-  value,
-  prefix,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string | number;
-  prefix: string;
-  min?: number;
-  type?: string;
-  onChange: (val: string | number) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
-          {prefix}
-        </span>
-        <input
-          type={type}
-          value={value}
-          onChange={(e) =>
-            onChange(
-              type === "number" ? Number(e.target.value) : e.target.value
-            )
-          }
-          className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          min={min}
-        />
-      </div>
-    </div>
-  );
-}
-
-function FieldWithSuffix({
-  label,
-  min,
-  max,
-  value,
-  suffix,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  min?: number;
-  max?: number;
-  value: string | number;
-  suffix: string;
-  type?: string;
-  onChange: (val: string | number) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          type={type}
-          min={min}
-          max={max}
-          value={value}
-          onChange={(e) =>
-            onChange(
-              type === "number" ? Number(e.target.value) : e.target.value
-            )
-          }
-          className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
-        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
-          {suffix}
-        </span>
-      </div>
     </div>
   );
 }
