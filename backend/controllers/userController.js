@@ -402,58 +402,6 @@ const deleteEmp = async(req, res)=>{
   }
 }
 
-const updateProfile = async (req, res) => {
-  try {
-    const allowedUpdates = [
-      "name",
-      "dateOfBirth",
-      "address",
-      "joiningDate",
-      "photo",
-      "salary",
-      "adharCard",
-      "panCard",
-      "experience",
-      "organizationName",
-      "departmentName",
-      "bankDetails",
-      "documents",
-    ];
-
-    const updates = {};
-    Object.keys(req.body).forEach((key) => {
-      if (allowedUpdates.includes(key)) {
-        updates[key] = req.body[key];
-      }
-    });
-
-    const user = await User.findByIdAndUpdate(req.user._id, updates, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
-
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
-    res.json({
-      success: true,
-      message: "Profile updated successfully",
-      data: user,
-    });
-  } catch (error) {
-    console.error("Update profile error:", error);
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res
-        .status(400)
-        .json({ success: false, message: messages.join(", ") });
-    }
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
 
 const registerEmployee = async (req, res) => {
   try {
