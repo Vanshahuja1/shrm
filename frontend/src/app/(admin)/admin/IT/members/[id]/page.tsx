@@ -6,14 +6,13 @@ import {
   Mail,
   Phone,
   MapPin,
-  UserCheck,
-  DollarSign,
   TrendingUp,
   Clock,
   Award,
   Target,
   Pencil,
   Trash2,
+  UserIcon,
 } from "lucide-react";
 import {
   Dialog,
@@ -26,7 +25,6 @@ import {
 } from "@/components/ui/dialog";
 import axios from "@/lib/axiosInstance";
 import type { OrganizationMember } from "../../../types";
-import { sampleMembers } from "@/lib/sampleData";
 
 export default function MemberDetailPage() {
   const { id } = useParams();
@@ -66,7 +64,7 @@ export default function MemberDetailPage() {
           onClick={() => router.back()}
           className="text-blue-600 hover:text-blue-800 font-medium"
         >
-          ← Back 
+          ← Back
         </button>
         <div className="flex items-center gap-3">
           <button
@@ -75,7 +73,10 @@ export default function MemberDetailPage() {
           >
             <Pencil size={16} /> Edit Member
           </button>
-          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
             <DialogTrigger asChild>
               <button className="flex items-center gap-2 text-sm px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
                 <Trash2 size={16} /> Delete Member
@@ -85,7 +86,9 @@ export default function MemberDetailPage() {
               <DialogHeader>
                 <DialogTitle>Delete Member</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to delete <strong>{member.name}</strong>? This action cannot be undone and will permanently remove all their data from the system.
+                  Are you sure you want to delete <strong>{member.name}</strong>
+                  ? This action cannot be undone and will permanently remove all
+                  their data from the system.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -168,10 +171,10 @@ export default function MemberDetailPage() {
               <MapPin className="text-gray-500" size={20} />
               {member.contactInfo.address}
             </div>
-            {member.upperManager && (
+            {member.upperManagerName && (
               <div className="flex items-center gap-3">
-                <UserCheck className="text-gray-500" size={20} />
-                Reports to: {member.upperManager}
+                <UserIcon className="text-gray-500" size={20} />
+                Reports to: {member.upperManagerName}
               </div>
             )}
           </div>
@@ -210,6 +213,46 @@ export default function MemberDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Associated Employees and Interns (for managers) */}
+        {member.role.toLowerCase() === "manager" &&
+          (() => {
+            type ManagerWithMembers = OrganizationMember & {
+              employees?: OrganizationMember[];
+              interns?: OrganizationMember[];
+            };
+            const manager = member as ManagerWithMembers;
+            return (
+              <div className="space-y-4">
+                {Array.isArray(manager.employees) &&
+                  manager.employees.length > 0 && (
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">
+                        Employees
+                      </h2>
+                      <ul className="list-disc list-inside text-gray-700 text-base ml-4">
+                        {manager.employees.map((emp) => (
+                          <li key={emp.id || emp.name}>{emp.name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                {Array.isArray(manager.interns) &&
+                  manager.interns.length > 0 && (
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">
+                        Interns
+                      </h2>
+                      <ul className="list-disc list-inside text-gray-700 text-base ml-4">
+                        {manager.interns.map((intern) => (
+                          <li key={intern.id || intern.name}>{intern.name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+              </div>
+            );
+          })()}
 
         {/* Projects */}
         <div>

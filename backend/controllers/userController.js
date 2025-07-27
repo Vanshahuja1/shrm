@@ -323,19 +323,155 @@ const addEmp = async (req, res) => {
     
     if (err.name === "ValidationError") {
       const messages = Object.values(err.errors).map(error => error.message);
-      return createErrorResponse(res, 400, "Validation error", messages);
+      return res.status(400).json({ 
+        success: false, 
+        message: "Validation error", 
+        errors: messages 
+      });
     }
     
-    return createErrorResponse(res, 400, err.message);
+    res.status(400).json({ 
+      success: false, 
+      message: err.message 
+    });
+  }
+};
+
+const getById = async (req, res) => {
+  try {
+    const user = await User.findOne({ id: req.params.id }).select("-password");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    res.json({ success: true, data: user });
+  } catch (error) {
+    console.error("Get user by ID error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    if (!users || users.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No active users found" });
+    }
+    res.json({ success: true, data: users });
+  } catch (error) {
+    console.error("Get all users error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const updateEmp = async (req, res) => {
+  try {
+    const user = await User.findOne({ id: req.params.id });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Update user fields
+    Object.keys(req.body).forEach((key) => {
+      user[key] = req.body[key];
+    });
+
+    await user.save();
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Update employee error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const deleteEmp = async(req, res)=>{
+  try{
+    const user = await User.findOne({ id: req.params.id });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    await User.findOneAndDelete({id: req.params.id});
+    return res.status(200).json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Delete employee error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+const updateProfile = async (req, res) => {
+  try {
+    const allowedUpdates = [
+      "name",
+      "dateOfBirth",
+      "address",
+      "joiningDate",
+      "photo",
+      "salary",
+      "adharCard",
+      "panCard",
+      "experience",
+      "organizationName",
+      "departmentName",
+      "bankDetails",
+      "documents",
+    ];
+
+    const updates = {};
+    Object.keys(req.body).forEach((key) => {
+      if (allowedUpdates.includes(key)) {
+        updates[key] = req.body[key];
+      }
+    });
+
+    const user = await User.findByIdAndUpdate(req.user._id, updates, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Profile updated successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res
+        .status(400)
+        .json({ success: false, message: messages.join(", ") });
+    }
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
 const registerEmployee = async (req, res) => {
   try {
     const {
-      name, role, dateOfBirth, address, joiningDate, photo,
-      upperManager, salary, adharCard, panCard, experience,
-      organizationName, departmentName, bankDetails, documents
+      name,
+      role,
+      dateOfBirth,
+      address,
+      joiningDate,
+      photo,
+      salary,
+      adharCard,
+      panCard,
+      experience,
+      organizationName,
+      departmentName,
+      bankDetails,
+      documents, // This will now contain the structured document URLs
     } = req.body;
 
     // Validate required fields
@@ -382,6 +518,16 @@ const registerEmployee = async (req, res) => {
     if (adharCard) userData.adharCard = adharCard;
     if (panCard) userData.panCard = panCard;
     if (experience) userData.experience = String(experience);
+    // Add optional fields if provided
+    if (dateOfBirth) userData.dateOfBirth = new Date(dateOfBirth)
+    if (address) userData.address = address
+    if (joiningDate) userData.joiningDate = new Date(joiningDate)
+    if (photo) userData.photo = photo
+    if (upperManager) userData.upperManager = upperManager
+    if (salary) userData.salary = Number(salary)
+    if (adharCard) userData.adharCard = adharCard
+    if (panCard) userData.panCard = panCard
+    if (experience) userData.experience = Number(experience)
 
     // Handle bank details
     if (bankDetails) {
@@ -396,246 +542,72 @@ const registerEmployee = async (req, res) => {
 
     // Handle documents
     if (documents) {
-      userData.documents = mapDocuments(documents);
-    }
-
-    const user = await User.create(userData);
-
-    return createSuccessResponse(res, 201, {
-      id: user.id,
-      name: user.name,
-      role: user.role,
-      organizationName: user.organizationName,
-      departmentName: user.departmentName,
-    }, "Employee registered successfully");
-
-  } catch (error) {
-    console.error("Registration error:", error);
-    
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return createErrorResponse(res, 400, "Validation error", messages);
-    }
-    
-    if (error.code === 11000) {
-      return createErrorResponse(res, 400, "Employee ID already exists");
-    }
-    
-    return createErrorResponse(res, 500, "Internal server error");
-  }
-};
-
-const getById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    if (!id) {
-      return createErrorResponse(res, 400, "Employee ID is required");
-    }
-
-    const user = await User.findOne({ id }).select("-password");
-    
-    if (!user) {
-      return createErrorResponse(res, 404, "User not found");
-    }
-    
-    return createSuccessResponse(res, 200, user);
-    
-  } catch (error) {
-    console.error("Get user by ID error:", error);
-    return createErrorResponse(res, 500, "Internal server error");
-  }
-};
-
-const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find().select("-password");
-    
-    if (!users || users.length === 0) {
-      return createErrorResponse(res, 404, "No active users found");
-    }
-    
-    return createSuccessResponse(res, 200, users);
-    
-  } catch (error) {
-    console.error("Get all users error:", error);
-    return createErrorResponse(res, 500, "Internal server error");
-  }
-};
-
-const updateEmp = async (req, res) => {
-  try {
-    const user = await User.findOne({ id: req.params.id });
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    // Parse dates
-    const dateOfBirth = req.body.personalInfo?.dob
-      ? parseAndValidateDate(req.body.personalInfo.dob)
-      : user.dateOfBirth;
-    const joiningDate = req.body.joiningDetails?.joiningDate
-      ? parseAndValidateDate(req.body.joiningDetails.joiningDate)
-      : user.joiningDate;
-
-    // Validate dateOfBirth
-    if (req.body.personalInfo?.dob && !dateOfBirth) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid date of birth format. Please use YYYY-MM-DD format",
-      });
-    }
-
-    // Validate joiningDate
-    if (req.body.joiningDetails?.joiningDate && !joiningDate) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid joining date format. Please use YYYY-MM-DD format",
-      });
-    }
-
-    // Update fields if present in request
-    // Basic Info
-    if (req.body.personalInfo?.name) user.name = req.body.personalInfo.name;
-    if (req.body.personalInfo?.email) user.email = req.body.personalInfo.email;
-    if (req.body.personalInfo?.phone) user.phone = req.body.personalInfo.phone;
-    if (req.body.departmentInfo?.role) user.role = req.body.departmentInfo.role.toLowerCase();
-
-    // Personal Info
-    if (req.body.personalInfo?.gender) user.gender = req.body.personalInfo.gender;
-    if (req.body.personalInfo?.dob) user.dateOfBirth = dateOfBirth;
-    if (req.body.personalInfo?.address) user.address = req.body.personalInfo.address;
-    if (req.body.personalInfo?.aadhar) user.adharCard = req.body.personalInfo.aadhar;
-    if (req.body.personalInfo?.pan) user.panCard = req.body.personalInfo.pan;
-    if (req.body.personalInfo?.emergencyContact) user.emergencyContact = req.body.personalInfo.emergencyContact;
-
-    // Department Info
-    if (req.body.departmentInfo?.departmentName) {
-      user.organizationName = req.body.departmentInfo.departmentName;
-      user.departmentName = req.body.departmentInfo.departmentName;
-    }
-    if (req.body.joiningDetails?.joiningDate) user.joiningDate = joiningDate;
-    if (req.body.departmentInfo?.managerName) user.upperManager = req.body.departmentInfo.managerName;
-    if (req.body.departmentInfo?.designation) user.designation = req.body.departmentInfo.designation;
-
-    // Financial Info
-    if (req.body.financialInfo?.salary) user.salary = Number(req.body.financialInfo.salary);
-    if (req.body.financialInfo?.bankInfo) {
-      user.bankDetails = {
-        accountHolder: req.body.financialInfo.bankInfo.accountHolderName || user.bankDetails.accountHolder || "",
-        accountNumber: req.body.financialInfo.bankInfo.accountNumber || user.bankDetails.accountNumber || "",
-        ifsc: req.body.financialInfo.bankInfo.ifscCode || user.bankDetails.ifsc || "",
-        branch: req.body.financialInfo.bankInfo.branch || user.bankDetails.branch || "",
-        accountType: req.body.financialInfo.bankInfo.accountType || user.bankDetails.accountType || "SAVING",
-      };
-    }
-
-    // Work Info
-    if (req.body.experience) user.experience = req.body.experience;
-    if (req.body.projects) user.projects = req.body.projects;
-    if (req.body.isActive !== undefined) user.isActive = req.body.isActive;
-
-    // Additional Info
-    if (req.body.payrollInfo?.taxCode) user.taxCode = req.body.payrollInfo.taxCode;
-    if (req.body.payrollInfo?.benefits) user.benefits = req.body.payrollInfo.benefits;
-
-    // Documents
-    if (req.body.documents) {
       const documentArray = [];
       if (req.body.documents.aadharFront) {
         documentArray.push({
           title: "Aadhar Card (Front)",
-          url: req.body.documents.aadharFront,
+          url: documents.aadharFront,
           type: "other",
         });
       }
-      if (req.body.documents.aadharBack) {
+
+      if (documents.aadharBack) {
         documentArray.push({
           title: "Aadhar Card (Back)",
-          url: req.body.documents.aadharBack,
+          url: documents.aadharBack,
           type: "other",
         });
       }
-      if (req.body.documents.panCard) {
+
+      if (documents.panCard) {
         documentArray.push({
           title: "PAN Card",
-          url: req.body.documents.panCard,
+          url: documents.panCard,
           type: "other",
         });
       }
-      if (req.body.documents.resume) {
+
+      if (documents.resume) {
         documentArray.push({
           title: "Resume",
-          url: req.body.documents.resume,
+          url: documents.resume,
           type: "experience",
         });
       }
-      user.documents = documentArray;
+
+      userData.documents = documentArray;
     }
 
-    // Task Info (if needed)
-    if (req.body.taskInfo) {
-      user.tasks = [
-        {
-          name: req.body.taskInfo.taskName,
-          assignedOn: parseAndValidateDate(req.body.taskInfo.assignedOn),
-          assignedBy: req.body.taskInfo.assignedBy,
-        },
-      ];
-    }
+    const user = await User.create(userData);
 
-    await user.save();
-
-    // Update the corresponding report
-    const reportUpdate = {
-      name: user.name,
-      designation: user.designation,
-      department: user.departmentName,
-      email: user.email,
-      growthAndHR: {
-        joiningDate: user.joiningDate,
+    res.status(201).json({
+      success: true,
+      message: "Employee registered successfully",
+      data: {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        organizationName: user.organizationName,
+        departmentName: user.departmentName,
       },
-      finance: {
-        currentSalary: user.salary ? user.salary.toString() : "0",
-      },
-    };
-    await Report.findOneAndUpdate(
-      { id: user.id },
-      reportUpdate,
-      { new: true, upsert: false }
-    );
-
-    res.json({ success: true });
+    });
   } catch (error) {
-    console.error("Update employee error:", error);
+    console.error("Registration error:", error);
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res
+        .status(400)
+        .json({ success: false, message: messages.join(", ") });
+    }
+    if (error.code === 11000) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Employee ID already exists" });
+    }
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-const deleteEmp = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    if (!id) {
-      return createErrorResponse(res, 400, "Employee ID is required");
-    }
-
-    const user = await User.findOne({ id });
-    if (!user) {
-      return createErrorResponse(res, 404, "User not found");
-    }
-
-    await User.findOneAndDelete({ id });
-    
-    return createSuccessResponse(res, 200, null, "User deleted successfully");
-
-  } catch (error) {
-    console.error("Delete employee error:", error);
-    return createErrorResponse(res, 500, "Internal server error");
-  }
-};
-
-// Export all controller functions
 module.exports = {
   getProfile,
   updateProfile,

@@ -186,6 +186,38 @@ export default function MembersPage() {
                   </span>
                 </div>
               </div>
+
+              {/* Show associated employees and interns if manager */}
+              {member.role.toLowerCase() === "manager" && (() => {
+                const manager = member as OrganizationMember & {
+                  employees?: OrganizationMember[];
+                  interns?: OrganizationMember[];
+                };
+                return (
+                  <div className="mt-4 space-y-2">
+                    {Array.isArray(manager.employees) && manager.employees.length > 0 && (
+                      <div>
+                        <span className="font-semibold text-gray-700">Employees:</span>
+                        <ul className="list-disc list-inside text-gray-600 text-xs mt-1">
+                          {manager.employees.map((emp) => (
+                            <li key={emp.id}>{emp.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {Array.isArray(manager.interns) && manager.interns.length > 0 && (
+                      <div>
+                        <span className="font-semibold text-gray-700">Interns:</span>
+                        <ul className="list-disc list-inside text-gray-600 text-xs mt-1">
+                          {manager.interns.map((intern) => (
+                            <li key={intern.id}>{intern.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </motion.div>
           ))
         )}

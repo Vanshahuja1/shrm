@@ -63,12 +63,8 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName,
                 <button
                   key={item.id}
                   onClick={() => {
-                    // if (item.id === "overview") {
-                    //   router.push("/admin")
-                    // } else {
-                    //   router.push(`/admin/IT/${item.id}`)
-                    // }
-                    router.push(`/admin/manager/${managerId}/${item.id}`)
+    
+                    router.push(`/manager/${managerId}/${item.id}`)
                     setIsSidebarOpen(false)
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left ${

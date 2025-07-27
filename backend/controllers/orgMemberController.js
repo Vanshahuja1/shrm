@@ -42,20 +42,97 @@ exports.getEmpInfo = async (req, res) => {
   }
 };
 
+exports.createMember = async (req, res) => {
+  try {
+    if (!req.body.role) {
+      return res.status(400).json({ message: "Role is required to generate ID" });
+    }
+
+    const memberData = {
+      name: req.body.name,
+      role: req.body.role,
+      departmentName: req.body.department,
+      organizationName: req.orgName || req.params.orgName,
+      salary: req.body.salary || 0,
+      projects: Array.isArray(req.body.projects) ? req.body.projects : [],
+      upperManager: req.body.upperManager || "",
+      experience: req.body.experience || "0",
+      email: req.body.contactInfo?.email,
+      phone: req.body.contactInfo?.phone,
+      address: req.body.contactInfo?.address,
+      panCard: req.body.documents?.pan,
+      adharCard: req.body.documents?.aadhar,
+      joiningDate: req.body.joiningDate,
+      taskCountPerDay: req.body.performanceMetrics?.tasksPerDay || 0,
+      attendanceCount30Days: req.body.performanceMetrics?.attendanceScore || 0,
+      performance: req.body.performanceMetrics?.combinedPercentage || 0,
+      isActive: req.body.attendance?.todayPresent ?? true,
+      id: await User.getNextId(req.body.role),
+    };
+
+    const newMember = new User(memberData);
+    await newMember.save();
+
+    // Manager logic
+    if (req.body.role.toLowerCase() === "manager") {
+      const employees = Array.isArray(req.body.employees) ? req.body.employees : [];
+      const interns = Array.isArray(req.body.interns) ? req.body.interns : [];
+      const extractId = (item) => typeof item === "object" && item !== null ? item.id : item;
+      const allMemberIds = [...employees, ...interns].map(extractId).filter(Boolean);
+
+      if (allMemberIds.length > 0) {
+        await User.updateMany(
+          { id: { $in: allMemberIds } },
+          { $set: { upperManager: newMember.id } }
+        );
+      }
+    }
+
+    res.status(201).json(newMember.OrgMemberInfo);
+  } catch (error) {
+    console.error("Error creating member:", error);
+    res
+      .status(500)
+      .json({ message: "Error creating member", error: error.message });
+  }
+};
 exports.getMemberById = async (req, res) => {
   try {
-    // console.log("Fetching member with ID:", req.params.id);
     const member = await User.findOne({ id: req.params.id });
-    // console.log("Member found:", member ? member.name : "Not found");
+
     if (!member) {
       return res.status(404).json({ message: "Member not found" });
     }
-    res.status(200).json(member.OrgMemberInfo);
+
+    const result = member.OrgMemberInfo;
+
+    // Attach employees/interns only if manager
+    if (member.role.toLowerCase() === "manager") {
+      const reports = await User.find({ upperManager: member.id });
+
+      result.employees = reports
+        .filter((m) => m.role.toLowerCase() === "employee")
+        .map((m) => m.OrgMemberInfo);
+
+      result.interns = reports
+        .filter((m) => m.role.toLowerCase() === "intern")
+        .map((m) => m.OrgMemberInfo);
+    }
+
+    // Attach upperManager name if exists
+    if (member.upperManager) {
+      const upperManager = await User.findOne({ id: member.upperManager });
+      if (upperManager) {
+        result.upperManagerName = upperManager.name;
+      }
+    }
+
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching member" });
+    console.error("Error in getMemberById:", error);
+    res.status(500).json({ message: "Error fetching member", error: error.message });
   }
 };
-
 // Get member by ID in raw format (if needed for editing)
 exports.getMemberByIdRaw = async (req, res) => {
   try {
@@ -97,6 +174,21 @@ exports.createMember = async (req, res) => {
 
     const newMember = new User(memberData);
     await newMember.save();
+
+    // If the new member is a manager, update upperManager for selected employees/interns
+    if (req.body.role && req.body.role.toLowerCase() === "manager") {
+      const employees = Array.isArray(req.body.employees) ? req.body.employees : [];
+      const interns = Array.isArray(req.body.interns) ? req.body.interns : [];
+      // Accept both array of objects or array of IDs
+      const extractId = (item) => typeof item === 'object' && item !== null ? item.id : item;
+      const allMemberIds = [...employees, ...interns].map(extractId).filter(Boolean);
+      if (allMemberIds.length > 0) {
+        await User.updateMany(
+          { id: { $in: allMemberIds } },
+          { $set: { upperManager: newMember.id } }
+        );
+      }
+    }
     res.status(201).json(newMember.OrgMemberInfo);
   } catch (error) {
     console.error("Error creating member:", error);
@@ -108,55 +200,104 @@ exports.createMember = async (req, res) => {
 
 exports.updateMember = async (req, res) => {
   try {
-    console.log("Updating member with ID:", req.params.id);
-    console.log("Updating member with ID:", req.body);
+    const memberId = req.params.id;
+    console.log("Updating member with ID:", memberId);
+    console.log("Request Body:", req.body);
 
     const updateData = {};
 
+    // Basic info
     if (req.body.name) updateData.name = req.body.name;
     if (req.body.role) updateData.role = req.body.role;
     if (req.body.department) updateData.departmentName = req.body.department;
     if (req.body.salary) updateData.salary = req.body.salary;
     if (req.body.projects) updateData.projects = req.body.projects;
     if (req.body.experience) updateData.experience = req.body.experience;
-    if (req.body.contactInfo?.email)
-      updateData.email = req.body.contactInfo.email;
-    if( req.body.upperManager)
-      updateData.upperManager = req.body.upperManager;
-    if (req.body.contactInfo?.phone)
-      updateData.phone = req.body.contactInfo.phone;
-    if (req.body.contactInfo?.address)
-      updateData.address = req.body.contactInfo.address;
-    if (req.body.documents?.pan) updateData.panCard = req.body.documents.pan;
-    if (req.body.documents?.aadhar)
-      updateData.adharCard = req.body.documents.aadhar;
     if (req.body.joiningDate) updateData.joiningDate = req.body.joiningDate;
+
+    // Contact info
+    if (req.body.contactInfo?.email) updateData.email = req.body.contactInfo.email;
+    if (req.body.contactInfo?.phone) updateData.phone = req.body.contactInfo.phone;
+    if (req.body.contactInfo?.address) updateData.address = req.body.contactInfo.address;
+
+    // Documents
+    if (req.body.documents?.pan) updateData.panCard = req.body.documents.pan;
+    if (req.body.documents?.aadhar) updateData.adharCard = req.body.documents.aadhar;
+
+    // Performance metrics
     if (req.body.performanceMetrics?.tasksPerDay)
       updateData.taskCountPerDay = req.body.performanceMetrics.tasksPerDay;
     if (req.body.performanceMetrics?.attendanceScore)
-      updateData.attendanceCount30Days =
-        req.body.performanceMetrics.attendanceScore;
+      updateData.attendanceCount30Days = req.body.performanceMetrics.attendanceScore;
     if (req.body.performanceMetrics?.combinedPercentage)
       updateData.performance = req.body.performanceMetrics.combinedPercentage;
-    if (req.body.attendance?.todayPresent !== undefined)
+
+    // Attendance toggle
+    if (typeof req.body.attendance?.todayPresent !== "undefined")
       updateData.isActive = req.body.attendance.todayPresent;
 
+    // Direct upperManager override (optional)
+    if (req.body.upperManager) updateData.upperManager = req.body.upperManager;
+
+    // 🔄 Update the member itself
     const updatedMember = await User.findOneAndUpdate(
-      { id: req.params.id },
+      { id: memberId },
       updateData,
       { new: true }
     );
+
     if (!updatedMember) {
       return res.status(404).json({ message: "Member not found" });
     }
+
+    // 🧠 If the member is (or becomes) a manager, update their subordinates
+    const isManager =
+      (updateData.role && updateData.role.toLowerCase() === "manager") ||
+      (updatedMember.role && updatedMember.role.toLowerCase() === "manager");
+
+    if (isManager) {
+      const employees = Array.isArray(req.body.employees) ? req.body.employees : [];
+      const interns = Array.isArray(req.body.interns) ? req.body.interns : [];
+      const allMemberIds = [...employees, ...interns].filter(Boolean);
+
+      console.log("New subordinates to assign:", allMemberIds);
+
+      // Set upperManager = updatedManager.id for selected members
+      if (allMemberIds.length > 0) {
+        const result = await User.updateMany(
+          { id: { $in: allMemberIds } },
+          { $set: { upperManager: updatedMember.id } }
+        );
+        console.log("Subordinates updated:", result.modifiedCount);
+      }
+
+      // 🧼 Remove previous members not in the new list
+      const prevMembers = await User.find(
+        { upperManager: updatedMember.id, role: { $in: ["employee", "intern"] } },
+        { id: 1 }
+      );
+      const prevIds = prevMembers.map((m) => m.id);
+      const removedIds = prevIds.filter((id) => !allMemberIds.includes(id));
+
+      if (removedIds.length > 0) {
+        const removedResult = await User.updateMany(
+          { id: { $in: removedIds } },
+          { $set: { upperManager: "" } }
+        );
+        console.log("Subordinates removed:", removedResult.modifiedCount);
+      }
+    }
+
     res.status(200).json(updatedMember.OrgMemberInfo);
   } catch (error) {
     console.error("Error updating member:", error);
-    res
-      .status(500)
-      .json({ message: "Error updating member", error: error.message });
+    res.status(500).json({
+      message: "Error updating member",
+      error: error.message,
+    });
   }
 };
+
 
 exports.deleteMember = async (req, res) => {
   try {
