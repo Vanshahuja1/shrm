@@ -116,7 +116,7 @@ export default function ComposeEmailPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {members.map((member) => (
-                    <SelectItem key={member.id} value={member.email}>
+                    <SelectItem key={member.id} value={member.email || member.id}>
                       {member.name ? (
                         <>
                           {member.name} ({member.email}){" "}
@@ -124,11 +124,10 @@ export default function ComposeEmailPage() {
                         </>
                       ) : (
                         <>
-                          {member.email} <span className="text-gray-500">[{member.id}]</span>
+                          {member.email || member.id} <span className="text-gray-500">[{member.id}]</span>
                         </>
                       )}
                     </SelectItem>
-
                   ))}
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
