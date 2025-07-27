@@ -1,12 +1,12 @@
 import { Clock, Coffee, Zap, FileText } from "lucide-react"
-import type { WorkHours } from "./types/employees"
+import type { WorkHours } from "../../types/employees";
 
 interface WorkHoursDisplayProps {
   workHours: WorkHours
   isActive: boolean
 }
 
-export default function WorkHoursDisplay({ workHours, isActive }: WorkHoursDisplayProps) {
+export function WorkHoursDisplay({ workHours, isActive }: WorkHoursDisplayProps) {
   const progressPercentage = Math.min((workHours.todayHours / workHours.requiredHours) * 100, 100)
   const isOvertime = workHours.todayHours > workHours.requiredHours
   const remainingHours = Math.max(workHours.requiredHours - workHours.todayHours, 0)

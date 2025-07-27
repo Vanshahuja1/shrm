@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Clock, AlertTriangle, CheckCircle, XCircle, Plus, Send } from "lucide-react"
-import type { OvertimeRequest } from "./types/employees"
+import type { OvertimeRequest } from "../../types/employees";
 
 interface OvertimeManagementProps {
   overtimeRequests: OvertimeRequest[]
@@ -10,7 +10,7 @@ interface OvertimeManagementProps {
   onSubmitOvertimeRequest: (hours: number, justification: string) => void
 }
 
-export default function OvertimeManagement({
+export function OvertimeManagement({
   overtimeRequests,
   currentOvertimeHours,
   onSubmitOvertimeRequest,

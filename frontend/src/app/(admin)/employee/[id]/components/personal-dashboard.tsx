@@ -1,12 +1,12 @@
 import { User, Calendar, CreditCard, DollarSign, TrendingUp, FileText, Shield } from "lucide-react"
-import type { EmployeeInfo, AttendanceRecord } from "./types/employees"
+import type { EmployeeInfo, AttendanceRecord } from "../../types/employees";
 
 interface PersonalDashboardProps {
   employeeInfo: EmployeeInfo
   attendanceRecords: AttendanceRecord[]
 }
 
-export default function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalDashboardProps) {
+export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalDashboardProps) {
   // Calculate last 30 days attendance
   const last30Days = attendanceRecords.slice(-30)
   const presentDays = last30Days.filter((record) => record.status === "present" || record.status === "late").length

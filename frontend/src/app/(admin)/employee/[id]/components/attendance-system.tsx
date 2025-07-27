@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Clock, Play, Pause, Square, Coffee, LogIn, LogOut, AlertCircle } from 'lucide-react'
-import type { BreakSession } from "./types/employees";
+import { Clock, Play, Pause, Square, Coffee, LogIn, LogOut, AlertCircle } from "lucide-react"
+import type { BreakSession } from "../../types/employees";
 
 interface AttendanceSystemProps {
   onPunchIn: () => void
@@ -17,7 +17,7 @@ interface AttendanceSystemProps {
   overtimeHours: number
 }
 
-export default function AttendanceSystem({
+export function AttendanceSystem({
   onPunchIn,
   onPunchOut,
   onBreakStart,
@@ -54,17 +54,21 @@ export default function AttendanceSystem({
   const handleBreakStart = (breakType: "break1" | "break2" | "lunch") => {
     setActiveBreak(breakType)
     setBreakStartTime(new Date())
-    setBreaks(breaks.map(b => b.type === breakType ? { ...b, status: "active", startTime: new Date().toLocaleTimeString() } : b))
+    setBreaks(
+      breaks.map((b) =>
+        b.type === breakType ? { ...b, status: "active", startTime: new Date().toLocaleTimeString() } : b,
+      ),
+    )
     onBreakStart(breakType)
   }
 
   const handleBreakEnd = () => {
     if (activeBreak) {
-      setBreaks(breaks.map(b => 
-        b.type === activeBreak 
-          ? { ...b, status: "completed", endTime: new Date().toLocaleTimeString() } 
-          : b
-      ))
+      setBreaks(
+        breaks.map((b) =>
+          b.type === activeBreak ? { ...b, status: "completed", endTime: new Date().toLocaleTimeString() } : b,
+        ),
+      )
       onBreakEnd(activeBreak as "break1" | "break2" | "lunch")
       setActiveBreak(null)
       setBreakStartTime(null)
@@ -75,15 +79,19 @@ export default function AttendanceSystem({
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
   const getBreakLabel = (type: string) => {
     switch (type) {
-      case "break1": return "Break 1 (15 min)"
-      case "break2": return "Break 2 (15 min)"
-      case "lunch": return "Lunch Break (30 min)"
-      default: return ""
+      case "break1":
+        return "Break 1 (15 min)"
+      case "break2":
+        return "Break 2 (15 min)"
+      case "lunch":
+        return "Lunch Break (30 min)"
+      default:
+        return ""
     }
   }
 
@@ -100,19 +108,15 @@ export default function AttendanceSystem({
           <Clock className="w-6 h-6 text-blue-500 mr-2" />
           Punch In/Out System
         </h3>
-        
+
         <div className="text-center mb-6">
           <div className="w-32 h-32 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Clock className="w-16 h-16 text-white" />
           </div>
           <h4 className="text-4xl font-bold text-gray-900 mb-2">{currentTime.toLocaleTimeString()}</h4>
           <p className="text-gray-600 text-lg">{currentTime.toLocaleDateString()}</p>
-          
-          {workStartTime && (
-            <p className="text-blue-600 font-medium mt-2">
-              Work started at: {workStartTime}
-            </p>
-          )}
+
+          {workStartTime && <p className="text-blue-600 font-medium mt-2">Work started at: {workStartTime}</p>}
         </div>
 
         <div className="flex justify-center mb-6">
@@ -129,9 +133,7 @@ export default function AttendanceSystem({
               onClick={onPunchOut}
               disabled={!canPunchOut}
               className={`px-12 py-4 rounded-lg transition-colors flex items-center space-x-3 text-xl font-semibold ${
-                canPunchOut
-                  ? "bg-red-500 text-white hover:bg-red-600"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                canPunchOut ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
               <LogOut className="w-8 h-8" />
@@ -184,9 +186,7 @@ export default function AttendanceSystem({
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-orange-900">
-                    {getBreakLabel(activeBreak)} - Active
-                  </h4>
+                  <h4 className="font-medium text-orange-900">{getBreakLabel(activeBreak)} - Active</h4>
                   <p className="text-orange-700">Started at: {breakStartTime?.toLocaleTimeString()}</p>
                 </div>
                 <div className="text-right">
@@ -215,10 +215,8 @@ export default function AttendanceSystem({
                       : "bg-gray-50 border-gray-200"
                 }`}
               >
-                <h4 className="font-medium text-gray-900 mb-2">
-                  {getBreakLabel(breakSession.type)}
-                </h4>
-                
+                <h4 className="font-medium text-gray-900 mb-2">{getBreakLabel(breakSession.type)}</h4>
+
                 {breakSession.status === "available" && !activeBreak && (
                   <button
                     onClick={() => handleBreakStart(breakSession.type)}
@@ -228,14 +226,14 @@ export default function AttendanceSystem({
                     Start Break
                   </button>
                 )}
-                
+
                 {breakSession.status === "active" && (
                   <div className="text-orange-600 font-medium">
                     <Pause className="w-4 h-4 inline mr-1" />
                     In Progress
                   </div>
                 )}
-                
+
                 {breakSession.status === "completed" && (
                   <div className="text-green-600 font-medium">
                     <Square className="w-4 h-4 inline mr-1" />
@@ -247,7 +245,7 @@ export default function AttendanceSystem({
                     )}
                   </div>
                 )}
-                
+
                 {breakSession.status === "available" && activeBreak && (
                   <div className="text-gray-500">
                     <Clock className="w-4 h-4 inline mr-1" />

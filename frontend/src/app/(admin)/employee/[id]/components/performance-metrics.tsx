@@ -1,11 +1,11 @@
 import { TrendingUp, Target, Calendar, Star, Award, BarChart3 } from "lucide-react"
-import type { EmployeePerformanceMetricsType } from "./types/employees"
+import type { EmployeePerformanceMetricsType } from "../../types/employees";
 
 interface EmployeePerformanceMetricsProps {
   metrics: EmployeePerformanceMetricsType
 }
 
-export default function EmployeePerformanceMetricsComponent({ metrics }: EmployeePerformanceMetricsProps) {
+export function PerformanceMetrics({ metrics }: EmployeePerformanceMetricsProps) {
   const getPerformanceColor = (percentage: number) => {
     if (percentage >= 90) return "text-green-600 bg-green-100"
     if (percentage >= 75) return "text-blue-600 bg-blue-100"

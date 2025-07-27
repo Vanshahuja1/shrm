@@ -2,14 +2,14 @@
 
 import { useState } from "react"
 import { Clock, CheckCircle, FileText, Upload, Send } from "lucide-react"
-import type { EmployeeTask } from "./types/employees"
+import type { EmployeeTask } from "../../types/employees";
 
 interface TaskListProps {
   tasks: EmployeeTask[]
   onTaskResponse: (taskId: number, response: string, format: "text" | "document", documents?: string[]) => void
 }
 
-export default function TaskList({ tasks, onTaskResponse }: TaskListProps) {
+export function TaskList({ tasks, onTaskResponse }: TaskListProps) {
   const [selectedTask, setSelectedTask] = useState<number | null>(null)
   const [response, setResponse] = useState("")
   const [responseFormat, setResponseFormat] = useState<"text" | "document">("text")

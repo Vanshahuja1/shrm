@@ -1,5 +1,5 @@
 import { Database, Send, CheckCircle, Clock, AlertCircle } from "lucide-react"
-import type { DataToAdmin, DataToManager } from "./types/employees";
+import type { DataToAdmin, DataToManager } from "../../types/employees";
 
 interface DataSyncStatusProps {
   adminData: DataToAdmin[]
@@ -8,7 +8,7 @@ interface DataSyncStatusProps {
   syncStatus: "synced" | "pending" | "error"
 }
 
-export default function DataSyncStatus({ adminData, managerData, lastSyncTime, syncStatus }: DataSyncStatusProps) {
+export function DataSyncStatus({ adminData, managerData, lastSyncTime, syncStatus }: DataSyncStatusProps) {
   const getStatusIcon = () => {
     switch (syncStatus) {
       case "synced":

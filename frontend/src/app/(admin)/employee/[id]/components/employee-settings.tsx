@@ -2,14 +2,14 @@
 
 import { useState } from "react"
 import { Settings, Bell, Palette, Clock, Save } from "lucide-react"
-import type { EmployeeSettings as EmployeeSettingsType, NotificationSettings } from "./types/employees";
+import type { EmployeeSettings as EmployeeSettingsType, NotificationSettings } from "../../types/employees";
 
 interface EmployeeSettingsProps {
   settings: EmployeeSettingsType
   onSettingsUpdate: (settings: EmployeeSettingsType) => void
 }
 
-export default function EmployeeSettings({ settings, onSettingsUpdate }: EmployeeSettingsProps) {
+export function EmployeeSettings({ settings, onSettingsUpdate }: EmployeeSettingsProps) {
   const [localSettings, setLocalSettings] = useState<EmployeeSettingsType>(settings)
   const [hasChanges, setHasChanges] = useState(false)
 
