@@ -40,13 +40,31 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
   exportAttendancePDF,
   employeeName
 }) => {
+  // Function to mark Sundays as off days
+  const markSundaysAsOff = (data: Array<{date: string, status: string}>) => {
+    return data.map(item => {
+      const date = new Date(item.date)
+      const dayOfWeek = date.getDay() // 0 = Sunday
+      
+      if (dayOfWeek === 0) {
+        return { ...item, status: 'Off' }
+      }
+      return item
+    })
+  }
+
+  // Apply Sunday marking to attendance data
+  const processedAttendanceData = useMemo(() => {
+    return markSundaysAsOff(attendanceData)
+  }, [attendanceData])
   // Calculate statistics and prepare chart data
   const statistics = useMemo(() => {
-    const total = attendanceData.length
-    const present = attendanceData.filter(d => d.status.toLowerCase() === 'present').length
-    const absent = attendanceData.filter(d => d.status.toLowerCase() === 'absent').length
-    const late = attendanceData.filter(d => d.status.toLowerCase() === 'late').length
-    const leave = attendanceData.filter(d => d.status.toLowerCase() === 'leave').length
+    const total = processedAttendanceData.length
+    const present = processedAttendanceData.filter(d => d.status.toLowerCase() === 'present').length
+    const absent = processedAttendanceData.filter(d => d.status.toLowerCase() === 'absent').length
+    const late = processedAttendanceData.filter(d => d.status.toLowerCase() === 'late').length
+    const leave = processedAttendanceData.filter(d => d.status.toLowerCase() === 'leave').length
+    const off = processedAttendanceData.filter(d => d.status.toLowerCase() === 'off').length
     
     const attendanceRate = total > 0 ? (present / total) * 100 : 0
     
@@ -56,32 +74,37 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
       absent,
       late,
       leave,
+      off,
       attendanceRate
     }
-  }, [attendanceData])
+  }, [processedAttendanceData])
 
   // Prepare pie chart data
   const pieChartData = useMemo(() => [
     { name: 'Present', value: statistics.present, color: '#10B981' },
     { name: 'Absent', value: statistics.absent, color: '#EF4444' },
     { name: 'Late', value: statistics.late, color: '#F59E0B' },
-    { name: 'Leave', value: statistics.leave, color: '#6B7280' }
+    { name: 'Leave', value: statistics.leave, color: '#6B7280' },
+    { name: 'Off', value: statistics.off, color: '#8B5CF6' }
   ].filter(item => item.value > 0), [statistics])
 
   // Prepare monthly trend data
   const monthlyTrend = useMemo(() => {
     const monthlyData: { [key: string]: { present: number, absent: number, total: number } } = {}
     
-    attendanceData.forEach(item => {
+    processedAttendanceData.forEach(item => {
       const month = new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
       if (!monthlyData[month]) {
         monthlyData[month] = { present: 0, absent: 0, total: 0 }
       }
-      monthlyData[month].total++
-      if (item.status.toLowerCase() === 'present') {
-        monthlyData[month].present++
-      } else {
-        monthlyData[month].absent++
+      // Only count working days (exclude off days) for attendance rate calculation
+      if (item.status.toLowerCase() !== 'off') {
+        monthlyData[month].total++
+        if (item.status.toLowerCase() === 'present') {
+          monthlyData[month].present++
+        } else {
+          monthlyData[month].absent++
+        }
       }
     })
 
@@ -92,21 +115,24 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
       absent: data.absent,
       total: data.total
     })).sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
-  }, [attendanceData])
+  }, [processedAttendanceData])
 
   // Prepare weekly pattern data
   const weeklyPattern = useMemo(() => {
     const weeklyData: { [key: string]: { present: number, total: number } } = {}
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     
-    attendanceData.forEach(item => {
+    processedAttendanceData.forEach(item => {
       const dayOfWeek = days[new Date(item.date).getDay()]
       if (!weeklyData[dayOfWeek]) {
         weeklyData[dayOfWeek] = { present: 0, total: 0 }
       }
-      weeklyData[dayOfWeek].total++
-      if (item.status.toLowerCase() === 'present') {
-        weeklyData[dayOfWeek].present++
+      // Only count working days (exclude off days) for attendance rate calculation
+      if (item.status.toLowerCase() !== 'off') {
+        weeklyData[dayOfWeek].total++
+        if (item.status.toLowerCase() === 'present') {
+          weeklyData[dayOfWeek].present++
+        }
       }
     })
 
@@ -116,7 +142,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
       present: weeklyData[day]?.present || 0,
       total: weeklyData[day]?.total || 0
     })).filter(item => item.total > 0)
-  }, [attendanceData])
+  }, [processedAttendanceData])
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -124,6 +150,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
       case 'absent': return 'text-red-600 bg-red-100'
       case 'late': return 'text-yellow-600 bg-yellow-100'
       case 'leave': return 'text-gray-600 bg-gray-100'
+      case 'off': return 'text-purple-600 bg-purple-100'
       default: return 'text-gray-600 bg-gray-100'
     }
   }
@@ -171,6 +198,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
               <input 
                 type="date" 
                 value={attendanceEnd} 
+                max={new Date().toISOString().split('T')[0]}
                 onChange={e => setAttendanceEnd(e.target.value)} 
                 className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
               />
@@ -193,7 +221,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
           
           <TabsContent value="overview" className="space-y-6 mt-4">
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard 
                 title="Total Days" 
                 value={statistics.total} 
@@ -219,6 +247,12 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
                 value={statistics.late + statistics.leave} 
                 icon={Calendar}
                 color="text-yellow-600"
+              />
+              <StatCard 
+                title="Off Days" 
+                value={statistics.off} 
+                icon={Calendar}
+                color="text-purple-600"
               />
             </div>
 
@@ -346,7 +380,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {attendanceData.map((row, i) => (
+                    {processedAttendanceData.map((row, i) => (
                       <tr key={row.date} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(row.date).toLocaleDateString('en-US', { 

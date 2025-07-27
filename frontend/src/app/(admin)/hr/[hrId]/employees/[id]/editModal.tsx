@@ -58,7 +58,8 @@ export default function EditModal({ isOpen, onClose, employee, onSave }: EditMod
         departmentInfo: {
             departmentName: employee?.departmentName || '',
             role: employee?.role || '',
-            managerName: employee?.managers?.[0] || ''
+            managerName: employee?.managers?.[0] || '',
+            designation: employee?.designation || ''
         },
         joiningDetails: {
             joiningDate: employee?.joiningDate?.split('T')[0] || '',
@@ -304,13 +305,9 @@ export default function EditModal({ isOpen, onClose, employee, onSave }: EditMod
                                                     <SelectValue placeholder="Select department" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="Engineering">Engineering</SelectItem>
+                                                    <SelectItem value="IT">IT</SelectItem>
                                                     <SelectItem value="HR">Human Resources</SelectItem>
-                                                    <SelectItem value="Finance">Finance</SelectItem>
-                                                    <SelectItem value="Marketing">Marketing</SelectItem>
-                                                    <SelectItem value="Sales">Sales</SelectItem>
-                                                    <SelectItem value="Operations">Operations</SelectItem>
-                                                </SelectContent>
+                                                   </SelectContent>
                                             </Select>
                                         </div>
 
@@ -348,7 +345,19 @@ export default function EditModal({ isOpen, onClose, employee, onSave }: EditMod
                                                 placeholder="Enter manager name"
                                             />
                                         </div>
-
+                                        <div className="space-y-2">
+                                            <Label htmlFor="designation">Designation</Label>
+                                            <Input
+                                                id="designation"
+                                                value={formData.departmentInfo.designation}
+                                                onChange={(e) => setFormData({
+                                                    ...formData,
+                                                    departmentInfo: { ...formData.departmentInfo, designation: e.target.value }
+                                                })}
+                                                placeholder="Enter designation"
+                                            />
+                                        </div>
+                                  
                                         <div className="space-y-2">
                                             <Label htmlFor="joiningDate">Joining Date</Label>
                                             <Input

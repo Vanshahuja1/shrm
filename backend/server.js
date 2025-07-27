@@ -41,6 +41,7 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/overview", overviewRoutes);
 app.use("/api/mail/", mailRoutes);
+app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/:orgName/org-members", (req, res, next) => {
   req.orgName = req.params.orgName;
   next();

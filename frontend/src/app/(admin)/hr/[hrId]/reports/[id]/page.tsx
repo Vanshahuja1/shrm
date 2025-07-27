@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, use } from 'react'
 
 import { format } from 'date-fns'
 import AttendanceDialog from './AttendanceDialog'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Calendar, Building, Trophy, TrendingUp, BadgeCheck, Target, HeartPulse, User, DollarSign, CheckCircle, BookOpen, Download, FileText, Image, FileSpreadsheet
 } from 'lucide-react'
@@ -12,6 +12,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, 
   BarChart, Bar, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend
 } from 'recharts'
+import axios from '@/lib/axiosInstance'
 
 type EmployeeReport = {
   id: string
@@ -76,6 +77,7 @@ type EmployeeReport = {
 
 export default function EmployeeReportDetails({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const { hrId } = useParams();
   const [loading, setLoading] = useState(true)
   const [report, setReport] = useState<EmployeeReport | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
@@ -152,65 +154,17 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
     window.print()
   }
 
+  const { id  } = useParams<{id: string, hrId: string}>()
+
   useEffect(() => {
-    setReport({
-      id: unwrappedParams.id,
-      name: "Ayesha Khan",
-      designation: "Senior Developer",
-      department: "Engineering",
-      email: "ayesha@company.com",
+    
+    const fetchReport = async () => {
+      const response = await axios.get(`reports/employee/${id}`)
+      const data = await response.data.data
+      setReport(data)
+    }
+    fetchReport()
 
-      performance: {
-        rating: 4.8,
-        attendance: 98,
-        projectsCompleted: 12,
-        targetsAchieved: 95,
-        performanceMeasure: 87,
-        consistencyScore: 92,
-        engagementScore: 88
-      },
-
-      workStats: {
-        daysWorked: 1250,
-        totalTasksCompleted: 532,
-        coursesCompleted: 14,
-        certificationsEarned: 5,
-        trainingsAttended: 7,
-        avgDailyWorkingHours: 8.2,
-        overtimeHoursMonthly: 12,
-        avgBreakTimePerDay: "1h 10m"
-      },
-
-      growthAndHR: {
-        joiningDate: "2021-01-15",
-        probationStatus: false,
-        lastPromotionDate: "2023-07-01",
-        nextAppraisalDue: "2025-12-31",
-        appraisalsReceived: 3,
-        skillLevel: "Advanced"
-      },
-
-      wellbeing: {
-        age: 29,
-        lastMedicalCheckup: "2025-05-10",
-        sickLeavesTaken: 5,
-        wellnessProgramParticipation: true,
-        lastFeedbackSurveyScore: 4.6,
-        workLifeBalanceScore: 82
-      },
-
-      finance: {
-        currentSalary: "$72,000",
-        bonusReceivedThisYear: "$5,000",
-        referralBonusesEarned: "$1,500"
-      },
-
-      recentActivities: [
-        { id: 1, type: "Project", description: "Completed frontend redesign ahead of schedule", date: "2025-07-15" },
-        { id: 2, type: "Achievement", description: "Awarded Employee of the Month", date: "2025-07-10" },
-        { id: 3, type: "Training", description: "Completed Advanced React Course", date: "2025-07-05" }
-      ]
-    })
     setLoading(false)
   }, [])
 
@@ -224,12 +178,8 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
 
   // Create visualization data from existing fields
   const performanceData = [
-    { name: 'Rating', value: report.performance.rating, maxValue: 5, percentage: (report.performance.rating / 5) * 100, color: '#ef4444' },
     { name: 'Attendance', value: report.performance.attendance, maxValue: 100, percentage: report.performance.attendance, color: '#10b981' },
-    { name: 'Targets', value: report.performance.targetsAchieved, maxValue: 100, percentage: report.performance.targetsAchieved, color: '#3b82f6' },
     { name: 'Performance', value: report.performance.performanceMeasure, maxValue: 100, percentage: report.performance.performanceMeasure, color: '#f59e0b' },
-    { name: 'Consistency', value: report.performance.consistencyScore, maxValue: 100, percentage: report.performance.consistencyScore, color: '#8b5cf6' },
-    { name: 'Engagement', value: report.performance.engagementScore, maxValue: 100, percentage: report.performance.engagementScore, color: '#06b6d4' }
   ]
 
   const workStatsData = [
@@ -240,9 +190,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
   ]
 
   const wellbeingData = [
-    { name: 'Work-Life Balance', value: report.wellbeing.workLifeBalanceScore, fill: '#10b981' },
-    { name: 'Feedback Score', value: (report.wellbeing.lastFeedbackSurveyScore / 5) * 100, fill: '#3b82f6' },
-    { name: 'Health Score', value: Math.max(0, 100 - (report.wellbeing.sickLeavesTaken * 10)), fill: '#ef4444' }
+      { name: 'Health Score', value: Math.max(0, 100 - (report.wellbeing.sickLeavesTaken * 10)), fill: '#ef4444' }
   ]
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -252,21 +200,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
           <p className="font-semibold text-gray-800">{label}</p>
           {payload.map((entry: any, index: number) => {
             // Handle different data sources
-            if (label === 'Work-Life Balance') {
-              return (
-                <div key={index} style={{ color: entry.color }} className="text-sm">
-                  <p>Score: {entry.value}/100</p>
-                </div>
-              )
-            } else if (label === 'Feedback Score') {
-              const originalScore = report?.wellbeing.lastFeedbackSurveyScore || 0
-              return (
-                <div key={index} style={{ color: entry.color }} className="text-sm">
-                  <p>Score: {originalScore}/5</p>
-                  <p>Percentage: {entry.value?.toFixed(1)}%</p>
-                </div>
-              )
-            } else if (label === 'Health Score') {
+              if (label === 'Health Score') {
               const sickDays = report?.wellbeing.sickLeavesTaken || 0
               return (
                 <div key={index} style={{ color: entry.color }} className="text-sm">
@@ -279,8 +213,8 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
               const data = performanceData.find(d => d.name === label)
               return (
                 <div key={index} style={{ color: entry.color }} className="text-sm">
-                  <p>Value: {data?.value}{data?.name === 'Rating' ? '/5' : data?.name === 'Attendance' ? '%' : data?.maxValue === 100 ? '%' : ''}</p>
-                  <p>Percentage: {entry.value?.toFixed(1)}%</p>
+                  {/* <p>Value: {data?.value}{data?.name === 'Rating' ? '/5' : data?.name === 'Attendance' ? '%' : data?.maxValue === 100 ? '%' : ''}</p>
+                  <p>Percentage: {entry.value?.toFixed(1)}%</p> */}
                 </div>
               )
             }
@@ -324,7 +258,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
       <div className="bg-white border-b print:hidden">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <button onClick={() => router.back()} className="flex items-center text-gray-600 hover:text-red-600">
+            <button onClick={() => router.push(`/hr/${hrId}/reports`)} className="flex items-center text-gray-600 hover:text-red-600">
               <ArrowLeft size={18} className="mr-2" /> Back
             </button>
             <h1 className="text-xl font-semibold text-gray-800">Employee Dashboard</h1>
@@ -360,12 +294,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
         <Section title="Performance Overview">
           {/* Individual Performance Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <MetricCard 
-              icon={<Trophy size={20} className="text-yellow-500" />} 
-              title="Rating" 
-              value={report.performance.rating} 
-              sub="/5" 
-            />
+           
             <MetricCard 
               icon={<BadgeCheck size={20} className="text-green-500" />} 
               title="Attendance" 
@@ -387,24 +316,13 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
         exportAttendancePDF={exportAttendancePDF}
         employeeName={report.name}
       />
-            <MetricCard 
-              icon={<TrendingUp size={20} className="text-blue-500" />} 
-              title="Targets Achieved" 
-              value={`${report.performance.targetsAchieved}%`} 
-            />
+            
             <MetricCard 
               icon={<Target size={20} className="text-red-500" />} 
               title="Performance Measure" 
               value={`${report.performance.performanceMeasure}/100`} 
             />
-            <MetricCard 
-              title="Consistency Score" 
-              value={`${report.performance.consistencyScore}%`} 
-            />
-            <MetricCard 
-              title="Engagement Score" 
-              value={`${report.performance.engagementScore}%`} 
-            />
+            
           </div>
          
         </Section>
@@ -425,30 +343,9 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
         </Section>
 
         {/* Work & Learning Visualization */}
-        <Section title="Work & Learning">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Learning & Development</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={workStatsData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {workStatsData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={performanceData[index]?.color || '#ef4444'} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+        <Section title="Work">
+          <div className="grid grid-cols-1  gap-6">
+            
             <div className="bg-white rounded-xl border shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Work Statistics</h3>
               <div className="space-y-6">
@@ -492,18 +389,9 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
               sub="years" 
             />
             <MetricCard 
-              title="Work-Life Balance" 
-              value={`${report.wellbeing.workLifeBalanceScore}/100`} 
-            />
-            <MetricCard 
-              title="Feedback Score" 
-              value={report.wellbeing.lastFeedbackSurveyScore} 
-              sub="/5" 
-            />
-            <MetricCard 
-              title="Sick Leaves" 
+              title="Leave Report" 
               value={report.wellbeing.sickLeavesTaken} 
-              sub="this year" 
+              sub="days this year" 
             />
           </div>
           
@@ -534,16 +422,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
                     </div>
                   </div>
                 </div>
-                {/* Last Medical Checkup */}
-                <div className="flex items-center gap-3">
-                  <HeartPulse size={18} className="text-pink-400" />
-                  <div>
-                    <div className="text-xs text-gray-500">Last Medical Checkup</div>
-                    <div className="text-base font-semibold text-gray-900">
-                      {new Date(report.wellbeing.lastMedicalCheckup).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
+                
                 {/* Appraisals Received */}
                 <div className="flex items-center gap-3">
                   <BadgeCheck size={18} className="text-green-400" />
@@ -560,14 +439,8 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
                     <div className="text-base font-semibold text-blue-600">{report.growthAndHR.skillLevel}</div>
                   </div>
                 </div>
-                {/* Wellness Program */}
-                <div className="flex items-center gap-3">
-                  <HeartPulse size={18} className={report.wellbeing.wellnessProgramParticipation ? 'text-green-500' : 'text-red-400'} />
-                  <div>
-                    <div className="text-xs text-gray-500">Wellness Program</div>
-                    <div className={`text-base font-semibold ${report.wellbeing.wellnessProgramParticipation ? 'text-green-600' : 'text-red-600'}`}>{report.wellbeing.wellnessProgramParticipation ? 'Active' : 'Inactive'}</div>
-                  </div>
-                </div>
+       
+                
               </div>
             </div>
           </div>
@@ -581,7 +454,6 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <MetricCard icon={<DollarSign size={20} />} title="Salary" value={report.finance.currentSalary} />
             <MetricCard title="Bonus" value={report.finance.bonusReceivedThisYear} />
-            <MetricCard title="Referral Bonus" value={report.finance.referralBonusesEarned} />
           </div>
         </Section>
 

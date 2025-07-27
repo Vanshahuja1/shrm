@@ -57,6 +57,7 @@ interface EmployeeDetails {
   projects: string[];
   organizationName: string;
   departmentName: string;
+  designation: string;
   isActive: boolean;
   documents: any[];
   bankDetails: {
@@ -602,6 +603,18 @@ export default function EmployeeDetailsPage() {
                         <div className="col-span-2">
                           <p className="text-sm text-gray-900">
                             {details.departmentName}
+                          </p>
+                        </div>
+                      </div>
+                       <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                          <p className="text-sm font-medium text-gray-600">
+                            Designation
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-900">
+                            {details.designation}
                           </p>
                         </div>
                       </div>
