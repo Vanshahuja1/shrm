@@ -2,7 +2,8 @@
 
 import { useState, useEffect, use } from "react"
 import { OvertimeManagement } from "../components/overtime-management"
-import type { OvertimeRequest } from "@/types/employee"
+import type { OvertimeRequest } from "../../types/employees";
+import axios from "@/lib/axiosInstance"
 
 export default function OvertimePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -16,12 +17,9 @@ export default function OvertimePage({ params }: { params: Promise<{ id: string 
 
   const fetchOvertimeData = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}/overtime`)
-      if (response.ok) {
-        const data = await response.json()
-        setOvertimeRequests(data.requests || [])
-        setCurrentOvertimeHours(data.currentHours || 0)
-      }
+      const response = await axios.get(`/employees/${id}/overtime`)
+      setOvertimeRequests(response.data.requests || [])
+      setCurrentOvertimeHours(response.data.currentHours || 0)
     } catch (error) {
       console.error("Failed to fetch overtime data:", error)
     } finally {
@@ -31,21 +29,12 @@ export default function OvertimePage({ params }: { params: Promise<{ id: string 
 
   const handleSubmitOvertimeRequest = async (hours: number, justification: string) => {
     try {
-      const response = await fetch(`/api/employees/${id}/overtime`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          hours,
-          justification,
-          date: new Date().toISOString().split("T")[0],
-        }),
+      await axios.post(`/employees/${id}/overtime`, {
+        hours,
+        justification,
+        date: new Date().toISOString().split("T")[0],
       })
-
-      if (response.ok) {
-        fetchOvertimeData() // Refresh data
-      }
+      fetchOvertimeData() // Refresh data
     } catch (error) {
       console.error("Failed to submit overtime request:", error)
     }
@@ -62,4 +51,3 @@ export default function OvertimePage({ params }: { params: Promise<{ id: string 
       onSubmitOvertimeRequest={handleSubmitOvertimeRequest}
     />
   )
-}

@@ -3,6 +3,8 @@ import { type NextRequest, NextResponse } from "next/server"
 // GET /api/employees/[id]/attendance - Get attendance records
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const { params } = context
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")

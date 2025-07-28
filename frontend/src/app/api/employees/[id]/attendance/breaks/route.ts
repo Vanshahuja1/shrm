@@ -6,7 +6,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const body = await request.json()
     const breakRecord = await recordBreak(params.id, body)
     return NextResponse.json(breakRecord, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to record break" }, { status: 500 })
   }
 }
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   try {
     const breaks = await getTodayBreaks(params.id)
     return NextResponse.json(breaks)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch breaks" }, { status: 500 })
   }
 }
