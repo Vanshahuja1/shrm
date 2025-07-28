@@ -3,12 +3,14 @@ import { type NextRequest, NextResponse } from "next/server"
 // GET /api/employees/[id]/work-hours - Get work hours data
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const { params } = context
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const date = searchParams.get("date") || new Date().toISOString().split("T")[0]
 
     const workHours = await getWorkHours(params.id, date)
     return NextResponse.json(workHours)
-  } catch (error) {
+  } catch  {
     return NextResponse.json({ error: "Failed to fetch work hours" }, { status: 500 })
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react"
 import { DataSyncStatus } from "../components/data-sync-status"
+import axios from "@/lib/axiosInstance"
 
 export default function DataSyncPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -14,11 +15,8 @@ export default function DataSyncPage({ params }: { params: Promise<{ id: string 
 
   const fetchSyncData = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}/data-sync`)
-      if (response.ok) {
-        const data = await response.json()
-        setSyncData(data)
-      }
+      const response = await axios.get(`/employees/${id}/data-sync`)
+      setSyncData(response.data)
     } catch (error) {
       console.error("Failed to fetch sync data:", error)
     } finally {
@@ -38,4 +36,3 @@ export default function DataSyncPage({ params }: { params: Promise<{ id: string 
       syncStatus={syncData.syncStatus}
     />
   )
-}

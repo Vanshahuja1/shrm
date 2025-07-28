@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     return NextResponse.json(employee)
-  } catch (error) {
+  } catch  {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

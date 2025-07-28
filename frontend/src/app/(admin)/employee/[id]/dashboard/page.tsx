@@ -2,7 +2,8 @@
 
 import { useState, useEffect, use } from "react"
 import { PersonalDashboard } from "../components/personal-dashboard"
-import type { EmployeeInfo, AttendanceRecord } from "@/types/employee"
+import type { EmployeeInfo, AttendanceRecord } from "../../types/employees";
+import axios from "@/lib/axiosInstance"
 
 export default function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -17,11 +18,8 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
 
   const fetchEmployeeData = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}`)
-      if (response.ok) {
-        const data = await response.json()
-        setEmployeeInfo(data)
-      }
+      const response = await axios.get(`/employees/${id}`)
+      setEmployeeInfo(response.data)
     } catch (error) {
       console.error("Failed to fetch employee data:", error)
     }
@@ -29,11 +27,8 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
 
   const fetchAttendanceRecords = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}/attendance`)
-      if (response.ok) {
-        const data = await response.json()
-        setAttendanceRecords(data)
-      }
+      const response = await axios.get(`/employees/${id}/attendance`)
+      setAttendanceRecords(response.data)
     } catch (error) {
       console.error("Failed to fetch attendance records:", error)
     } finally {
@@ -45,5 +40,4 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
     return <div className="animate-pulse">Loading dashboard...</div>
   }
 
-  return <PersonalDashboard employeeInfo={employeeInfo} attendanceRecords={attendanceRecords} />
-}
+  return <PersonalDashboard employeeInfo={employeeInfo} attendanceRecords={attendanceRecords}

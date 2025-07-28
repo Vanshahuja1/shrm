@@ -2,7 +2,8 @@
 
 import { useState, useEffect, use } from "react"
 import { PerformanceMetrics } from "../components/performance-metrics"
-import type { EmployeePerformanceMetricsType } from "@/types/employee"
+import type { EmployeePerformanceMetricsType } from "../../types/employees";
+import axios from "@/lib/axiosInstance"
 
 export default function PerformancePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -15,11 +16,8 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
 
   const fetchPerformanceMetrics = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}/performance`)
-      if (response.ok) {
-        const data = await response.json()
-        setMetrics(data)
-      }
+      const response = await axios.get(`/employees/${id}/performance`)
+      setMetrics(response.data)
     } catch (error) {
       console.error("Failed to fetch performance metrics:", error)
     } finally {
@@ -32,4 +30,3 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
   }
 
   return <PerformanceMetrics metrics={metrics} />
-}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react"
 import { AttendanceSystem } from "../components/attendance-system"
-
+import axios from "@/lib/axiosInstance";
 export default function AttendancePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -17,11 +17,8 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
 
   const fetchAttendanceData = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}/attendance`)
-      if (response.ok) {
-        const data = await response.json()
-        setAttendanceData(data)
-      }
+      const response = await axios.get(`/employees/${id}/attendance`)
+      setAttendanceData(response.data)
     } catch (error) {
       console.error("Failed to fetch attendance data:", error)
     } finally {
@@ -31,39 +28,22 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
 
   const handlePunchIn = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}/attendance`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          timestamp: new Date().toISOString(),
-        }),
-      })
-
-      if (response.ok) {
+       await axios.post(`/employees/${id}/attendance`)
         fetchAttendanceData()
-      }
+      
     } catch (error) {
       console.error("Failed to punch in:", error)
     }
   }
 
+// ...existing code...
+
   const handlePunchOut = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}/attendance/punch-out`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          timestamp: new Date().toISOString(),
-        }),
+      await axios.post(`/employees/${id}/attendance/punch-out`, {
+        timestamp: new Date().toISOString(),
       })
-
-      if (response.ok) {
-        fetchAttendanceData()
-      }
+      fetchAttendanceData()
     } catch (error) {
       console.error("Failed to punch out:", error)
     }
@@ -71,16 +51,11 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
 
   const handleBreakStart = async (breakType: "break1" | "break2" | "lunch") => {
     try {
-      await fetch(`/api/employees/${id}/attendance/breaks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: breakType,
-          action: "start",
-        }),
+      await axios.post(`/employees/${id}/attendance/breaks`, {
+        type: breakType,
+        action: "start",
       })
+      fetchAttendanceData()
     } catch (error) {
       console.error("Failed to start break:", error)
     }
@@ -88,20 +63,17 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
 
   const handleBreakEnd = async (breakType: "break1" | "break2" | "lunch") => {
     try {
-      await fetch(`/api/employees/${id}/attendance/breaks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: breakType,
-          action: "end",
-        }),
+      await axios.post(`/employees/${id}/attendance/breaks`, {
+        type: breakType,
+        action: "end",
       })
+      fetchAttendanceData()
     } catch (error) {
       console.error("Failed to end break:", error)
     }
   }
+
+// ...existing code...
 
   if (loading) {
     return <div className="animate-pulse">Loading attendance data...</div>
