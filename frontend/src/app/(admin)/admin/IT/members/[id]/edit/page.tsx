@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import { useParams, useRouter } from "next/navigation";
 import axios from "@/lib/axiosInstance";
-import type { OrganizationMember } from "../../../../types";
+import type {
+  OrganizationMember,
+  UpdateMemberPayload,
+} from "../../../../types";
+type Subordinate = { id: string | number; upperManager: string; name?: string };
 
 export default function EditMemberPage() {
   const { id } = useParams();
@@ -18,13 +22,18 @@ export default function EditMemberPage() {
   const [allEmployees, setAllEmployees] = useState<OrganizationMember[]>([]);
   const [allInterns, setAllInterns] = useState<OrganizationMember[]>([]);
   const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
+  
 
   useEffect(() => {
     const fetchMember = async () => {
       try {
         const response = await axios.get(`/IT/org-members/${id}`);
         const data = response.data;
-        setMember(data);
+        setMember({
+          ...data,
+          employees: data.employees || [],
+          interns: data.interns || [],
+        });
         setProjectsText(
           Array.isArray(data.projects) ? data.projects.join(", ") : ""
         );
@@ -73,28 +82,40 @@ export default function EditMemberPage() {
     setMember({ ...member, [key]: value });
   };
 
-  const handleContactChange = (
-    key: keyof OrganizationMember["contactInfo"],
-    value: string
-  ) => {
-    if (!member) return;
-    setMember({
-      ...member,
-      contactInfo: { ...member.contactInfo, [key]: value },
-    });
-  };
+ const handleContactChange = useCallback(
+    (key: keyof OrganizationMember["contactInfo"], value: string) => {
+      setMember((prev) =>
+        prev
+          ? {
+              ...prev,
+              contactInfo: {
+                ...prev.contactInfo,
+                [key]: value,
+              },
+            }
+          : prev
+      );
+    },
+    []
+  );
 
   // Helper functions (single set only)
-  const handleDocumentChange = (
-    key: keyof OrganizationMember["documents"],
-    value: string
-  ) => {
-    if (!member) return;
-    setMember({
-      ...member,
-      documents: { ...member.documents, [key]: value },
-    });
-  };
+  const handleDocumentChange = useCallback(
+    (key: keyof OrganizationMember["documents"], value: string) => {
+      setMember((prev) =>
+        prev
+          ? {
+              ...prev,
+              documents: {
+                ...prev.documents,
+                [key]: value,
+              },
+            }
+          : prev
+      );
+    },
+    []
+  );
 
   const handlePerformanceChange = (
     key: keyof OrganizationMember["performanceMetrics"],
@@ -126,11 +147,14 @@ export default function EditMemberPage() {
       .split(",")
       .map((p) => p.trim())
       .filter((p) => p);
-    let memberToSubmit = {
+
+    const memberToSubmit: UpdateMemberPayload = {
       id: member.id,
       name: member.name,
       role: member.role,
       department: member.department,
+      upperManager: member.upperManager,
+      upperManagerName: member.upperManagerName || "",
       salary: member.salary,
       projects: projectsList,
       experience:
@@ -158,28 +182,18 @@ export default function EditMemberPage() {
         todayPresent: member.attendance?.todayPresent ?? true,
       },
     };
-    // If manager, add employees/interns arrays of IDs only if present
-    if (member.role === "Manager") {
-      type ManagerWithMembers = OrganizationMember & {
-        employees?: OrganizationMember[];
-        interns?: OrganizationMember[];
-      };
-      const manager = member as ManagerWithMembers;
-      const employees = Array.isArray(manager.employees)
-        ? manager.employees.map((e) => ({
-            id: e.id,
-            upperManager: member.name,
-          }))
-        : undefined;
-      const interns = Array.isArray(manager.interns)
-        ? manager.interns.map((i) => ({ id: i.id, upperManager: member.name }))
-        : undefined;
-      memberToSubmit = {
-        ...memberToSubmit,
-        ...(employees ? { employees } : {}),
-        ...(interns ? { interns } : {}),
-      };
+
+    if (member.role.toLowerCase() === "manager") {
+      memberToSubmit.employees = (member.employees || []).map((e) => ({
+        id: String(e.id),
+        upperManager: String(member.upperManager || ""),
+      }));
+      memberToSubmit.interns = (member.interns || []).map((i) => ({
+        id: String(i.id),
+        upperManager: String(member.upperManager || ""),
+      }));
     }
+
     setSaving(true);
     setError(null);
     setSuccess(null);
@@ -201,136 +215,139 @@ export default function EditMemberPage() {
   };
 
   // Helper field components (must be above usage)
-  function Field({
-    label,
-    value,
-    onChange,
-    type = "text",
-  }: {
-    label: string;
-    value: string | number;
-    onChange: (val: string) => void;
-    type?: string;
-  }) {
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {label}
-        </label>
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string | number;
+  onChange: (val: string | number) => void;
+  type?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) =>
+          onChange(type === "number" ? Number(e.target.value) : e.target.value)
+        }
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+  );
+}
+
+  function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { label: string; value: string }[];
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+
+ function FieldWithSuffix({
+  label,
+  value,
+  suffix,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string | number;
+  suffix: string;
+  type?: string;
+  onChange: (val: string | number) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
+      <div className="relative">
         <input
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          onChange={(e) =>
+            onChange(
+              type === "number" ? Number(e.target.value) : e.target.value
+            )
+          }
+          className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
         />
+        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
+          {suffix}
+        </span>
       </div>
-    );
-  }
-
-  function SelectField({
-    label,
-    value,
-    options,
-    onChange,
-  }: {
-    label: string;
-    value: string;
-    options: string[];
-    onChange: (val: string) => void;
-  }) {
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {label}
-        </label>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        >
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  function FieldWithSuffix({
-    label,
-    value,
-    suffix,
-    onChange,
-    type = "text",
-  }: {
-    label: string;
-    value: string | number;
-    suffix: string;
-    type?: string;
-    onChange: (val: string | number) => void;
-  }) {
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {label}
-        </label>
-        <div className="relative">
-          <input
-            type={type}
-            value={value}
-            onChange={(e) =>
-              onChange(
-                type === "number" ? Number(e.target.value) : e.target.value
-              )
-            }
-            className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
-            {suffix}
-          </span>
-        </div>
-      </div>
-    );
-  }
+    </div>
+  );
+}
 
   function FieldWithPrefix({
-    label,
-    value,
-    prefix,
-    onChange,
-    type = "text",
-  }: {
-    label: string;
-    value: string | number;
-    prefix: string;
-    type?: string;
-    onChange: (val: string | number) => void;
-  }) {
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {label}
-        </label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
-            {prefix}
-          </span>
-          <input
-            type={type}
-            value={value}
-            onChange={(e) =>
-              onChange(
-                type === "number" ? Number(e.target.value) : e.target.value
-              )
-            }
-            className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+  label,
+  value,
+  prefix,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string | number;
+  prefix: string;
+  type?: string;
+  onChange: (val: string | number) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
+          {prefix}
+        </span>
+        <input
+          type={type}
+          value={value}
+          onChange={(e) =>
+            onChange(
+              type === "number" ? Number(e.target.value) : e.target.value
+            )
+          }
+          className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        />
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (loading) return <p className="text-center text-gray-500">Loading...</p>;
   if (!member) return null;
@@ -374,12 +391,17 @@ export default function EditMemberPage() {
           <Field
             label="Name"
             value={member.name}
-            onChange={(val: string) => handleChange("name", val)}
+            onChange={(val) => handleChange("name", val as string)}
           />
           <SelectField
             label="Role"
             value={member.role}
-            options={["Manager", "Employee", "Intern", "Head"]}
+            options={[
+              { label: "Manager", value: "Manager" },
+              { label: "Employee", value: "Employee" },
+              { label: "Intern", value: "Intern" },
+              { label: "Head", value: "Head" },
+            ]}
             onChange={(val: string) =>
               handleChange("role", val as OrganizationMember["role"])
             }
@@ -387,14 +409,27 @@ export default function EditMemberPage() {
           <Field
             label="Department"
             value={member.department}
-            onChange={(val: string) => handleChange("department", val)}
+            onChange={(val) => handleChange("department", val as string)}
           />
           {["employee", "intern"].includes(member.role.toLowerCase()) && (
             <SelectField
               label="Manager"
               value={member.upperManager || ""}
-              options={allManagers.map((m) => String(m.id))}
-              onChange={(val: string) => handleChange("upperManager", val)}
+              options={allManagers.map((m) => ({
+                label: m.name,
+                value: String(m.id),
+              }))}
+              onChange={(val: string) =>
+                setMember((prev) => {
+                  if (!prev) return prev;
+                  const selected = allManagers.find((m) => String(m.id) === val);
+                  return {
+                    ...prev,
+                    upperManager: val,
+                    upperManagerName: selected?.name || "",
+                  };
+                })
+              }
             />
           )}
           <FieldWithPrefix
@@ -410,7 +445,7 @@ export default function EditMemberPage() {
             label="Joining Date"
             value={member.joiningDate}
             type="date"
-            onChange={(val: string) => handleChange("joiningDate", val)}
+            onChange={(val) => handleChange("joiningDate", val as string)}
           />
           <FieldWithSuffix
             label="Experience"
@@ -427,13 +462,37 @@ export default function EditMemberPage() {
           />
           <Field
             label="Email"
-            value={member.contactInfo.email}
-            onChange={(val: string) => handleContactChange("email", val)}
+            value={member.contactInfo?.email || ""}
+            onChange={(val) =>
+              setMember((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      contactInfo: {
+                        ...prev.contactInfo,
+                        email: val as string,
+                      },
+                    }
+                  : prev
+              )
+            }
           />
           <Field
             label="Phone"
-            value={member.contactInfo.phone}
-            onChange={(val: string) => handleContactChange("phone", val)}
+            value={member.contactInfo?.phone || ""}
+            onChange={(val) =>
+              setMember((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      contactInfo: {
+                        ...prev.contactInfo,
+                        phone: val as string,
+                      },
+                    }
+                  : prev
+              )
+            }
           />
         </div>
 
@@ -448,12 +507,12 @@ export default function EditMemberPage() {
           <Field
             label="PAN Number"
             value={member.documents.pan}
-            onChange={(val: string) => handleDocumentChange("pan", val)}
+            onChange={(val) => handleDocumentChange("pan", val as string)}
           />
           <Field
             label="Aadhar Number"
             value={member.documents.aadhar}
-            onChange={(val: string) => handleDocumentChange("aadhar", val)}
+            onChange={(val) => handleDocumentChange("aadhar", val as string)}
           />
         </div>
 
@@ -525,6 +584,7 @@ export default function EditMemberPage() {
               interns?: OrganizationMember[];
             };
             const manager = member as ManagerWithMembers;
+
             return (
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <MultiSelectDropdown
@@ -541,15 +601,19 @@ export default function EditMemberPage() {
                         ? {
                             ...prev,
                             employees: [
-                              ...((prev as ManagerWithMembers).employees || []),
-                              emp,
+                              ...((prev.employees as Subordinate[]) || []),
+                              {
+                                id: emp.id,
+                                name: emp.name,
+                                upperManager: prev.name || "", // required
+                              },
                             ],
                           }
                         : prev
                     )
                   }
                   onRemove={(idx: number) =>
-                    setMember((prev) =>
+                    setMember((prev): OrganizationMember | null =>
                       prev
                         ? {
                             ...prev,
@@ -557,10 +621,11 @@ export default function EditMemberPage() {
                               (prev as ManagerWithMembers).employees || []
                             ).filter((_, i) => i !== idx),
                           }
-                        : prev
+                        : null
                     )
                   }
                 />
+
                 <MultiSelectDropdown
                   label="Interns Under Manager"
                   options={allInterns}
@@ -575,15 +640,19 @@ export default function EditMemberPage() {
                         ? {
                             ...prev,
                             interns: [
-                              ...((prev as ManagerWithMembers).interns || []),
-                              intern,
+                              ...((prev.interns as Subordinate[]) || []),
+                              {
+                                id: intern.id,
+                                name: intern.name,
+                                upperManager: prev.name || "",
+                              },
                             ],
                           }
                         : prev
                     )
                   }
                   onRemove={(idx: number) =>
-                    setMember((prev) =>
+                    setMember((prev): OrganizationMember | null =>
                       prev
                         ? {
                             ...prev,
@@ -591,7 +660,7 @@ export default function EditMemberPage() {
                               (prev as ManagerWithMembers).interns || []
                             ).filter((_, i) => i !== idx),
                           }
-                        : prev
+                        : null
                     )
                   }
                 />

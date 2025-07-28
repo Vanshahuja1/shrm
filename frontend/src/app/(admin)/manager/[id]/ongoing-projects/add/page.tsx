@@ -70,7 +70,7 @@ export default function NewProjectModal() {
       };
       await axios.post("/projects", payload);
       console.log("Project added successfully");
-      router.push(`/admin/manager/${managerId}/ongoing-projects`);
+      router.push(`/manager/${managerId}/ongoing-projects`);
     } catch (err) {
       console.log("Failed to add project. Please try again.", err);
     }

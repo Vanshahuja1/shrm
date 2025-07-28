@@ -8,29 +8,43 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    upperManagerName: { type: String, default: "" },
     id: {
       type: String,
-      // required: true,
       unique: true,
       trim: true,
       index: true,
     },
     name: {
       type: String,
-      // required: [true, "Name is required"],
-      trim: true,
-      maxlength: [100, "Name cannot exceed 100 characters"],
-    },
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      // validate: {
-      //   validator: (v) => !v || validator.isEmail(v),
-      //   message: "Invalid email format",
-      // },
       default: "",
     },
+    employees: [
+      {
+        id: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        upperManager: {
+          type: String,
+          trim: true,
+        },
+      },
+    ],
+    interns: [
+      {
+        id: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        upperManager: {
+          type: String,
+          trim: true,
+        },
+      },
+    ],
     gender: {
       type: String,
       enum: ["Male", "Female", "Other"],
@@ -42,12 +56,10 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      // required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
     role: {
       type: String,
-      // required: [true, "Role is required"],
       enum: ["admin", "manager", "employee", "sales", "intern", "hr"],
       lowercase: true,
     },
@@ -56,33 +68,27 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
-
     dateOfBirth: {
       type: Date,
     },
-
     address: {
       type: String,
       trim: true,
       default: "",
     },
-
     performance: {
       type: Number,
       min: [0, "Performance cannot be below 0"],
       max: [100, "Performance cannot exceed 100"],
       default: 0,
     },
-
     joiningDate: {
       type: Date,
     },
-
     currentProjects: {
       type: [String],
       default: [],
     },
-
     pastProjects: {
       type: [String],
       default: [],
@@ -91,13 +97,11 @@ const userSchema = new mongoose.Schema(
       {
         title: {
           type: String,
-          // required: true,
           trim: true,
           maxlength: 100,
         },
         url: {
           type: String,
-          // required: true,
           trim: true,
           validate: {
             validator: (v) => validator.isURL(v),
@@ -120,34 +124,28 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-
     taskCountPerDay: {
       type: Number,
       default: 0,
       min: 0,
     },
-
     tasks: {
       type: [String],
       default: [],
     },
-
     responses: {
       type: [String],
       default: [],
     },
-
     managers: {
       type: [String],
       default: [],
     },
-
     photo: {
       type: String,
       trim: true,
       default: "",
     },
-
     bankDetails: {
       accountHolder: {
         type: String,
@@ -177,83 +175,57 @@ const userSchema = new mongoose.Schema(
         uppercase: true,
       },
     },
-
     workLog: {
-      punchIn: {
-        type: Date,
-      },
-      punchOut: {
-        type: Date,
-      },
+      punchIn: Date,
+      punchOut: Date,
       hoursWorked: {
         type: Number,
         default: 0,
         min: 0,
       },
     },
-
-
     salary: {
       type: Number,
       min: [0, "Salary cannot be negative"],
       default: 0,
     },
-
     adharCard: {
       type: String,
       trim: true,
-      // validate: {
-      //   validator: (v) => !v || /^\d{12}$/.test(v.replace(/\s/g, "")),
-      //   message: "Aadhar card must be 12 digits",
-      // },
       default: "",
     },
-
     panCard: {
       type: String,
       trim: true,
       uppercase: true,
-      // validate: {
-      //   validator: (v) => !v || /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(v),
-      //   message: "Invalid PAN card format",
-      // },
       default: "",
     },
-
     experience: {
       type: String,
       min: [0, "Experience cannot be negative"],
       default: "0",
     },
-
     projects: [
       {
         type: String,
         trim: true,
       },
     ],
-
     organizationName: {
       type: String,
       trim: true,
       default: "",
     },
-
     departmentName: {
       type: String,
       trim: true,
       default: "",
     },
-
     isActive: {
       type: Boolean,
       default: true,
     },
-
-    lastLogin: {
-      type: Date,
-    },
-
+    lastLogin: Date,
     passwordChangedAt: {
       type: Date,
       default: Date.now,
@@ -266,13 +238,11 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Indexes
 userSchema.index({ role: 1 });
 userSchema.index({ organizationName: 1 });
 userSchema.index({ departmentName: 1 });
 userSchema.index({ createdAt: -1 });
 
-// Virtual
 userSchema.virtual("employeeInfo").get(function () {
   return {
     id: this.id,
@@ -289,15 +259,13 @@ userSchema.virtual("reportRecords").get(function () {
   return {
     id: this.id,
     name: this.name,
-    email : this.email,
+    email: this.email,
     departmentName: this.departmentName,
     role: this.role,
-    
     joiningDate: this.joiningDate,
     status: this.isActive ? "Active" : "Inactive",
   };
 });
-
 
 userSchema.virtual("OrgMemberInfo").get(function () {
   return {
@@ -309,7 +277,6 @@ userSchema.virtual("OrgMemberInfo").get(function () {
     projects: this.projects || [],
     experience: (() => {
       const exp = (this.experience || "0").toString();
-      // Remove any existing "years" and clean up, then add single "years"
       const cleanExp = exp.replace(/\s*years?\s*/gi, "").trim();
       return `${cleanExp} years`;
     })(),
@@ -328,11 +295,11 @@ userSchema.virtual("OrgMemberInfo").get(function () {
     performanceMetrics: {
       tasksPerDay: this.taskCountPerDay || 0,
       attendanceScore: this.attendanceCount30Days || 0,
-      managerReviewRating: this.performance / 20 || 0, // Convert 0-100 to 0-5 scale
+      managerReviewRating: this.performance / 20 || 0,
       combinedPercentage: this.performance || 0,
     },
     attendance: {
-      last7Days: new Array(7).fill(true), // You can implement actual logic here
+      last7Days: new Array(7).fill(true),
       todayPresent: this.isActive,
     },
     upperManager: this.upperManager || null,
@@ -340,14 +307,11 @@ userSchema.virtual("OrgMemberInfo").get(function () {
   };
 });
 
-// Hook to set a flag for new documents, to be used in post-save hook
 userSchema.pre("save", function (next) {
-  // `this` is the document being saved. this.isNew is a mongoose boolean.
   this.wasNew = this.isNew;
   next();
 });
 
-// Password Hash
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(12);
@@ -355,12 +319,10 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// Compare Password
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// JWT check
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     const changedTimestamp = parseInt(
@@ -372,7 +334,6 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-// Static: Get Next ID
 userSchema.statics.getNextId = async function (role) {
   const rolePrefixes = {
     admin: "ADM",
@@ -400,19 +361,14 @@ userSchema.statics.getNextId = async function (role) {
   return `${prefix}${nextNumber}`;
 };
 
-// Static: Find by Employee ID
 userSchema.statics.findByEmployeeId = function (employeeId) {
   return this.findOne({ id: employeeId, isActive: true });
 };
 
-// Hook to create a report automatically when a new user is created
 userSchema.post("save", async function (doc, next) {
-  // doc.wasNew is set in the pre-save hook
   if (doc.wasNew) {
     try {
-      // Use mongoose.model to avoid circular dependency issues
       const Report = mongoose.model("Report");
-      console.log(doc)
       const reportData = {
         id: doc.id,
         name: doc.name || "N/A",

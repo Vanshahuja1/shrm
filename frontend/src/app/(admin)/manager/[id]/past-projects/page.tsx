@@ -1,35 +1,28 @@
 "use client"
-import { useParams } from "next/dist/client/components/navigation"
-
 import { useEffect, useState } from "react"
-import { mockPastProjects } from "../data/mockData"
-import type { Project } from "../types"
+import type { Project } from "@/types/index"
 export default function PastProjects() {
 
-  const {id: managerId} = useParams()
   const [projects, setProjects] = useState<Project[]>([])
 
   useEffect(() => {
-    // Fetch past projects for the manager
     async function fetchProjects() {
       try {
-        const response = await fetch(`/api/managers/${managerId}/projects?status=past`)
+        const response = await fetch("http://localhost:5000/api/projects")
         if (!response.ok) {
           throw new Error("Failed to fetch projects")
         }
-        const data = await response.json()
-        setProjects(data.projects)
-        
-      }
-      catch (error) {
+        const data: Project[] = await response.json()
+        // Filter for completed projects only
+        const completed = data.filter((p) => p.completionPercentage === 100)
+        setProjects(completed)
+      } catch (error) {
         console.error("Error fetching projects:", error)
-        // Fallback to mock data in case of error
-        setProjects(mockPastProjects as Project[])
+        setProjects([])
       }
     }
-
     fetchProjects()
-  }, [managerId])
+  }, [])
 
 
   return (
@@ -58,56 +51,54 @@ export default function PastProjects() {
             </div>
 
             {/* Historical Data */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h4 className="font-medium text-gray-900 mb-3">Historical Data</h4>
-              <div className="grid grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Duration:</span>
-                  <p className="font-medium">
-                    {Math.ceil(
-                      (new Date(project.endDate).getTime() - new Date(project.startDate).getTime()) /
-                        (1000 * 60 * 60 * 24 * 30),
-                    )}{" "}
-                    months
-                  </p>
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <h4 className="font-medium text-gray-900 mb-3">Historical Data</h4>
+                  <div className="grid grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Duration:</span>
+                      <p className="font-medium">
+                        {project.startDate && project.endDate
+                          ? `${Math.ceil((new Date(project.endDate).getTime() - new Date(project.startDate).getTime()) / (1000 * 60 * 60 * 24 * 30))} months`
+                          : "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Team Size:</span>
+                      <p className="font-medium">{Array.isArray(project.membersInvolved) ? project.membersInvolved.length : 0} members</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Budget vs Actual:</span>
+                      <p className="font-medium">
+                        {project.budgetVsActual ? project.budgetVsActual : "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Cost Efficiency:</span>
+                      <p className="font-medium text-green-600">
+                        {project.costEfficiency ? project.costEfficiency : "-"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-gray-600">Team Size:</span>
-                  <p className="font-medium">{project.employees.length} members</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Budget vs Actual:</span>
-                  <p className="font-medium">
-                    ${project.budget.toLocaleString()} / ${project.actualCost.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Cost Efficiency:</span>
-                  <p className="font-medium text-green-600">
-                    {Math.round(((project.budget - project.actualCost) / project.budget) * 100)}% saved
-                  </p>
-                </div>
-              </div>
-            </div>
 
             {/* Performance Analysis */}
-            <div className="bg-red-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-3">Performance Analysis</h4>
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Success Rate:</span>
-                  <p className="font-medium text-green-600">95%</p>
+                <div className="bg-red-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">Performance Analysis</h4>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Success Rate:</span>
+                      <p className="font-medium text-green-600">{project.successRate ? project.successRate : "-"}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Quality Score:</span>
+                      <p className="font-medium text-blue-600">{project.qualityScore ? project.qualityScore : "-"}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Client Satisfaction:</span>
+                      <p className="font-medium text-red-600">{project.clientSatisfaction ? project.clientSatisfaction : "-"}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-gray-600">Quality Score:</span>
-                  <p className="font-medium text-blue-600">4.5/5</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Client Satisfaction:</span>
-                  <p className="font-medium text-red-600">Excellent</p>
-                </div>
-              </div>
-            </div>
           </div>
         ))}
       </div>

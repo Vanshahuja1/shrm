@@ -27,7 +27,15 @@ interface SelectFieldProps {
 }
 
 // Custom form components
-const Input: React.FC<FieldProps> = ({ label, name, type = "text", value, onChange, required, placeholder }) => (
+const Input: React.FC<FieldProps> = ({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  required,
+  placeholder,
+}) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700 mb-2">
       {label} {required && <span className="text-red-500">*</span>}
@@ -44,7 +52,13 @@ const Input: React.FC<FieldProps> = ({ label, name, type = "text", value, onChan
   </div>
 );
 
-const SelectField: React.FC<SelectFieldProps> = ({ label, value, onChange, options, required }) => (
+const SelectField: React.FC<SelectFieldProps> = ({
+  label,
+  value,
+  onChange,
+  options,
+  required,
+}) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700 mb-2">
       {label} {required && <span className="text-red-500">*</span>}
@@ -65,7 +79,15 @@ const SelectField: React.FC<SelectFieldProps> = ({ label, value, onChange, optio
   </div>
 );
 
-const FieldWithPrefix: React.FC<FieldProps & { prefix: string }> = ({ label, name, type = "text", value, onChange, required, prefix }) => (
+const FieldWithPrefix: React.FC<FieldProps & { prefix: string }> = ({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  required,
+  prefix,
+}) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700 mb-2">
       {label} {required && <span className="text-red-500">*</span>}
@@ -86,7 +108,15 @@ const FieldWithPrefix: React.FC<FieldProps & { prefix: string }> = ({ label, nam
   </div>
 );
 
-const FieldWithSuffix: React.FC<FieldProps & { suffix: string }> = ({ label, name, type = "text", value, onChange, required, suffix }) => (
+const FieldWithSuffix: React.FC<FieldProps & { suffix: string }> = ({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  required,
+  suffix,
+}) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700 mb-2">
       {label} {required && <span className="text-red-500">*</span>}
@@ -107,7 +137,14 @@ const FieldWithSuffix: React.FC<FieldProps & { suffix: string }> = ({ label, nam
   </div>
 );
 
-const Textarea: React.FC<FieldProps> = ({ label, name, value, onChange, required, placeholder }) => (
+const Textarea: React.FC<FieldProps> = ({
+  label,
+  name,
+  value,
+  onChange,
+  required,
+  placeholder,
+}) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700 mb-2">
       {label} {required && <span className="text-red-500">*</span>}
@@ -124,7 +161,6 @@ const Textarea: React.FC<FieldProps> = ({ label, name, value, onChange, required
   </div>
 );
 
-
 // MultiSelectDropdown component interface
 interface MultiSelectDropdownProps {
   items: OrganizationMember[];
@@ -136,8 +172,14 @@ interface MultiSelectDropdownProps {
   placeholder: string;
 }
 
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ 
-  items, selectedItems, onAdd, onRemove, getOptionLabel, getOptionKey, placeholder 
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
+  items,
+  selectedItems,
+  onAdd,
+  onRemove,
+  getOptionLabel,
+  getOptionKey,
+  placeholder,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -146,12 +188,12 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
       <div className="min-h-[40px] p-2 border border-gray-300 rounded-md bg-white">
         <div className="flex flex-wrap gap-1 mb-2">
           {selectedItems.map((item, index) => (
-            <span 
-              key={getOptionKey(item)} 
+            <span
+              key={getOptionKey(item)}
               className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm flex items-center"
             >
               {getOptionLabel(item)}
-              <button 
+              <button
                 type="button"
                 onClick={() => onRemove(index)}
                 className="ml-1 text-blue-600 hover:text-blue-800"
@@ -172,25 +214,31 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
       </div>
       {isOpen && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-          {items.filter(item => !selectedItems.some(selected => getOptionKey(selected) === getOptionKey(item))).map((item) => (
-            <button
-              key={getOptionKey(item)}
-              type="button"
-              onClick={() => {
-                onAdd(item);
-                setIsOpen(false);
-              }}
-              className="w-full text-left px-3 py-2 hover:bg-gray-100"
-            >
-              {getOptionLabel(item)}
-            </button>
-          ))}
+          {items
+            .filter(
+              (item) =>
+                !selectedItems.some(
+                  (selected) => getOptionKey(selected) === getOptionKey(item)
+                )
+            )
+            .map((item) => (
+              <button
+                key={getOptionKey(item)}
+                type="button"
+                onClick={() => {
+                  onAdd(item);
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100"
+              >
+                {getOptionLabel(item)}
+              </button>
+            ))}
         </div>
       )}
     </div>
   );
 };
-
 
 export default function AddMemberPage() {
   const router = useRouter();
@@ -198,9 +246,12 @@ export default function AddMemberPage() {
   const [allEmployees, setAllEmployees] = useState<OrganizationMember[]>([]);
   const [allInterns, setAllInterns] = useState<OrganizationMember[]>([]);
   const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
-  const [selectedManager, setSelectedManager] = useState<string>("");
+  const [selectedManagerId, setSelectedManagerId] = useState<string>("");
+  const [selectedManagerName, setSelectedManagerName] = useState<string>("");
   const [formData, setFormData] = useState<
-    (Omit<OrganizationMember, "id" | "salary" | "upperManager"> & { salary: string }) & {
+    (Omit<OrganizationMember, "id" | "salary" | "upperManager"> & {
+      salary: string;
+    }) & {
       employees?: OrganizationMember[];
       interns?: OrganizationMember[];
     }
@@ -243,9 +294,21 @@ export default function AddMemberPage() {
       try {
         const response = await axiosInstance.get("/IT/org-members/empInfo");
         const allMembers = response.data;
-        setAllEmployees(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "employee"));
-        setAllInterns(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "intern"));
-        setAllManagers(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "manager"));
+        setAllEmployees(
+          allMembers.filter(
+            (m: OrganizationMember) => m.role.toLowerCase() === "employee"
+          )
+        );
+        setAllInterns(
+          allMembers.filter(
+            (m: OrganizationMember) => m.role.toLowerCase() === "intern"
+          )
+        );
+        setAllManagers(
+          allMembers.filter(
+            (m: OrganizationMember) => m.role.toLowerCase() === "manager"
+          )
+        );
       } catch (error) {
         console.error("Error fetching members:", error);
         setAllEmployees([]);
@@ -274,7 +337,7 @@ export default function AddMemberPage() {
       .split(",")
       .map((p) => p.trim())
       .filter((p) => p);
-    
+
     const formDataToSubmit: Record<string, unknown> = {
       ...formData,
       projects: projectsList,
@@ -285,25 +348,27 @@ export default function AddMemberPage() {
             : Number(formData.salary)
           : formData.salary,
     };
-    
+
     // Only add upperManager if employee/intern and a manager is selected
-    if (["employee", "intern"].includes(formData.role.toLowerCase()) && selectedManager) {
-      // Find the manager ID by name and use it as upperManager
-      const selectedManagerObj = allManagers.find(manager => manager.name === selectedManager);
-      formDataToSubmit.upperManager = selectedManagerObj?.id || selectedManager;
+    if (
+      ["employee", "intern"].includes(formData.role.toLowerCase()) &&
+      selectedManagerId
+    ) {
+      formDataToSubmit.upperManager = selectedManagerId;
+      formDataToSubmit.upperManagerName = selectedManagerName;
     }
-     if (formData.role === "Manager") {
-    const employees = (formData.employees || []).map(e => ({
-      id: e.id,
-      upperManager: formDataToSubmit.id // or leave as undefined if not available yet
-    }));
-    const interns = (formData.interns || []).map(i => ({
-      id: i.id,
-      upperManager: formDataToSubmit.id // or leave as undefined if not available yet
-    }));
-    formDataToSubmit.employees = employees;
-    formDataToSubmit.interns = interns;
-  }
+    if (formData.role === "Manager") {
+      const employees = (formData.employees || []).map((e) => ({
+        id: e.id,
+        upperManager: formDataToSubmit.id, // or leave as undefined if not available yet
+      }));
+      const interns = (formData.interns || []).map((i) => ({
+        id: i.id,
+        upperManager: formDataToSubmit.id, // or leave as undefined if not available yet
+      }));
+      formDataToSubmit.employees = employees;
+      formDataToSubmit.interns = interns;
+    }
 
     try {
       await axiosInstance.post("/IT/org-members", formDataToSubmit);
@@ -338,22 +403,52 @@ export default function AddMemberPage() {
                 setFormData({
                   ...formData,
                   role: val as OrganizationMember["role"],
-                  employees: val === "Manager" ? formData.employees || [] : undefined,
-                  interns: val === "Manager" ? formData.interns || [] : undefined,
+                  employees:
+                    val === "Manager" ? formData.employees || [] : undefined,
+                  interns:
+                    val === "Manager" ? formData.interns || [] : undefined,
                 });
-                if (val === "Employee" || val === "Intern") setSelectedManager("");
+                if (val === "Employee" || val === "Intern")
+                  setSelectedManagerId("");
               }}
             />
             {/* Show manager selection if role is employee or intern */}
-            {formData.role && ["Employee", "Intern"].includes(formData.role) && (
-              <SelectField
-                label="Manager"
-                value={selectedManager}
-                onChange={setSelectedManager}
-                options={allManagers.map(manager => manager.name)}
-                required={true}
-              />
-            )}
+            {formData.role &&
+              ["Employee", "Intern"].includes(formData.role) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manager
+                  </label>
+                  <select
+                    value={selectedManagerId}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      const selected = allManagers.find(
+                        (m) => String(m.id) === selectedId
+                      );
+                      setSelectedManagerId(selectedId);
+                      setSelectedManagerName(selected?.name || "");
+
+                      // Update formData with both manager ID and name
+                      setFormData((prev) => ({
+                        ...prev,
+                        upperManager: selectedId,
+                        upperManagerName: selected?.name || "",
+                      }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select Manager</option>
+                    {allManagers.map((m) => (
+                      <option key={m.id} value={String(m.id)}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
             <Input
               label="Department"
               value={formData.department}
@@ -382,7 +477,8 @@ export default function AddMemberPage() {
               value={formData.experience}
               suffix="Years"
               onChange={(val) =>
-                setFormData({ ...formData, experience: Number(val) })}
+                setFormData({ ...formData, experience: Number(val) })
+              }
             />
           </div>
 
@@ -396,14 +492,20 @@ export default function AddMemberPage() {
                 <MultiSelectDropdown
                   items={allEmployees}
                   selectedItems={formData.employees || []}
-                  onAdd={(emp) => setFormData({
-                    ...formData,
-                    employees: [...(formData.employees || []), emp],
-                  })}
-                  onRemove={(idx) => setFormData({
-                    ...formData,
-                    employees: (formData.employees || []).filter((_, i) => i !== idx),
-                  })}
+                  onAdd={(emp) =>
+                    setFormData({
+                      ...formData,
+                      employees: [...(formData.employees || []), emp],
+                    })
+                  }
+                  onRemove={(idx) =>
+                    setFormData({
+                      ...formData,
+                      employees: (formData.employees || []).filter(
+                        (_, i) => i !== idx
+                      ),
+                    })
+                  }
                   getOptionLabel={(item) => item.name}
                   getOptionKey={(item) => item.id}
                   placeholder="Add Employee"
@@ -416,14 +518,20 @@ export default function AddMemberPage() {
                 <MultiSelectDropdown
                   items={allInterns}
                   selectedItems={formData.interns || []}
-                  onAdd={(intern) => setFormData({
-                    ...formData,
-                    interns: [...(formData.interns || []), intern],
-                  })}
-                  onRemove={(idx) => setFormData({
-                    ...formData,
-                    interns: (formData.interns || []).filter((_, i) => i !== idx),
-                  })}
+                  onAdd={(intern) =>
+                    setFormData({
+                      ...formData,
+                      interns: [...(formData.interns || []), intern],
+                    })
+                  }
+                  onRemove={(idx) =>
+                    setFormData({
+                      ...formData,
+                      interns: (formData.interns || []).filter(
+                        (_, i) => i !== idx
+                      ),
+                    })
+                  }
                   getOptionLabel={(item) => item.name}
                   getOptionKey={(item) => item.id}
                   placeholder="Add Intern"
@@ -590,8 +698,8 @@ export default function AddMemberPage() {
             placeholder="Enter project names separated by commas..."
           />
           <p className="text-xs text-gray-500 mt-2">
-            Enter project names separated by commas (e.g., &quot;Project A, Project
-            B, Project C&quot;)
+            Enter project names separated by commas (e.g., &quot;Project A,
+            Project B, Project C&quot;)
           </p>
         </div>
 

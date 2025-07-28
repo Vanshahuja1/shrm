@@ -1,15 +1,16 @@
 export type Employee = {
-  id: number
-  name: string
-  department: string
-  position: string
-  email: string
-  phone: string
-  joinDate: string
-  performance: number
-  attendance: number
-  tasksPerDay: number
-  managerRating: number
+  id: string;
+  name: string;
+  department: string;
+  position: string;
+  email: string;
+  phone: string;
+  joinDate: string;
+  performance: number;
+  attendance: number;
+  tasksPerDay: number;
+  managerRating: number;
+  role: string;
 }
 
 export type Intern = {
@@ -38,21 +39,27 @@ export type Project = {
 }
 
 export type Task = {
-  id: number
-  title: string
-  description: string
-  assignedTo: string
-  assignedBy: string
-  department: string
-  team: string
-  priority: "high" | "medium" | "low"
-  weightage: number
-  dueDate: string
-  dueTime: string
-  status: "pending" | "in-progress" | "completed"
-  responses: TaskResponse[]
-  emailSent: boolean
-  createdAt: string
+_id?: string;
+id?: number;
+title: string;
+description: string;
+assignedTo: { id: string; name: string };
+assignedBy: { id: string; name: string };
+department?: string;
+team?: string;
+priority: "high" | "medium" | "low";
+weightage: number;
+dueDate: string;
+dueTime: string;
+status: "pending" | "in-progress" | "completed";
+responses?: TaskResponse[];
+emailSent?: boolean;
+createdAt?: string;
+category?: string;
+estimatedHours?: number;
+actualHours?: number;
+tags?: string[];
+attachments?: unknown[];
 }
 
 export type TaskResponse = {
