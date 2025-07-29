@@ -50,4 +50,4 @@ export default function OvertimePage({ params }: { params: Promise<{ id: string 
       currentOvertimeHours={currentOvertimeHours}
       onSubmitOvertimeRequest={handleSubmitOvertimeRequest}
     />
-  )
+  );}

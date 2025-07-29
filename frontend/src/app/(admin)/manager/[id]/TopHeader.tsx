@@ -1,7 +1,9 @@
 "use client"
 
 import { Menu, Bell, Settings } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
+import { useEffect, useState } from "react";
+import axios from "@/lib/axiosInstance";
 
 interface TopHeaderProps {
   setIsSidebarOpen: (open: boolean) => void
@@ -9,19 +11,32 @@ interface TopHeaderProps {
 }
 
 export default function TopHeader({ setIsSidebarOpen, managerName }: TopHeaderProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const params = useParams();
+  // Extract manager id from URL param
+  const managerId = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : undefined;
+  const [fetchedManagerName, setFetchedManagerName] = useState<string>("");
+
+  useEffect(() => {
+    if (!managerName && managerId) {
+      axios.get(`/IT/org-members/${managerId}`)
+        .then(res => {
+          if (res.data && res.data.name) setFetchedManagerName(res.data.name);
+        })
+        .catch(() => setFetchedManagerName(""));
+    }
+  }, [managerName, managerId]);
 
   const getPageTitle = (path: string) => {
-    if (path.startsWith("/profile")) return "Manager Profile"
-    if (path.startsWith("/outgoing-projects")) return "Outgoing Projects"
-    if (path.startsWith("/past-projects")) return "Past Projects"
-    if (path.startsWith("/task-assignment")) return "Task Assignment"
-    if (path.startsWith("/emp-response")) return "Employee Responses"
-    if (path.startsWith("/attendance-mgmt")) return "Attendance Management"
-    if (path.startsWith("/personal-details")) return "Personal Details"
-    
-    return "Manager Dashboard"
-  }
+    if (path.startsWith("/profile")) return "Manager Profile";
+    if (path.startsWith("/outgoing-projects")) return "Outgoing Projects";
+    if (path.startsWith("/past-projects")) return "Past Projects";
+    if (path.startsWith("/task-assignment")) return "Task Assignment";
+    if (path.startsWith("/emp-response")) return "Employee Responses";
+    if (path.startsWith("/attendance-mgmt")) return "Attendance Management";
+    if (path.startsWith("/personal-details")) return "Personal Details";
+    return "Manager Dashboard";
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -36,7 +51,7 @@ export default function TopHeader({ setIsSidebarOpen, managerName }: TopHeaderPr
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{getPageTitle(pathname)}</h1>
             {/* <p className="text-sm text-gray-500">Welcome back, manage your organization efficiently</p> */}
-            <p>Welcome back, {managerName ? managerName : "Manager"}</p>
+            <p>Welcome back, {managerName || fetchedManagerName || managerId || "Manager"}</p>
           </div>
         </div>
 
@@ -51,5 +66,5 @@ export default function TopHeader({ setIsSidebarOpen, managerName }: TopHeaderPr
         </div>
       </div>
     </header>
-  )
+  );
 }

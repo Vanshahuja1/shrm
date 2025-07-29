@@ -1,6 +1,6 @@
 const User = require("../models/userModel");
 
-// Get all members with OrgMemberInfo format
+// Get all members with Info format
 exports.getMembers = async (req, res) => {
   try {
     // Get orgName from params (with mergeParams) or from custom middleware
@@ -9,7 +9,7 @@ exports.getMembers = async (req, res) => {
     const members = await User.find({ organizationName: new RegExp(`^${orgName}$`, "i"), });
     console.log("Found members count:", members.length);
 
-    const formattedMembers = members.map((member) => member.OrgMemberInfo);
+    const formattedMembers = members.map((member) => member.Info);
     res.status(200).json(formattedMembers);
   } catch (error) {
     console.error("Error in getMembers:", error);
@@ -100,7 +100,7 @@ exports.createMember = async (req, res) => {
       }
     }
 
-    res.status(201).json(newMember.OrgMemberInfo);
+    res.status(201).json(newMember.Info);
   } catch (error) {
     console.error("Error creating member:", error);
     res
@@ -236,7 +236,7 @@ exports.createMember = async (req, res) => {
         );
       }
     }
-    res.status(201).json(newMember.OrgMemberInfo);
+    res.status(201).json(newMember.Info);
   } catch (error) {
     console.error("Error creating member:", error);
     res
@@ -350,7 +350,7 @@ exports.updateMember = async (req, res) => {
       }
     }
 
-    res.status(200).json(updatedMember.OrgMemberInfo);
+    res.status(200).json(updatedMember.Info);
   } catch (error) {
     console.error("Error updating member:", error);
     res.status(500).json({
@@ -372,7 +372,7 @@ exports.deleteMember = async (req, res) => {
   }
 };
 
-// Get members by department with OrgMemberInfo format
+// Get members by department with Info format
 exports.getMembersByDepartment = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
@@ -381,14 +381,14 @@ exports.getMembersByDepartment = async (req, res) => {
   departmentName: new RegExp(`^${req.params.department}$`, 'i'),
 });
 
-    const formattedMembers = members.map((member) => member.OrgMemberInfo);
+    const formattedMembers = members.map((member) => member.Info);
     res.status(200).json(formattedMembers);
   } catch (error) {
     res.status(500).json({ message: "Error fetching department members" });
   }
 };
 
-// Get members by role with OrgMemberInfo format
+// Get members by role with Info format
 exports.getMembersByRole = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
@@ -398,7 +398,7 @@ exports.getMembersByRole = async (req, res) => {
       role: new RegExp(`^${req.params.role}$`, 'i'),
     });
 
-    const formattedMembers = members.map((member) => member.OrgMemberInfo);
+    const formattedMembers = members.map((member) => member.Info);
     res.status(200).json(formattedMembers);
   } catch (error) {
     console.error("Error in getMembersByRole:", error);

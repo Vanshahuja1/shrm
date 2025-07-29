@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { Plus, Mail } from "lucide-react"
-import { useParams} from "next/navigation"
+import { Plus, Mail } from "lucide-react";
+import { useParams } from "next/navigation";
 import type { Employee, Task } from "../types";
 import { useEffect, useState } from "react";
 import { mockTasks } from "../data/mockData";
@@ -17,7 +17,10 @@ export default function TaskAssignment() {
     title: "",
     description: "",
     assignedTo: { id: "", name: "" },
-    assignedBy: { id: typeof managerId === "string" ? managerId : "", name: "" },
+    assignedBy: {
+      id: typeof managerId === "string" ? managerId : "",
+      name: "",
+    },
     dueDate: "",
     dueTime: "",
     status: "pending",
@@ -36,10 +39,14 @@ export default function TaskAssignment() {
         const response = await axiosInstance.get("/tasks");
         const data = response.data;
         // Only show tasks assigned by this manager
-        setTasks(data.filter((task: Task) => task.assignedBy?.id === managerId));
+        setTasks(
+          data.filter((task: Task) => task.assignedBy?.id === managerId)
+        );
       } catch (error) {
         console.error("Error fetching tasks:", error);
-        setTasks(mockTasks.filter((task: Task) => task.assignedBy?.id === managerId));
+        setTasks(
+          mockTasks.filter((task: Task) => task.assignedBy?.id === managerId)
+        );
       }
     };
     fetchTasks();
@@ -57,7 +64,14 @@ export default function TaskAssignment() {
               member.department?.toLowerCase().includes("hr")
           )
         );
-      } catch{
+        const currentManager = allMembers.find((m) => m.id === managerId);
+        if (currentManager) {
+          setFormData((prev) => ({
+            ...prev,
+            assignedBy: { id: currentManager.id, name: currentManager.name },
+          }));
+        }
+      } catch {
         // fallback: empty
         setEmployees([]);
         setManagers([]);
@@ -65,7 +79,6 @@ export default function TaskAssignment() {
     };
     fetchOrgMembers();
   }, [managerId]);
-
 
   return (
     <div className="space-y-6">
@@ -83,26 +96,36 @@ export default function TaskAssignment() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-xl shadow-lg p-8 max-w-lg w-full relative">
-            <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-700" onClick={() => {
-              setShowModal(false);
-              setEditTaskId(null);
-              setFormData({
-                title: "",
-                description: "",
-                assignedTo: { id: "", name: "" },
-                assignedBy: { id: typeof managerId === "string" ? managerId : "", name: "" },
-                dueDate: "",
-                dueTime: "",
-                status: "pending",
-                priority: "medium",
-                weightage: 5,
-              });
-            }}>
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
+              onClick={() => {
+                setShowModal(false);
+                setEditTaskId(null);
+                setFormData({
+                  title: "",
+                  description: "",
+                  assignedTo: { id: "", name: "" },
+                  assignedBy: {
+                    id: typeof managerId === "string" ? managerId : "",
+                    name: "",
+                  },
+                  dueDate: "",
+                  dueTime: "",
+                  status: "pending",
+                  priority: "medium",
+                  weightage: 5,
+                });
+              }}
+            >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-center">{editTaskId ? "Edit Task" : "Add New Task"}</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              {editTaskId ? "Edit Task" : "Add New Task"}
+            </h2>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">{error}</div>
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                {error}
+              </div>
             )}
             <form
               onSubmit={async (e) => {
@@ -130,7 +153,10 @@ export default function TaskAssignment() {
                     title: "",
                     description: "",
                     assignedTo: { id: "", name: "" },
-                    assignedBy: { id: typeof managerId === "string" ? managerId : "", name: "" },
+                    assignedBy: {
+                      id: typeof managerId === "string" ? managerId : "",
+                      name: "",
+                    },
                     dueDate: "",
                     dueTime: "",
                     status: "pending",
@@ -142,90 +168,141 @@ export default function TaskAssignment() {
                   // Refresh tasks
                   const response = await axiosInstance.get("/tasks");
                   const data = response.data;
-                  setTasks(data.filter((task: Task) => task.assignedBy?.id === managerId));
+                  setTasks(
+                    data.filter(
+                      (task: Task) => task.assignedBy?.id === managerId
+                    )
+                  );
                 } catch {
-                  setError(editTaskId ? "Failed to update task. Please try again." : "Failed to create task. Please try again.");
+                  setError(
+                    editTaskId
+                      ? "Failed to update task. Please try again."
+                      : "Failed to create task. Please try again."
+                  );
                   setLoading(false);
                 }
               }}
               className="space-y-4"
             >
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Title</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Title
+                </label>
                 <input
                   type="text"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   value={formData.title}
-                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   required
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Description</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Description
+                </label>
                 <textarea
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   rows={3}
                   value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   required
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Assigned To</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Assigned To
+                </label>
                 <select
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={formData.assignedTo.id}
-                  onChange={e => {
-                    const selected = employees.find(emp => emp.id === e.target.value);
+                  onChange={(e) => {
+                    const selected = employees.find(
+                      (emp) => emp.id === e.target.value
+                    );
                     if (selected) {
-                      setFormData({ ...formData, assignedTo: { id: selected.id, name: selected.name } });
+                      setFormData({
+                        ...formData,
+                        assignedTo: { id: selected.id, name: selected.name },
+                      });
                     }
                   }}
                   required
                 >
                   <option value="">Select employee</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.role}) - {emp.department}</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.role}) - {emp.department}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Assigned By</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Assigned By
+                </label>
                 <select
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={formData.assignedBy.id}
-                  onChange={e => {
-                    const selected = managers.find(mgr => mgr.id === e.target.value);
+                  onChange={(e) => {
+                    const selected = managers.find(
+                      (mgr) => mgr.id === e.target.value
+                    );
                     if (selected) {
-                      setFormData({ ...formData, assignedBy: { id: selected.id, name: selected.name } });
+                      setFormData({
+                        ...formData,
+                        assignedBy: { id: selected.id, name: selected.name },
+                      });
                     }
                   }}
                   required
                 >
                   <option value="">Select manager/HR</option>
-                  {managers.map(mgr => (
-                    <option key={mgr.id} value={mgr.id}>{mgr.name} ({mgr.role}) - {mgr.department}</option>
+                  {managers.map((mgr) => (
+                    <option key={mgr.id} value={mgr.id}>
+                      {mgr.name} ({mgr.role}) - {mgr.department}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Due Date</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Due Date
+                </label>
                 <input
                   type="date"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   value={formData.dueDate}
-                  onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
-                  min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dueDate: e.target.value })
+                  }
+                  min={
+                    new Date(Date.now() + 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0]
+                  }
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Due date must be at least tomorrow</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Due date must be at least tomorrow
+                </p>
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Priority</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Priority
+                </label>
                 <select
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={formData.priority}
-                  onChange={e => setFormData({ ...formData, priority: e.target.value as Task["priority"] })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      priority: e.target.value as Task["priority"],
+                    })
+                  }
                   required
                 >
                   <option value="low">Low</option>
@@ -259,25 +336,36 @@ export default function TaskAssignment() {
         <div className="flex items-center space-x-2">
           <Mail className="w-5 h-5 text-blue-500" />
           <span className="font-medium text-blue-900">Email System Active</span>
-          <span className="text-blue-700">- Automatic notifications sent for task assignments</span>
+          <span className="text-blue-700">
+            - Automatic notifications sent for task assignments
+          </span>
         </div>
       </div>
 
       <div className="grid gap-6">
         {tasks.map((task) => (
-          <div key={task._id || task.id} className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
+          <div
+            key={task._id || task.id}
+            className="bg-white rounded-lg shadow-sm border border-red-200 p-6"
+          >
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-gray-900">{task.title}</h3>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {task.title}
+                </h3>
                 <p className="text-gray-600 mt-2">{task.description}</p>
                 <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
                   <div>
                     <span className="text-gray-600">Assigned to:</span>
-                    <span className="ml-2 font-medium text-green-600">{task.assignedTo?.name} ({task.assignedTo?.id})</span>
+                    <span className="ml-2 font-medium text-green-600">
+                      {task.assignedTo?.name} ({task.assignedTo?.id})
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-600">Assigned by:</span>
-                    <span className="ml-2 font-medium text-blue-600">{task.assignedBy?.name} ({task.assignedBy?.id})</span>
+                    <span className="ml-2 font-medium text-blue-600">
+                      {task.assignedBy?.name} ({task.assignedBy?.id})
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-600">Due Date:</span>
@@ -293,27 +381,37 @@ export default function TaskAssignment() {
                   </div>
                   <div>
                     <span className="text-gray-600">Weightage:</span>
-                    <span className="ml-2 text-gray-500">{task.weightage}/10</span>
+                    <span className="ml-2 text-gray-500">
+                      {task.weightage}/10
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-600">Priority:</span>
-                    <span className={`ml-2 font-medium px-2 py-1 rounded-full text-xs ${
-                      task.priority === "high"
-                        ? "bg-red-100 text-red-800"
-                        : task.priority === "medium"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                    }`}>{task.priority}</span>
+                    <span
+                      className={`ml-2 font-medium px-2 py-1 rounded-full text-xs ${
+                        task.priority === "high"
+                          ? "bg-red-100 text-red-800"
+                          : task.priority === "medium"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {task.priority}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-600">Status:</span>
-                    <span className={`ml-2 font-medium px-2 py-1 rounded-full text-xs ${
-                      task.status === "completed"
-                        ? "bg-green-100 text-green-800"
-                        : task.status === "in-progress"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                    }`}>{task.status.replace("-", " ")}</span>
+                    <span
+                      className={`ml-2 font-medium px-2 py-1 rounded-full text-xs ${
+                        task.status === "completed"
+                          ? "bg-green-100 text-green-800"
+                          : task.status === "in-progress"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {task.status.replace("-", " ")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -325,14 +423,18 @@ export default function TaskAssignment() {
                     setEditTaskId(task._id || null);
                     setShowModal(true);
                   }}
-                >Edit</button>
+                >
+                  Edit
+                </button>
                 <button
                   className="bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 text-sm font-medium"
                   onClick={() => {
                     setShowDeleteModal(true);
                     setDeleteTaskId(task._id || null);
                   }}
-                >Delete</button>
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
@@ -343,14 +445,19 @@ export default function TaskAssignment() {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full relative">
-            <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-700" onClick={() => {
-              setShowDeleteModal(false);
-              setDeleteTaskId(null);
-            }}>
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteTaskId(null);
+              }}
+            >
               &times;
             </button>
             <h2 className="text-xl font-bold mb-6 text-center">Delete Task</h2>
-            <p className="mb-6 text-center text-gray-700">Are you sure you want to delete this task?</p>
+            <p className="mb-6 text-center text-gray-700">
+              Are you sure you want to delete this task?
+            </p>
             <div className="flex justify-end gap-4">
               <button
                 className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
@@ -358,22 +465,28 @@ export default function TaskAssignment() {
                   setShowDeleteModal(false);
                   setDeleteTaskId(null);
                 }}
-              >Cancel</button>
+              >
+                Cancel
+              </button>
               <button
                 className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
                 onClick={async () => {
                   if (deleteTaskId) {
                     await axiosInstance.delete(`/tasks/${deleteTaskId}`);
-                    setTasks((prev) => prev.filter((t) => t._id !== deleteTaskId));
+                    setTasks((prev) =>
+                      prev.filter((t) => t._id !== deleteTaskId)
+                    );
                   }
                   setShowDeleteModal(false);
                   setDeleteTaskId(null);
                 }}
-              >Delete</button>
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -103,7 +103,7 @@ export default function ManagerPersonalDetailsPage() {
             {manager.upperManager && (
               <div className="flex items-center gap-3">
                 <UserIcon className="text-gray-500" size={20} />
-                Reports to: {manager.upperManagerName}
+                Reports to: {manager.upperManager}
               </div>
             )}
           </div>

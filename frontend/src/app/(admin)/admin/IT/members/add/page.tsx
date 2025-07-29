@@ -242,467 +242,209 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
 export default function AddMemberPage() {
   const router = useRouter();
-  // const [supervisors, setSupervisors] = useState<OrganizationMember[]>([]);
+
   const [allEmployees, setAllEmployees] = useState<OrganizationMember[]>([]);
   const [allInterns, setAllInterns] = useState<OrganizationMember[]>([]);
   const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
-  const [selectedManagerId, setSelectedManagerId] = useState<string>("");
-  const [selectedManagerName, setSelectedManagerName] = useState<string>("");
-  const [formData, setFormData] = useState<
-    (Omit<OrganizationMember, "id" | "salary" | "upperManager"> & {
-      salary: string;
-    }) & {
-      employees?: OrganizationMember[];
-      interns?: OrganizationMember[];
-    }
-  >({
-    name: "",
-    role: "Manager",
-    department: "IT",
-    salary: "",
-    projects: [],
-    experience: 0,
-    contactInfo: {
-      email: "",
-      phone: "",
-      address: "",
-    },
-    documents: {
-      pan: "",
-      aadhar: "",
-    },
-    joiningDate: "",
-    performanceMetrics: {
-      tasksPerDay: 0,
-      attendanceScore: 100,
-      managerReviewRating: 0,
-      combinedPercentage: 0,
-    },
-    attendance: {
-      last7Days: [true, true, true, true, true, false, false],
-      todayPresent: true,
-    },
-    employees: [],
-    interns: [],
-  });
 
-  const [projectsText, setProjectsText] = useState<string>("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<OrganizationMember["role"]>("Manager");
+  const [department, setDepartment] = useState("IT");
+  const [salary, setSalary] = useState("");
+  const [experience, setExperience] = useState<number | string>(0);
+  const [joiningDate, setJoiningDate] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [pan, setPan] = useState("");
+  const [aadhar, setAadhar] = useState("");
+  const [tasksPerDay, setTasksPerDay] = useState(0);
+  const [attendanceScore, setAttendanceScore] = useState(100);
+  const [managerReviewRating, setManagerReviewRating] = useState(0);
+  const [combinedPercentage, setCombinedPercentage] = useState(0);
+  const [projectsText, setProjectsText] = useState("");
+  const [selectedManagerId, setSelectedManagerId] = useState("");
+  const [selectedManagerName, setSelectedManagerName] = useState("");
 
-  // Fetch employees and interns on component mount
+  const [employeesUnderManager, setEmployeesUnderManager] = useState<OrganizationMember[]>([]);
+  const [internsUnderManager, setInternsUnderManager] = useState<OrganizationMember[]>([]);
+
   useEffect(() => {
     const fetchMembers = async () => {
       try {
         const response = await axiosInstance.get("/IT/org-members/empInfo");
         const allMembers = response.data;
-        setAllEmployees(
-          allMembers.filter(
-            (m: OrganizationMember) => m.role.toLowerCase() === "employee"
-          )
-        );
-        setAllInterns(
-          allMembers.filter(
-            (m: OrganizationMember) => m.role.toLowerCase() === "intern"
-          )
-        );
-        setAllManagers(
-          allMembers.filter(
-            (m: OrganizationMember) => m.role.toLowerCase() === "manager"
-          )
-        );
-      } catch (error) {
-        console.error("Error fetching members:", error);
-        setAllEmployees([]);
-        setAllInterns([]);
-        setAllManagers([]);
+        setAllEmployees(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "employee"));
+        setAllInterns(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "intern"));
+        setAllManagers(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "manager"));
+      } catch (err) {
+        console.error("Failed to fetch members", err);
       }
     };
     fetchMembers();
   }, []);
 
-  const handleProjectsChange = (val: string) => {
-    setProjectsText(val);
-    // Process projects immediately
-    const projectsList = val
-      .split(",")
-      .map((p) => p.trim())
-      .filter((p) => p);
-    setFormData({ ...formData, projects: projectsList });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Process projects one final time before submission
     const projectsList = projectsText
       .split(",")
       .map((p) => p.trim())
-      .filter((p) => p);
+      .filter(Boolean);
 
-    const formDataToSubmit: Record<string, unknown> = {
-      ...formData,
+    const formDataToSubmit: Record<string, any> = {
+      name,
+      role,
+      department,
+      salary: salary.trim() === "" ? undefined : Number(salary),
+      experience: Number(experience),
       projects: projectsList,
-      salary:
-        typeof formData.salary === "string"
-          ? (formData.salary as string).trim() === ""
-            ? undefined
-            : Number(formData.salary)
-          : formData.salary,
+      joiningDate,
+      contactInfo: {
+        email,
+        phone,
+        address,
+      },
+      documents: {
+        pan,
+        aadhar,
+      },
+      performanceMetrics: {
+        tasksPerDay,
+        attendanceScore,
+        managerReviewRating,
+        combinedPercentage,
+      },
+      attendance: {
+        last7Days: [true, true, true, true, true, false, false],
+        todayPresent: true,
+      },
     };
 
-    // Only add upperManager if employee/intern and a manager is selected
-    if (
-      ["employee", "intern"].includes(formData.role.toLowerCase()) &&
-      selectedManagerId
-    ) {
+    if (email) {
+      formDataToSubmit.email = email;
+    }
+
+    if (["employee", "intern"].includes(role.toLowerCase()) && selectedManagerId) {
       formDataToSubmit.upperManager = selectedManagerId;
       formDataToSubmit.upperManagerName = selectedManagerName;
     }
-    if (formData.role === "Manager") {
-      const employees = (formData.employees || []).map((e) => ({
-        id: e.id,
-        upperManager: formDataToSubmit.id, // or leave as undefined if not available yet
-      }));
-      const interns = (formData.interns || []).map((i) => ({
-        id: i.id,
-        upperManager: formDataToSubmit.id, // or leave as undefined if not available yet
-      }));
-      formDataToSubmit.employees = employees;
-      formDataToSubmit.interns = interns;
+
+    if (role === "Manager") {
+      formDataToSubmit.employees = employeesUnderManager.map((e) => ({ id: e.id }));
+      formDataToSubmit.interns = internsUnderManager.map((i) => ({ id: i.id }));
     }
 
     try {
       await axiosInstance.post("/IT/org-members", formDataToSubmit);
-      console.log("Member added successfully");
       router.push("/admin/IT/members");
     } catch (error) {
-      console.error("Error adding member:", error);
+      console.error("Error submitting form:", error);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Add New Member</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Information */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Basic Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Full Name"
-              value={formData.name}
-              onChange={(val) => setFormData({ ...formData, name: val })}
-            />
-            <SelectField
-              label="Role"
-              value={formData.role}
-              options={["Manager", "Employee", "Intern", "Head"]}
-              onChange={(val) => {
-                setFormData({
-                  ...formData,
-                  role: val as OrganizationMember["role"],
-                  employees:
-                    val === "Manager" ? formData.employees || [] : undefined,
-                  interns:
-                    val === "Manager" ? formData.interns || [] : undefined,
-                });
-                if (val === "Employee" || val === "Intern")
-                  setSelectedManagerId("");
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Add New Member</h1>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Info */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <Input label="Full Name" value={name} onChange={setName} />
+          <SelectField
+            label="Role"
+            value={role}
+            options={["Manager", "Employee", "Intern", "Head"]}
+            onChange={(val) => {
+              setRole(val as OrganizationMember["role"]);
+              if (val === "Employee" || val === "Intern") {
+                setSelectedManagerId("");
+              }
+            }}
+          />
+          {["Employee", "Intern"].includes(role) && (
+            <select
+              required
+              value={selectedManagerId}
+              onChange={(e) => {
+                const id = e.target.value;
+                const mgr = allManagers.find((m) => String(m.id) === id);
+                setSelectedManagerId(id);
+                setSelectedManagerName(mgr?.name || "");
               }}
-            />
-            {/* Show manager selection if role is employee or intern */}
-            {formData.role &&
-              ["Employee", "Intern"].includes(formData.role) && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Manager
-                  </label>
-                  <select
-                    value={selectedManagerId}
-                    onChange={(e) => {
-                      const selectedId = e.target.value;
-                      const selected = allManagers.find(
-                        (m) => String(m.id) === selectedId
-                      );
-                      setSelectedManagerId(selectedId);
-                      setSelectedManagerName(selected?.name || "");
-
-                      // Update formData with both manager ID and name
-                      setFormData((prev) => ({
-                        ...prev,
-                        upperManager: selectedId,
-                        upperManagerName: selected?.name || "",
-                      }));
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select Manager</option>
-                    {allManagers.map((m) => (
-                      <option key={m.id} value={String(m.id)}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-            <Input
-              label="Department"
-              value={formData.department}
-              onChange={(val) => setFormData({ ...formData, department: val })}
-            />
-            <FieldWithPrefix
-              label="Salary"
-              type="number"
-              min={0}
-              value={formData.salary}
-              prefix="$"
-              onChange={(val) =>
-                setFormData({ ...formData, salary: String(val) })
-              }
-            />
-            <Input
-              label="Joining Date"
-              type="date"
-              value={formData.joiningDate}
-              onChange={(val) => setFormData({ ...formData, joiningDate: val })}
-            />
-            <FieldWithSuffix
-              label="Experience"
-              min={0}
-              type="number"
-              value={formData.experience}
-              suffix="Years"
-              onChange={(val) =>
-                setFormData({ ...formData, experience: Number(val) })
-              }
-            />
-          </div>
-
-          {/* Show employee/intern selection if role is manager */}
-          {formData.role === "Manager" && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Employees Under Manager
-                </label>
-                <MultiSelectDropdown
-                  items={allEmployees}
-                  selectedItems={formData.employees || []}
-                  onAdd={(emp) =>
-                    setFormData({
-                      ...formData,
-                      employees: [...(formData.employees || []), emp],
-                    })
-                  }
-                  onRemove={(idx) =>
-                    setFormData({
-                      ...formData,
-                      employees: (formData.employees || []).filter(
-                        (_, i) => i !== idx
-                      ),
-                    })
-                  }
-                  getOptionLabel={(item) => item.name}
-                  getOptionKey={(item) => item.id}
-                  placeholder="Add Employee"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Interns Under Manager
-                </label>
-                <MultiSelectDropdown
-                  items={allInterns}
-                  selectedItems={formData.interns || []}
-                  onAdd={(intern) =>
-                    setFormData({
-                      ...formData,
-                      interns: [...(formData.interns || []), intern],
-                    })
-                  }
-                  onRemove={(idx) =>
-                    setFormData({
-                      ...formData,
-                      interns: (formData.interns || []).filter(
-                        (_, i) => i !== idx
-                      ),
-                    })
-                  }
-                  getOptionLabel={(item) => item.name}
-                  getOptionKey={(item) => item.id}
-                  placeholder="Add Intern"
-                />
-              </div>
-            </div>
+              className="w-full p-2 border rounded"
+            >
+              <option value="">Select Manager</option>
+              {allManagers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
           )}
+          <Input label="Department" value={department} onChange={setDepartment} />
+          <FieldWithPrefix label="Salary" prefix="$" type="number" value={salary} onChange={setSalary} />
+          <Input label="Joining Date" type="date" value={joiningDate} onChange={setJoiningDate} />
+          <FieldWithSuffix label="Experience" suffix="Years" type="number" value={experience} onChange={setExperience} />
         </div>
 
-        {/* Contact Information */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Contact Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Email"
-              type="email"
-              value={formData.contactInfo.email}
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  contactInfo: { ...formData.contactInfo, email: val },
-                })
-              }
-            />
-            <Input
-              label="Phone"
-              type="tel"
-              value={formData.contactInfo.phone}
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  contactInfo: { ...formData.contactInfo, phone: val },
-                })
-              }
-            />
-          </div>
-          <div className="mt-6">
-            <Textarea
-              label="Address"
-              value={formData.contactInfo.address}
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  contactInfo: { ...formData.contactInfo, address: val },
-                })
-              }
-            />
-          </div>
+        {/* Contact Info */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <Input label="Email" type="email" value={email} onChange={setEmail} />
+          <Input label="Phone" type="tel" value={phone} onChange={setPhone} />
+          <Textarea label="Address" value={address} onChange={setAddress} />
         </div>
 
         {/* Documents */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Documents
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="PAN Number"
-              value={formData.documents.pan}
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  documents: { ...formData.documents, pan: val },
-                })
-              }
-            />
-            <Input
-              label="Aadhar Number"
-              value={formData.documents.aadhar}
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  documents: { ...formData.documents, aadhar: val },
-                })
-              }
-            />
-          </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <Input label="PAN Number" value={pan} onChange={setPan} />
+          <Input label="Aadhar Number" value={aadhar} onChange={setAadhar} />
         </div>
 
-        {/* Performance Metrics */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Performance Metrics
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Input
-              label="Tasks Per Day"
-              type="number"
-              min={0}
-              value={formData.performanceMetrics.tasksPerDay}
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  performanceMetrics: {
-                    ...formData.performanceMetrics,
-                    tasksPerDay: Number(val),
-                  },
-                })
-              }
-            />
-            <FieldWithSuffix
-              label="Attendance Score"
-              type="number"
-              min={0}
-              max={100}
-              value={formData.performanceMetrics.attendanceScore}
-              suffix="%"
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  performanceMetrics: {
-                    ...formData.performanceMetrics,
-                    attendanceScore: Number(val),
-                  },
-                })
-              }
-            />
-            <FieldWithSuffix
-              label="Manager Review Rating"
-              type="number"
-              min={0}
-              max={5}
-              value={formData.performanceMetrics.managerReviewRating}
-              suffix="/5"
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  performanceMetrics: {
-                    ...formData.performanceMetrics,
-                    managerReviewRating: Number(val),
-                  },
-                })
-              }
-            />
-            <FieldWithSuffix
-              label="Combined Performance"
-              type="number"
-              value={formData.performanceMetrics.combinedPercentage}
-              suffix="%"
-              min={0}
-              max={100}
-              onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  performanceMetrics: {
-                    ...formData.performanceMetrics,
-                    combinedPercentage: Number(val),
-                  },
-                })
-              }
-            />
-          </div>
+        {/* Performance */}
+        <div className="grid md:grid-cols-4 gap-4">
+          <Input label="Tasks Per Day" type="number" value={tasksPerDay} onChange={(v) => setTasksPerDay(Number(v))} />
+          <FieldWithSuffix label="Attendance Score" suffix="%" type="number" value={attendanceScore} onChange={(v) => setAttendanceScore(Number(v))} />
+          <FieldWithSuffix label="Manager Review Rating" suffix="/5" type="number" value={managerReviewRating} onChange={(v) => setManagerReviewRating(Number(v))} />
+          <FieldWithSuffix label="Combined Performance" suffix="%" type="number" value={combinedPercentage} onChange={(v) => setCombinedPercentage(Number(v))} />
         </div>
 
         {/* Projects */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Projects</h2>
-          <Textarea
-            label="Projects (comma-separated)"
-            value={projectsText}
-            onChange={handleProjectsChange}
-            placeholder="Enter project names separated by commas..."
-          />
-          <p className="text-xs text-gray-500 mt-2">
-            Enter project names separated by commas (e.g., &quot;Project A,
-            Project B, Project C&quot;)
-          </p>
-        </div>
+        <Textarea
+          label="Projects (comma-separated)"
+          value={projectsText}
+          onChange={setProjectsText}
+          placeholder="Project A, Project B, ..."
+        />
 
+        {/* Subordinates */}
+        {role === "Manager" && (
+          <div className="grid md:grid-cols-2 gap-4">
+            <MultiSelectDropdown
+              items={allEmployees}
+              selectedItems={employeesUnderManager}
+              onAdd={(item) => setEmployeesUnderManager((prev) => [...prev, item])}
+              onRemove={(idx) =>
+                setEmployeesUnderManager((prev) => prev.filter((_, i) => i !== idx))
+              }
+              getOptionLabel={(m) => m.name}
+              getOptionKey={(m) => m.id}
+              placeholder="Add Employee"
+            />
+            <MultiSelectDropdown
+              items={allInterns}
+              selectedItems={internsUnderManager}
+              onAdd={(item) => setInternsUnderManager((prev) => [...prev, item])}
+              onRemove={(idx) =>
+                setInternsUnderManager((prev) => prev.filter((_, i) => i !== idx))
+              }
+              getOptionLabel={(m) => m.name}
+              getOptionKey={(m) => m.id}
+              placeholder="Add Intern"
+            />
+          </div>
+        )}
+
+        {/* Actions */}
         <div className="flex gap-4 pt-4">
           <button
             type="submit"
