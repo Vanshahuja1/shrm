@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -21,6 +20,7 @@ import {
   ImageIcon,
 } from "lucide-react"
 import Link from "next/link"
+import axiosInstance from "@/lib/axiosInstance"
 
 interface BankDetails {
   accountHolder: string
@@ -35,33 +35,45 @@ interface DocumentFiles {
   aadharBack: string
   panCard: string
   resume: string
+  experienceLetter: string
+  passbookPhoto: string
+  tenthMarksheet: string
+  twelfthMarksheet: string
+  degreeMarksheet: string
+  policy: string
+}
+
+interface Organization {
+  id: string
+  name: string
+}
+
+interface Department {
+  id: string
+  name: string
+  organizationId: string
 }
 
 interface RegisterFormData {
   // Basic Information
   name: string
-  role: string
-  organizationName: string
-  departmentName: string
-
+  role: "Admin" | "manager" | "employee" | "intern" | "hr" 
+  organizationId: string
+  departmentId: string
   // Personal Information
   dateOfBirth: string
-  address: string
+  currentAddress: string
   photo: string
-
   // Work Information
   joiningDate: string
   upperManager: string
   salary: string
   experience: string
-
   // Documents
   adharCard: string
   panCard: string
-
   // Bank Details
   bankDetails: BankDetails
-
   // Document Files
   documents: DocumentFiles
 }
@@ -70,10 +82,10 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterFormData>({
     name: "",
     role: "",
-    organizationName: "",
-    departmentName: "",
+    organizationId: "",
+    departmentId: "",
     dateOfBirth: "",
-    address: "",
+    currentAddress: "",
     photo: "",
     joiningDate: "",
     upperManager: "",
@@ -93,9 +105,18 @@ export default function RegisterPage() {
       aadharBack: "",
       panCard: "",
       resume: "",
+      experienceLetter: "",
+      passbookPhoto: "",
+      tenthMarksheet: "",
+      twelfthMarksheet: "",
+      degreeMarksheet: "",
+      policy: "",
     },
   })
 
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -103,8 +124,71 @@ export default function RegisterPage() {
   const [focusedField, setFocusedField] = useState("")
   const [currentStep, setCurrentStep] = useState(1)
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({})
+  const [loadingOrganizations, setLoadingOrganizations] = useState(false)
+  const [loadingDepartments, setLoadingDepartments] = useState(false)
+
   const router = useRouter()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  // Fetch organizations on component mount
+  useEffect(() => {
+    fetchOrganizations()
+  }, [])
+
+  // Fetch departments when organizations are loaded
+  useEffect(() => {
+    if (organizations.length > 0) {
+      fetchDepartments()
+    }
+  }, [organizations])
+
+  // Filter departments based on selected organization
+  useEffect(() => {
+    if (formData.organizationId && departments.length > 0) {
+      const filtered = departments.filter((dept) => dept.organizationId === formData.organizationId)
+      setFilteredDepartments(filtered)
+      // Reset department selection if current selection is not valid for new organization
+      if (formData.departmentId && !filtered.find((dept) => dept.id === formData.departmentId)) {
+        setFormData((prev) => ({ ...prev, departmentId: "" }))
+      }
+    } else {
+      setFilteredDepartments([])
+    }
+  }, [formData.organizationId, departments])
+
+  const fetchOrganizations = async () => {
+    setLoadingOrganizations(true)
+    try {
+      const response = await axiosInstance.get("/organizations")
+      if (response.data.success) {
+        setOrganizations(response.data.data)
+      } else {
+        setError("Failed to fetch organizations")
+      }
+    } catch (error) {
+      console.error("Error fetching organizations:", error)
+      setError("Error loading organizations")
+    } finally {
+      setLoadingOrganizations(false)
+    }
+  }
+
+  const fetchDepartments = async () => {
+    setLoadingDepartments(true)
+    try {
+      const response = await axiosInstance.get("/departments")
+      if (response.data.success) {
+        setDepartments(response.data.data)
+      } else {
+        setError("Failed to fetch departments")
+      }
+    } catch (error) {
+      console.error("Error fetching departments:", error)
+      setError("Error loading departments")
+    } finally {
+      setLoadingDepartments(false)
+    }
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -127,7 +211,6 @@ export default function RegisterPage() {
     }))
 
     let animationId: number
-
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
@@ -154,17 +237,13 @@ export default function RegisterPage() {
         if (p.opacity > 0.6 || p.opacity < 0.1) p.pulse *= -1
         ctx.fillStyle = `rgba(34, 197, 94, ${p.opacity * 0.5})`
         ctx.fill()
-
         p.x += p.dx
         p.y += p.dy
-
         if (p.x < 0 || p.x > canvas.width) p.dx *= -1
         if (p.y < 0 || p.y > canvas.height) p.dy *= -1
       })
-
       animationId = requestAnimationFrame(draw)
     }
-
     draw()
 
     const handleResize = () => {
@@ -173,7 +252,6 @@ export default function RegisterPage() {
     }
 
     window.addEventListener("resize", handleResize)
-
     return () => {
       cancelAnimationFrame(animationId)
       window.removeEventListener("resize", handleResize)
@@ -182,9 +260,8 @@ export default function RegisterPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-
     if (name.startsWith("bankDetails.")) {
-      const field = name.split(".")[1]
+      const field = name.split(".")[1] as keyof BankDetails
       setFormData((prev) => ({
         ...prev,
         bankDetails: {
@@ -193,7 +270,7 @@ export default function RegisterPage() {
         },
       }))
     } else if (name.startsWith("documents.")) {
-      const field = name.split(".")[1]
+      const field = name.split(".")[1] as keyof DocumentFiles
       setFormData((prev) => ({
         ...prev,
         documents: {
@@ -209,40 +286,66 @@ export default function RegisterPage() {
     }
   }
 
-  // File upload handler (you'll need to implement this based on your storage solution)
-  const handleFileUpload = async (file: File, documentType: keyof DocumentFiles) => {
-    setUploadingFiles((prev) => ({ ...prev, [documentType]: true }))
+  // Cloudinary upload function
+  const uploadToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("upload_preset", "your_upload_preset") // You'll need to set this up in Cloudinary
 
     try {
-      // This is a placeholder - you'll need to implement actual file upload
-      // Example with FormData for multipart upload:
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("documentType", documentType)
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/your_cloud_name/auto/upload`, // Replace with your cloud name
+        {
+          method: "POST",
+          body: formData,
+        },
+      )
+      const data = await response.json()
+      if (data.secure_url) {
+        return data.secure_url
+      } else {
+        throw new Error("Upload failed")
+      }
+    } catch (error) {
+      console.error("Cloudinary upload error:", error)
+      throw error
+    }
+  }
 
-      const response = await fetch("/api/upload-document", {
-        method: "POST",
-        body: formData,
-      })
+  // File upload handler
+  const handleFileUpload = async (file: File, documentType: keyof DocumentFiles | "photo") => {
+    if (documentType === "photo") {
+      setUploadingFiles((prev) => ({ ...prev, photo: true }))
+    } else {
+      setUploadingFiles((prev) => ({ ...prev, [documentType]: true }))
+    }
 
-      const result = await response.json()
+    try {
+      const fileUrl = await uploadToCloudinary(file)
 
-      if (result.success) {
+      if (documentType === "photo") {
+        setFormData((prev) => ({
+          ...prev,
+          photo: fileUrl,
+        }))
+      } else {
         setFormData((prev) => ({
           ...prev,
           documents: {
             ...prev.documents,
-            [documentType]: result.fileUrl,
+            [documentType]: fileUrl,
           },
         }))
-      } else {
-        setError(`Failed to upload ${documentType}`)
       }
     } catch (error) {
       console.error("File upload error:", error)
       setError(`Error uploading ${documentType}`)
     } finally {
-      setUploadingFiles((prev) => ({ ...prev, [documentType]: false }))
+      if (documentType === "photo") {
+        setUploadingFiles((prev) => ({ ...prev, photo: false }))
+      } else {
+        setUploadingFiles((prev) => ({ ...prev, [documentType]: false }))
+      }
     }
   }
 
@@ -261,32 +364,23 @@ export default function RegisterPage() {
         joiningDate: formData.joiningDate || null,
       }
 
-      const response = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(submitData),
-      })
+      const response = await axiosInstance.post("/auth/register", submitData)
 
-      const data = await response.json()
-
-      if (data.success) {
-        setSuccess(data.message)
+      if (response.data.success) {
+        setSuccess(response.data.message)
         setGeneratedCredentials({
-          id: data.data.id,
-          password: data.data.id,
+          id: response.data.data.id,
+          password: response.data.data.id,
         })
         setCurrentStep(5) // Move to success step
-
         // Reset form
         setFormData({
           name: "",
           role: "",
-          organizationName: "",
-          departmentName: "",
+          organizationId: "",
+          departmentId: "",
           dateOfBirth: "",
-          address: "",
+          currentAddress: "",
           photo: "",
           joiningDate: "",
           upperManager: "",
@@ -306,14 +400,20 @@ export default function RegisterPage() {
             aadharBack: "",
             panCard: "",
             resume: "",
+            experienceLetter: "",
+            passbookPhoto: "",
+            tenthMarksheet: "",
+            twelfthMarksheet: "",
+            degreeMarksheet: "",
+            policy: "",
           },
         })
       } else {
-        setError(data.message || "Registration failed")
+        setError(response.data.message || "Registration failed")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error)
-      setError("Network error. Please check if the server is running.")
+      setError(error.response?.data?.message || "Network error. Please check if the server is running.")
     } finally {
       setIsLoading(false)
     }
@@ -327,13 +427,52 @@ export default function RegisterPage() {
     if (currentStep > 1) setCurrentStep(currentStep - 1)
   }
 
-  const isStep1Valid = formData.name && formData.role && formData.organizationName && formData.departmentName
+  const isStep1Valid = formData.name && formData.role && formData.organizationId && formData.departmentId
+
+  // Document upload component
+  const DocumentUpload = ({
+    documentType,
+    label,
+    accept = "image/*,.pdf",
+    icon: Icon = FileText,
+  }: {
+    documentType: keyof DocumentFiles
+    label: string
+    accept?: string
+    icon?: React.ComponentType<any>
+  }) => (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+        <Icon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+        <input
+          type="file"
+          accept={accept}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) handleFileUpload(file, documentType)
+          }}
+          className="hidden"
+          id={documentType}
+          disabled={uploadingFiles[documentType]}
+        />
+        <label htmlFor={documentType} className="cursor-pointer text-green-600 hover:text-green-700 font-medium">
+          {uploadingFiles[documentType] ? "Uploading..." : "Click to upload"}
+        </label>
+        <p className="text-xs text-gray-500 mt-1">
+          {accept.includes("image") ? "PNG, JPG, PDF up to 5MB" : "PDF up to 10MB"}
+        </p>
+        {formData.documents[documentType] && (
+          <p className="text-xs text-green-600 mt-2">✓ File uploaded successfully</p>
+        )}
+      </div>
+    </div>
+  )
 
   if (generatedCredentials && currentStep === 5) {
     return (
       <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-green-100 text-gray-900 overflow-hidden">
         <canvas ref={canvasRef} className="absolute inset-0 z-0" />
-
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -348,10 +487,8 @@ export default function RegisterPage() {
             >
               <CheckCircle className="w-8 h-8 text-white" />
             </motion.div>
-
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Registration Successful!</h2>
             <p className="text-gray-600 mb-6">Your employee account has been created successfully.</p>
-
             <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
               <h3 className="font-semibold text-green-800 mb-4">Your Login Credentials</h3>
               <div className="space-y-3">
@@ -369,7 +506,6 @@ export default function RegisterPage() {
                 login.
               </p>
             </div>
-
             <div className="space-y-3">
               <Link
                 href="/login"
@@ -450,7 +586,6 @@ export default function RegisterPage() {
           </motion.div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Employee Registration</h1>
           <p className="text-gray-600">Create a comprehensive employee profile</p>
-
           <Link
             href="/login"
             className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 mt-4 transition-colors"
@@ -496,10 +631,10 @@ export default function RegisterPage() {
             {currentStep === 1 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h3>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Name Field */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "name" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
@@ -515,7 +650,7 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         name="name"
-                        placeholder="Full Name *"
+                        placeholder="Enter your full name"
                         value={formData.name}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("name")}
@@ -529,6 +664,7 @@ export default function RegisterPage() {
 
                   {/* Role Field */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "role" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
@@ -551,22 +687,22 @@ export default function RegisterPage() {
                         required
                         disabled={isLoading}
                       >
-                        <option value="">Select Role *</option>
-                        <option value="admin">Admin</option>
+                        <option value="">Select Role</option>
+                        <option value="Admin">Admin</option>
                         <option value="manager">Manager</option>
-                        <option value="hr">HR</option>
                         <option value="employee">Employee</option>
-                        <option value="sales">Sales</option>
                         <option value="intern">Intern</option>
+                        <option value="hr">HR</option>
                       </select>
                     </div>
                   </div>
 
                   {/* Organization Name */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Organization *</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
-                        focusedField === "organizationName"
+                        focusedField === "organizationId"
                           ? "border-green-500 bg-green-50"
                           : "border-gray-300 bg-gray-50/50"
                       }`}
@@ -574,30 +710,38 @@ export default function RegisterPage() {
                       <div className="flex items-center justify-center w-12 h-12">
                         <Building2
                           className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            focusedField === "organizationName" ? "text-green-400" : "text-gray-400"
+                            focusedField === "organizationId" ? "text-green-400" : "text-gray-400"
                           }`}
                         />
                       </div>
-                      <input
-                        type="text"
-                        name="organizationName"
-                        placeholder="Organization Name *"
-                        value={formData.organizationName}
+                      <select
+                        name="organizationId"
+                        value={formData.organizationId}
                         onChange={handleInputChange}
-                        onFocus={() => setFocusedField("organizationName")}
+                        onFocus={() => setFocusedField("organizationId")}
                         onBlur={() => setFocusedField("")}
-                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 outline-none"
                         required
-                        disabled={isLoading}
-                      />
+                        disabled={isLoading || loadingOrganizations}
+                      >
+                        <option value="">
+                          {loadingOrganizations ? "Loading organizations..." : "Select Organization"}
+                        </option>
+                        {organizations.map((org) => (
+                          <option key={org.id} value={org.id}>
+                            {org.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
                   {/* Department Name */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
-                        focusedField === "departmentName"
+                        focusedField === "departmentId"
                           ? "border-green-500 bg-green-50"
                           : "border-gray-300 bg-gray-50/50"
                       }`}
@@ -605,22 +749,33 @@ export default function RegisterPage() {
                       <div className="flex items-center justify-center w-12 h-12">
                         <Users
                           className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            focusedField === "departmentName" ? "text-green-400" : "text-gray-400"
+                            focusedField === "departmentId" ? "text-green-400" : "text-gray-400"
                           }`}
                         />
                       </div>
-                      <input
-                        type="text"
-                        name="departmentName"
-                        placeholder="Department Name *"
-                        value={formData.departmentName}
+                      <select
+                        name="departmentId"
+                        value={formData.departmentId}
                         onChange={handleInputChange}
-                        onFocus={() => setFocusedField("departmentName")}
+                        onFocus={() => setFocusedField("departmentId")}
                         onBlur={() => setFocusedField("")}
-                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 outline-none"
                         required
-                        disabled={isLoading}
-                      />
+                        disabled={isLoading || loadingDepartments || !formData.organizationId}
+                      >
+                        <option value="">
+                          {!formData.organizationId
+                            ? "Select organization first"
+                            : loadingDepartments
+                              ? "Loading departments..."
+                              : "Select Department"}
+                        </option>
+                        {filteredDepartments.map((dept) => (
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -642,10 +797,10 @@ export default function RegisterPage() {
             {currentStep === 2 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Personal & Work Information</h3>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Date of Birth */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "dateOfBirth"
@@ -675,6 +830,7 @@ export default function RegisterPage() {
 
                   {/* Joining Date */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Joining Date</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "joiningDate"
@@ -704,6 +860,7 @@ export default function RegisterPage() {
 
                   {/* Upper Manager */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upper Manager</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "upperManager"
@@ -721,7 +878,7 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         name="upperManager"
-                        placeholder="Upper Manager"
+                        placeholder="Enter manager's name"
                         value={formData.upperManager}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("upperManager")}
@@ -732,8 +889,9 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  {/* Salary */}
+                  {/* Salary in Rupees */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Annual Salary (₹)</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "salary" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
@@ -749,7 +907,7 @@ export default function RegisterPage() {
                       <input
                         type="number"
                         name="salary"
-                        placeholder="Annual Salary"
+                        placeholder="Enter annual salary in rupees"
                         value={formData.salary}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("salary")}
@@ -762,6 +920,7 @@ export default function RegisterPage() {
 
                   {/* Experience */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "experience" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
@@ -777,7 +936,7 @@ export default function RegisterPage() {
                       <input
                         type="number"
                         name="experience"
-                        placeholder="Years of Experience"
+                        placeholder="Enter years of experience"
                         value={formData.experience}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("experience")}
@@ -788,36 +947,33 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  {/* Photo URL */}
+                  {/* Profile Photo Upload */}
                   <div className="relative">
-                    <div
-                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
-                        focusedField === "photo" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-center w-12 h-12">
-                        <Camera
-                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            focusedField === "photo" ? "text-green-400" : "text-gray-400"
-                          }`}
-                        />
-                      </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <input
-                        type="url"
-                        name="photo"
-                        placeholder="Profile Photo URL"
-                        value={formData.photo}
-                        onChange={handleInputChange}
-                        onFocus={() => setFocusedField("photo")}
-                        onBlur={() => setFocusedField("")}
-                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
-                        disabled={isLoading}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleFileUpload(file, "photo")
+                        }}
+                        className="hidden"
+                        id="photo"
+                        disabled={uploadingFiles.photo}
                       />
+                      <label htmlFor="photo" className="cursor-pointer text-green-600 hover:text-green-700 font-medium">
+                        {uploadingFiles.photo ? "Uploading..." : "Click to upload photo"}
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                      {formData.photo && <p className="text-xs text-green-600 mt-2">✓ Photo uploaded successfully</p>}
                     </div>
                   </div>
 
                   {/* Aadhar Card Number */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Aadhar Card Number</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "adharCard" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
@@ -833,7 +989,7 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         name="adharCard"
-                        placeholder="Aadhar Card Number"
+                        placeholder="Enter 12-digit Aadhar number"
                         value={formData.adharCard}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("adharCard")}
@@ -846,6 +1002,7 @@ export default function RegisterPage() {
 
                   {/* PAN Card Number */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">PAN Card Number</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "panCard" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
@@ -861,7 +1018,7 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         name="panCard"
-                        placeholder="PAN Card Number"
+                        placeholder="Enter 10-character PAN number"
                         value={formData.panCard}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("panCard")}
@@ -873,26 +1030,29 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Address */}
+                {/* Current Address */}
                 <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Address</label>
                   <div
                     className={`relative flex items-start border-2 rounded-xl transition-all duration-500 ease-out ${
-                      focusedField === "address" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
+                      focusedField === "currentAddress"
+                        ? "border-green-500 bg-green-50"
+                        : "border-gray-300 bg-gray-50/50"
                     }`}
                   >
                     <div className="flex items-center justify-center w-12 h-12 mt-1">
                       <MapPin
                         className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                          focusedField === "address" ? "text-green-400" : "text-gray-400"
+                          focusedField === "currentAddress" ? "text-green-400" : "text-gray-400"
                         }`}
                       />
                     </div>
                     <textarea
-                      name="address"
-                      placeholder="Full Address"
-                      value={formData.address}
+                      name="currentAddress"
+                      placeholder="Enter your current residential address"
+                      value={formData.currentAddress}
                       onChange={handleInputChange}
-                      onFocus={() => setFocusedField("address")}
+                      onFocus={() => setFocusedField("currentAddress")}
                       onBlur={() => setFocusedField("")}
                       rows={3}
                       className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none resize-none"
@@ -929,10 +1089,10 @@ export default function RegisterPage() {
             {currentStep === 3 && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Bank Details</h3>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Account Holder */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "bankDetails.accountHolder"
@@ -950,7 +1110,7 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         name="bankDetails.accountHolder"
-                        placeholder="Account Holder Name"
+                        placeholder="Enter account holder name"
                         value={formData.bankDetails.accountHolder}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("bankDetails.accountHolder")}
@@ -963,6 +1123,7 @@ export default function RegisterPage() {
 
                   {/* Account Number */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "bankDetails.accountNumber"
@@ -980,7 +1141,7 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         name="bankDetails.accountNumber"
-                        placeholder="Account Number"
+                        placeholder="Enter bank account number"
                         value={formData.bankDetails.accountNumber}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("bankDetails.accountNumber")}
@@ -993,6 +1154,7 @@ export default function RegisterPage() {
 
                   {/* IFSC Code */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">IFSC Code</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "bankDetails.ifsc"
@@ -1010,7 +1172,7 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         name="bankDetails.ifsc"
-                        placeholder="IFSC Code"
+                        placeholder="Enter IFSC code"
                         value={formData.bankDetails.ifsc}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("bankDetails.ifsc")}
@@ -1023,6 +1185,7 @@ export default function RegisterPage() {
 
                   {/* Branch */}
                   <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Branch Name</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "bankDetails.branch"
@@ -1040,7 +1203,7 @@ export default function RegisterPage() {
                       <input
                         type="text"
                         name="bankDetails.branch"
-                        placeholder="Branch Name"
+                        placeholder="Enter branch name"
                         value={formData.bankDetails.branch}
                         onChange={handleInputChange}
                         onFocus={() => setFocusedField("bankDetails.branch")}
@@ -1053,6 +1216,7 @@ export default function RegisterPage() {
 
                   {/* Account Type */}
                   <div className="relative md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "bankDetails.accountType"
@@ -1112,125 +1276,29 @@ export default function RegisterPage() {
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Document Upload</h3>
                 <p className="text-gray-600 text-sm mb-6">
-                  Please upload the required documents. All documents should be clear and readable.
+                  Please upload all required documents. All documents should be clear and readable.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Aadhar Front */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Aadhar Card (Front Side) *</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
-                      <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleFileUpload(file, "aadharFront")
-                        }}
-                        className="hidden"
-                        id="aadharFront"
-                        disabled={uploadingFiles.aadharFront}
-                      />
-                      <label
-                        htmlFor="aadharFront"
-                        className="cursor-pointer text-green-600 hover:text-green-700 font-medium"
-                      >
-                        {uploadingFiles.aadharFront ? "Uploading..." : "Click to upload"}
-                      </label>
-                      <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF up to 5MB</p>
-                      {formData.documents.aadharFront && (
-                        <p className="text-xs text-green-600 mt-2">✓ File uploaded successfully</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Aadhar Back */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Aadhar Card (Back Side) *</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
-                      <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleFileUpload(file, "aadharBack")
-                        }}
-                        className="hidden"
-                        id="aadharBack"
-                        disabled={uploadingFiles.aadharBack}
-                      />
-                      <label
-                        htmlFor="aadharBack"
-                        className="cursor-pointer text-green-600 hover:text-green-700 font-medium"
-                      >
-                        {uploadingFiles.aadharBack ? "Uploading..." : "Click to upload"}
-                      </label>
-                      <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF up to 5MB</p>
-                      {formData.documents.aadharBack && (
-                        <p className="text-xs text-green-600 mt-2">✓ File uploaded successfully</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* PAN Card */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">PAN Card *</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
-                      <CreditCard className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleFileUpload(file, "panCard")
-                        }}
-                        className="hidden"
-                        id="panCardFile"
-                        disabled={uploadingFiles.panCard}
-                      />
-                      <label
-                        htmlFor="panCardFile"
-                        className="cursor-pointer text-green-600 hover:text-green-700 font-medium"
-                      >
-                        {uploadingFiles.panCard ? "Uploading..." : "Click to upload"}
-                      </label>
-                      <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF up to 5MB</p>
-                      {formData.documents.panCard && (
-                        <p className="text-xs text-green-600 mt-2">✓ File uploaded successfully</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Resume */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Resume *</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
-                      <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleFileUpload(file, "resume")
-                        }}
-                        className="hidden"
-                        id="resume"
-                        disabled={uploadingFiles.resume}
-                      />
-                      <label
-                        htmlFor="resume"
-                        className="cursor-pointer text-green-600 hover:text-green-700 font-medium"
-                      >
-                        {uploadingFiles.resume ? "Uploading..." : "Click to upload"}
-                      </label>
-                      <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 10MB</p>
-                      {formData.documents.resume && (
-                        <p className="text-xs text-green-600 mt-2">✓ File uploaded successfully</p>
-                      )}
-                    </div>
-                  </div>
+                  <DocumentUpload documentType="aadharFront" label="Aadhar Card (Front Side) *" icon={CreditCard} />
+                  <DocumentUpload documentType="aadharBack" label="Aadhar Card (Back Side) *" icon={CreditCard} />
+                  <DocumentUpload documentType="panCard" label="PAN Card *" icon={CreditCard} />
+                  <DocumentUpload documentType="resume" label="Resume *" accept=".pdf,.doc,.docx" icon={FileText} />
+                  <DocumentUpload
+                    documentType="experienceLetter"
+                    label="Experience Letter"
+                    accept=".pdf,.doc,.docx"
+                    icon={FileText}
+                  />
+                  <DocumentUpload documentType="passbookPhoto" label="Passbook Photo *" icon={ImageIcon} />
+                  <DocumentUpload documentType="tenthMarksheet" label="10th Marksheet *" icon={FileText} />
+                  <DocumentUpload documentType="twelfthMarksheet" label="12th Marksheet *" icon={FileText} />
+                  <DocumentUpload
+                    documentType="degreeMarksheet"
+                    label="Degree/Latest Semester Marksheet *"
+                    icon={FileText}
+                  />
+                  <DocumentUpload documentType="policy" label="Policy Document *" accept=".pdf" icon={FileText} />
                 </div>
 
                 {/* Error message */}

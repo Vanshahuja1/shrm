@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken")
 const User = require("../models/userModel")
+const Organization = require("../models/organizationModel")
+const Department = require("../models/departmentModel")
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -17,68 +19,157 @@ const generateToken = (user) => {
 const register = async (req, res) => {
   try {
     const {
+      // Basic Information
       name,
       role,
-      upperManager = "",
-      salary = 0,
-      adharCard = "",
-      panCard = "",
-      experience = 0,
-      projects = [],
-      organizationName = "",
-      departmentName = "",
+      organizationId,
+      departmentId,
+
+      // Personal Information
+      dateOfBirth,
+      currentAddress,
+      photo,
+
+      // Work Information
+      joiningDate,
+      upperManager,
+      salary,
+      experience,
+
+      // Identity Documents
+      adharCard,
+      panCard,
+
+      // Bank Details
+      bankDetails,
+
+      // Document Files
+      documents,
     } = req.body
 
-    if (!name || !role) {
-      return res.status(400).json({ success: false, message: "Name and role are required" })
+    // Validation
+    if (!name || !role || !organizationId || !departmentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, role, organization, and department are required",
+      })
     }
 
-    const validRoles = ["admin", "manager", "employee", "sales", "intern", "hr"]
-    if (!validRoles.includes(role.toLowerCase())) {
-      return res.status(400).json({ success: false, message: "Invalid role specified" })
+    // Validate role
+    const validRoles = ["Admin", "manager", "employee", "intern", "hr"]
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role specified",
+      })
     }
 
+    // Validate organization exists
+    const organization = await Organization.findById(organizationId)
+    if (!organization) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid organization selected",
+      })
+    }
+
+    // Validate department exists and belongs to organization
+    const department = await Department.findById(departmentId)
+    if (!department || department.organizationId.toString() !== organizationId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid department selected for the chosen organization",
+      })
+    }
+
+    // Check if user with same name already exists in the same organization
     const existingUser = await User.findOne({
       name: { $regex: new RegExp(`^${name}$`, "i") },
+      organizationId,
       isActive: true,
     })
 
     if (existingUser) {
-      return res.status(400).json({ success: false, message: "User with this name already exists" })
+      return res.status(400).json({
+        success: false,
+        message: "User with this name already exists in the organization",
+      })
     }
 
+    // Generate unique user ID
     const userId = await User.getNextId(role)
 
-    const projectsArray = Array.isArray(projects)
-      ? projects
-      : typeof projects === "string"
-        ? projects.split(",").map(p => p.trim()).filter(p => p)
-        : []
-
-    const newUser = new User({
+    // Prepare user data
+    const userData = {
+      // Basic Information
       id: userId,
       name: name.trim(),
-      password: userId,
+      password: userId, // Default password is the user ID
       role: role.toLowerCase(),
-      upperManager: upperManager.trim(),
-      salary: Number(salary) || 0,
-      adharCard: adharCard.trim(),
-      panCard: panCard.trim().toUpperCase(),
-      experience: Number(experience) || 0,
-      projects: projectsArray,
-      organizationName: organizationName.trim(),
-      departmentName: departmentName.trim(),
-    })
+      organizationId,
+      departmentId,
 
+      // Personal Information
+      dateOfBirth: dateOfBirth || null,
+      currentAddress: currentAddress?.trim() || "",
+      photo: photo || "",
+
+      // Work Information
+      joiningDate: joiningDate || null,
+      upperManager: upperManager?.trim() || "",
+      salary: Number(salary) || 0,
+      experience: Number(experience) || 0,
+
+      // Identity Documents
+      adharCard: adharCard?.trim() || "",
+      panCard: panCard?.trim().toUpperCase() || "",
+
+      // Bank Details
+      bankDetails: {
+        accountHolder: bankDetails?.accountHolder?.trim() || "",
+        accountNumber: bankDetails?.accountNumber?.trim() || "",
+        ifsc: bankDetails?.ifsc?.trim().toUpperCase() || "",
+        branch: bankDetails?.branch?.trim() || "",
+        accountType: bankDetails?.accountType || "SAVING",
+      },
+
+      // Document Files
+      documents: {
+        aadharFront: documents?.aadharFront || "",
+        aadharBack: documents?.aadharBack || "",
+        panCard: documents?.panCard || "",
+        resume: documents?.resume || "",
+        experienceLetter: documents?.experienceLetter || "",
+        passbookPhoto: documents?.passbookPhoto || "",
+        tenthMarksheet: documents?.tenthMarksheet || "",
+        twelfthMarksheet: documents?.twelfthMarksheet || "",
+        degreeMarksheet: documents?.degreeMarksheet || "",
+        policy: documents?.policy || "",
+      },
+
+      // Legacy fields for backward compatibility
+      organizationName: organization.name,
+      departmentName: department.name,
+    }
+
+    // Create new user
+    const newUser = new User(userData)
     await newUser.save()
+
+    // Update organization and department employee counts
+    await Organization.findByIdAndUpdate(organizationId, {
+      $inc: { totalEmployees: 1 },
+    })
 
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
+      message: "Employee registered successfully",
       data: {
         id: userId,
         name: newUser.name,
         role: newUser.role,
+        organization: organization.name,
+        department: department.name,
         message: `Login ID and password: ${userId}`,
       },
     })
@@ -86,15 +177,24 @@ const register = async (req, res) => {
     console.error("Registration error:", error)
 
     if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map(err => err.message)
-      return res.status(400).json({ success: false, message: messages.join(", ") })
+      const messages = Object.values(error.errors).map((err) => err.message)
+      return res.status(400).json({
+        success: false,
+        message: messages.join(", "),
+      })
     }
 
     if (error.code === 11000) {
-      return res.status(400).json({ success: false, message: "User ID already exists" })
+      return res.status(400).json({
+        success: false,
+        message: "User ID already exists",
+      })
     }
 
-    res.status(500).json({ success: false, message: "Internal server error" })
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    })
   }
 }
 
@@ -103,17 +203,26 @@ const login = async (req, res) => {
     const { id, password } = req.body
 
     if (!id || !password) {
-      return res.status(400).json({ success: false, message: "ID and password are required" })
+      return res.status(400).json({
+        success: false,
+        message: "ID and password are required",
+      })
     }
 
     const user = await User.findByEmployeeId(id)
     if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" })
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      })
     }
 
     const isPasswordValid = await user.comparePassword(password)
     if (!isPasswordValid) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" })
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      })
     }
 
     user.lastLogin = new Date()
@@ -138,7 +247,10 @@ const login = async (req, res) => {
     })
   } catch (error) {
     console.error("Login error:", error)
-    res.status(500).json({ success: false, message: "Internal server error" })
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    })
   }
 }
 
@@ -147,24 +259,36 @@ const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body
 
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ success: false, message: "Current password and new password are required" })
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      })
     }
 
     const user = await User.findById(req.user._id)
 
     const isCurrentPasswordValid = await user.comparePassword(currentPassword)
     if (!isCurrentPasswordValid) {
-      return res.status(400).json({ success: false, message: "Current password is incorrect" })
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      })
     }
 
     user.password = newPassword
     user.passwordChangedAt = new Date()
     await user.save()
 
-    res.json({ success: true, message: "Password changed successfully" })
+    res.json({
+      success: true,
+      message: "Password changed successfully",
+    })
   } catch (error) {
     console.error("Change password error:", error)
-    res.status(500).json({ success: false, message: "Internal server error" })
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    })
   }
 }
 

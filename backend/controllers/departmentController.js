@@ -2,96 +2,222 @@ const Department = require("../models/departmentModel")
 
 exports.getAllDepartments = async (req, res) => {
   try {
-    const departments = await Department.find()
-    res.json(departments)
+    const { organizationId } = req.query
+
+    let departments
+    if (organizationId) {
+      // Validate ObjectId format
+      if (!organizationId.match(/^[0-9a-fA-F]{24}$/)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid organization ID format",
+        })
+      }
+      departments = await Department.findByOrganization(organizationId)
+    } else {
+      departments = await Department.findActive()
+    }
+
+    res.json({
+      success: true,
+      data: departments,
+      count: departments.length,
+    })
   } catch (error) {
     console.error("Get all departments error:", error)
-    res.status(500).json({ error: error.message })
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch departments",
+      error: error.message,
+    })
   }
 }
 
 exports.getDepartmentById = async (req, res) => {
   try {
     const { id } = req.params
-    
+
     // Validate ObjectId format
     if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ error: "Invalid department ID format" })
+      return res.status(400).json({
+        success: false,
+        message: "Invalid department ID format",
+      })
     }
 
-    const department = await Department.findById(id)
-    if (!department) return res.status(404).json({ error: "Department not found" })
-    res.json(department)
+    const department = await Department.findById(id).populate("organizationId", "name")
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        message: "Department not found",
+      })
+    }
+
+    res.json({
+      success: true,
+      data: department,
+    })
   } catch (error) {
     console.error("Get department by ID error:", error)
-    res.status(500).json({ error: error.message })
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch department",
+      error: error.message,
+    })
   }
 }
 
 exports.createDepartment = async (req, res) => {
   try {
     const newDepartment = await Department.create(req.body)
-    res.status(201).json(newDepartment)
+    const populatedDepartment = await Department.findById(newDepartment._id).populate("organizationId", "name")
+
+    res.status(201).json({
+      success: true,
+      message: "Department created successfully",
+      data: populatedDepartment,
+    })
   } catch (error) {
-    res.status(400).json({ error: error.message })
+    console.error("Create department error:", error)
+    res.status(400).json({
+      success: false,
+      message: "Failed to create department",
+      error: error.message,
+    })
   }
 }
 
 exports.updateDepartment = async (req, res) => {
   try {
     const { id } = req.params
-    
+
     // Validate ObjectId format
     if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ error: "Invalid department ID format" })
+      return res.status(400).json({
+        success: false,
+        message: "Invalid department ID format",
+      })
     }
 
-    const updated = await Department.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
-    if (!updated) return res.status(404).json({ error: "Department not found" })
-    res.json(updated)
+    const updated = await Department.findByIdAndUpdate(id, req.body, { new: true, runValidators: true }).populate(
+      "organizationId",
+      "name",
+    )
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Department not found",
+      })
+    }
+
+    res.json({
+      success: true,
+      message: "Department updated successfully",
+      data: updated,
+    })
   } catch (error) {
     console.error("Update department error:", error)
-    res.status(400).json({ error: error.message })
+    res.status(400).json({
+      success: false,
+      message: "Failed to update department",
+      error: error.message,
+    })
   }
 }
 
 exports.deleteDepartment = async (req, res) => {
   try {
-    const { id } = req.params    
+    const { id } = req.params
+
     // Validate ObjectId format
     if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ error: "Invalid department ID format" })
+      return res.status(400).json({
+        success: false,
+        message: "Invalid department ID format",
+      })
     }
 
     const deleted = await Department.findByIdAndDelete(id)
-    if (!deleted) return res.status(404).json({ error: "Department not found" })
-    res.status(204).send()
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Department not found",
+      })
+    }
+
+    res.json({
+      success: true,
+      message: "Department deleted successfully",
+    })
   } catch (error) {
     console.error("Delete department error:", error)
-    res.status(500).json({ error: error.message })
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete department",
+      error: error.message,
+    })
   }
 }
 
 exports.getDepartmentsByOrganisation = async (req, res) => {
-  const { orgName } = req.params
-  const departments = await Department.findByOrganisation(orgName)
-  res.json(departments)
+  try {
+    const { orgId } = req.params
+
+    // Validate ObjectId format
+    if (!orgId || !orgId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid organization ID format",
+      })
+    }
+
+    const departments = await Department.findByOrganization(orgId)
+    res.json({
+      success: true,
+      data: departments,
+      count: departments.length,
+    })
+  } catch (error) {
+    console.error("Get departments by organization error:", error)
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch departments",
+      error: error.message,
+    })
+  }
 }
 
 exports.getDepartmentSummary = async (req, res) => {
   try {
     const { id } = req.params
-    
+
     // Validate ObjectId format
     if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ error: "Invalid department ID format" })
+      return res.status(400).json({
+        success: false,
+        message: "Invalid department ID format",
+      })
     }
 
     const department = await Department.findById(id)
-    if (!department) return res.status(404).json({ error: "Department not found" })
-    res.json(department.getSummary())
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        message: "Department not found",
+      })
+    }
+
+    res.json({
+      success: true,
+      data: department.getSummary(),
+    })
   } catch (error) {
     console.error("Get department summary error:", error)
-    res.status(500).json({ error: error.message })
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch department summary",
+      error: error.message,
+    })
   }
 }
