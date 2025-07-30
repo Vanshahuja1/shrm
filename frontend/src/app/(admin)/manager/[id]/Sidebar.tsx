@@ -58,7 +58,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName,
           <nav className="flex-1 p-4 space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon
-              const active = pathname.startsWith(`/admin/manager/${managerId}/${item.id}`)
+              const active = pathname.startsWith(`/manager/${managerId}/${item.id}`)
               return (
                 <button
                   key={item.id}

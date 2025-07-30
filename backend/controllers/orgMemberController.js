@@ -1,15 +1,15 @@
 const User = require("../models/userModel");
 
-// Get all members with OrgMemberInfo format
+// Get all members with Info format
 exports.getMembers = async (req, res) => {
   try {
     // Get orgName from params (with mergeParams) or from custom middleware
     const orgName = req.params.orgName || req.orgName;
     console.log("Searching for members with organizationName:", orgName);
-    const members = await User.find({ organizationName: orgName });
+    const members = await User.find({ organizationName: new RegExp(`^${orgName}$`, "i"), });
     console.log("Found members count:", members.length);
 
-    const formattedMembers = members.map((member) => member.OrgMemberInfo);
+    const formattedMembers = members.map((member) => member.Info);
     res.status(200).json(formattedMembers);
   } catch (error) {
     console.error("Error in getMembers:", error);
@@ -21,18 +21,21 @@ exports.getMembers = async (req, res) => {
 exports.getMembersRaw = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
-    const members = await User.find({ organizationName: orgName });
+    const members = await User.find({ organizationName:  new RegExp(`^${orgName}$`, "i"), });
     res.status(200).json(members);
   } catch (error) {
     res.status(500).json({ message: "Error fetching members" });
   }
 };
 
-
 exports.getEmpInfo = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
-    const members = await User.find({ organizationName: orgName });
+
+    const members = await User.find({
+      organizationName: new RegExp(`^${orgName}$`, "i"),
+    });
+
     const empInfo = members.map((member) => member.employeeInfo);
 
     res.status(200).json(empInfo);
@@ -42,10 +45,13 @@ exports.getEmpInfo = async (req, res) => {
   }
 };
 
+
 exports.createMember = async (req, res) => {
   try {
     if (!req.body.role) {
-      return res.status(400).json({ message: "Role is required to generate ID" });
+      return res
+        .status(400)
+        .json({ message: "Role is required to generate ID" });
     }
 
     const memberData = {
@@ -56,6 +62,7 @@ exports.createMember = async (req, res) => {
       salary: req.body.salary || 0,
       projects: Array.isArray(req.body.projects) ? req.body.projects : [],
       upperManager: req.body.upperManager || "",
+      upperManagerName: req.body.upperManagerName || "",
       experience: req.body.experience || "0",
       email: req.body.contactInfo?.email,
       phone: req.body.contactInfo?.phone,
@@ -75,10 +82,15 @@ exports.createMember = async (req, res) => {
 
     // Manager logic
     if (req.body.role.toLowerCase() === "manager") {
-      const employees = Array.isArray(req.body.employees) ? req.body.employees : [];
+      const employees = Array.isArray(req.body.employees)
+        ? req.body.employees
+        : [];
       const interns = Array.isArray(req.body.interns) ? req.body.interns : [];
-      const extractId = (item) => typeof item === "object" && item !== null ? item.id : item;
-      const allMemberIds = [...employees, ...interns].map(extractId).filter(Boolean);
+      const extractId = (item) =>
+        typeof item === "object" && item !== null ? item.id : item;
+      const allMemberIds = [...employees, ...interns]
+        .map(extractId)
+        .filter(Boolean);
 
       if (allMemberIds.length > 0) {
         await User.updateMany(
@@ -88,7 +100,7 @@ exports.createMember = async (req, res) => {
       }
     }
 
-    res.status(201).json(newMember.OrgMemberInfo);
+    res.status(201).json(newMember.Info);
   } catch (error) {
     console.error("Error creating member:", error);
     res
@@ -106,33 +118,48 @@ exports.getMemberById = async (req, res) => {
 
     const result = member.OrgMemberInfo;
 
-    // Attach employees/interns only if manager
+    // Attach employees/interns if role is manager
     if (member.role.toLowerCase() === "manager") {
-      const reports = await User.find({ upperManager: member.id });
+      const subordinates = await User.find(
+        { upperManager: member.id },
+        { id: 1, name: 1, role: 1 }
+      );
 
-      result.employees = reports
+      result.employees = subordinates
         .filter((m) => m.role.toLowerCase() === "employee")
-        .map((m) => m.OrgMemberInfo);
+        .map((m) => ({
+          id: m.id,
+          name: m.name,
+        }));
 
-      result.interns = reports
+      result.interns = subordinates
         .filter((m) => m.role.toLowerCase() === "intern")
-        .map((m) => m.OrgMemberInfo);
+        .map((m) => ({
+          id: m.id,
+          name: m.name,
+        }));
     }
 
     // Attach upperManager name if exists
     if (member.upperManager) {
-      const upperManager = await User.findOne({ id: member.upperManager });
+      const upperManager = await User.findOne(
+        { id: member.upperManager },
+        { name: 1 }
+      );
       if (upperManager) {
         result.upperManagerName = upperManager.name;
       }
     }
 
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Error in getMemberById:", error);
-    res.status(500).json({ message: "Error fetching member", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Error fetching member", error: error.message });
   }
 };
+
 // Get member by ID in raw format (if needed for editing)
 exports.getMemberByIdRaw = async (req, res) => {
   try {
@@ -172,16 +199,36 @@ exports.createMember = async (req, res) => {
       id: await User.getNextId(req.body.role),
     };
 
+    if (req.body.role && req.body.role.toLowerCase() === "manager") {
+      memberData.employees = Array.isArray(req.body.employees)
+        ? req.body.employees.map((e) => ({
+            id: String(e.id),
+            upperManager: memberData.name,
+          }))
+        : [];
+
+      memberData.interns = Array.isArray(req.body.interns)
+        ? req.body.interns.map((i) => ({
+            id: String(i.id),
+            upperManager: memberData.name,
+          }))
+        : [];
+    }
     const newMember = new User(memberData);
     await newMember.save();
 
     // If the new member is a manager, update upperManager for selected employees/interns
     if (req.body.role && req.body.role.toLowerCase() === "manager") {
-      const employees = Array.isArray(req.body.employees) ? req.body.employees : [];
+      const employees = Array.isArray(req.body.employees)
+        ? req.body.employees
+        : [];
       const interns = Array.isArray(req.body.interns) ? req.body.interns : [];
       // Accept both array of objects or array of IDs
-      const extractId = (item) => typeof item === 'object' && item !== null ? item.id : item;
-      const allMemberIds = [...employees, ...interns].map(extractId).filter(Boolean);
+      const extractId = (item) =>
+        typeof item === "object" && item !== null ? item.id : item;
+      const allMemberIds = [...employees, ...interns]
+        .map(extractId)
+        .filter(Boolean);
       if (allMemberIds.length > 0) {
         await User.updateMany(
           { id: { $in: allMemberIds } },
@@ -189,7 +236,7 @@ exports.createMember = async (req, res) => {
         );
       }
     }
-    res.status(201).json(newMember.OrgMemberInfo);
+    res.status(201).json(newMember.Info);
   } catch (error) {
     console.error("Error creating member:", error);
     res
@@ -216,19 +263,24 @@ exports.updateMember = async (req, res) => {
     if (req.body.joiningDate) updateData.joiningDate = req.body.joiningDate;
 
     // Contact info
-    if (req.body.contactInfo?.email) updateData.email = req.body.contactInfo.email;
-    if (req.body.contactInfo?.phone) updateData.phone = req.body.contactInfo.phone;
-    if (req.body.contactInfo?.address) updateData.address = req.body.contactInfo.address;
+    if (req.body.contactInfo?.email)
+      updateData.email = req.body.contactInfo.email;
+    if (req.body.contactInfo?.phone)
+      updateData.phone = req.body.contactInfo.phone;
+    if (req.body.contactInfo?.address)
+      updateData.address = req.body.contactInfo.address;
 
     // Documents
     if (req.body.documents?.pan) updateData.panCard = req.body.documents.pan;
-    if (req.body.documents?.aadhar) updateData.adharCard = req.body.documents.aadhar;
+    if (req.body.documents?.aadhar)
+      updateData.adharCard = req.body.documents.aadhar;
 
     // Performance metrics
     if (req.body.performanceMetrics?.tasksPerDay)
       updateData.taskCountPerDay = req.body.performanceMetrics.tasksPerDay;
     if (req.body.performanceMetrics?.attendanceScore)
-      updateData.attendanceCount30Days = req.body.performanceMetrics.attendanceScore;
+      updateData.attendanceCount30Days =
+        req.body.performanceMetrics.attendanceScore;
     if (req.body.performanceMetrics?.combinedPercentage)
       updateData.performance = req.body.performanceMetrics.combinedPercentage;
 
@@ -238,6 +290,7 @@ exports.updateMember = async (req, res) => {
 
     // Direct upperManager override (optional)
     if (req.body.upperManager) updateData.upperManager = req.body.upperManager;
+    if (req.body.upperManagerName) updateData.upperManagerName = req.body.upperManagerName;
 
     // 🔄 Update the member itself
     const updatedMember = await User.findOneAndUpdate(
@@ -256,9 +309,15 @@ exports.updateMember = async (req, res) => {
       (updatedMember.role && updatedMember.role.toLowerCase() === "manager");
 
     if (isManager) {
-      const employees = Array.isArray(req.body.employees) ? req.body.employees : [];
+      const employees = Array.isArray(req.body.employees)
+        ? req.body.employees
+        : [];
       const interns = Array.isArray(req.body.interns) ? req.body.interns : [];
-      const allMemberIds = [...employees, ...interns].filter(Boolean);
+
+      const extractId = (x) => (typeof x === "object" && x !== null ? x.id : x);
+      const allMemberIds = [...employees, ...interns]
+        .map(extractId)
+        .filter(Boolean);
 
       console.log("New subordinates to assign:", allMemberIds);
 
@@ -273,7 +332,10 @@ exports.updateMember = async (req, res) => {
 
       // 🧼 Remove previous members not in the new list
       const prevMembers = await User.find(
-        { upperManager: updatedMember.id, role: { $in: ["employee", "intern"] } },
+        {
+          upperManager: updatedMember.id,
+          role: { $in: ["employee", "intern"] },
+        },
         { id: 1 }
       );
       const prevIds = prevMembers.map((m) => m.id);
@@ -288,7 +350,7 @@ exports.updateMember = async (req, res) => {
       }
     }
 
-    res.status(200).json(updatedMember.OrgMemberInfo);
+    res.status(200).json(updatedMember.Info);
   } catch (error) {
     console.error("Error updating member:", error);
     res.status(500).json({
@@ -297,7 +359,6 @@ exports.updateMember = async (req, res) => {
     });
   }
 };
-
 
 exports.deleteMember = async (req, res) => {
   try {
@@ -311,32 +372,36 @@ exports.deleteMember = async (req, res) => {
   }
 };
 
-// Get members by department with OrgMemberInfo format
+// Get members by department with Info format
 exports.getMembersByDepartment = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
     const members = await User.find({
-      organizationName: orgName,
-      departmentName: req.params.department,
-    });
-    const formattedMembers = members.map((member) => member.OrgMemberInfo);
+  organizationName: new RegExp(`^${orgName}$`, 'i'),
+  departmentName: new RegExp(`^${req.params.department}$`, 'i'),
+});
+
+    const formattedMembers = members.map((member) => member.Info);
     res.status(200).json(formattedMembers);
   } catch (error) {
     res.status(500).json({ message: "Error fetching department members" });
   }
 };
 
-// Get members by role with OrgMemberInfo format
+// Get members by role with Info format
 exports.getMembersByRole = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
+
     const members = await User.find({
-      organizationName: orgName,
-      role: req.params.role,
+      organizationName: new RegExp(`^${orgName}$`, 'i'),
+      role: new RegExp(`^${req.params.role}$`, 'i'),
     });
-    const formattedMembers = members.map((member) => member.OrgMemberInfo);
+
+    const formattedMembers = members.map((member) => member.Info);
     res.status(200).json(formattedMembers);
   } catch (error) {
+    console.error("Error in getMembersByRole:", error);
     res.status(500).json({ message: "Error fetching role members" });
   }
 };

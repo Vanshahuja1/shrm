@@ -1,43 +1,54 @@
-"use client"
+"use client";
 
-import { useState, useEffect, use } from "react"
-import { PersonalDashboard } from "../components/personal-dashboard"
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { PersonalDashboard } from "../components/personal-dashboard";
 import type { EmployeeInfo, AttendanceRecord } from "../../types/employees";
-import axios from "@/lib/axiosInstance"
+import axios from "@/lib/axiosInstance";
 
-export default function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfo | null>(null)
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
-  const [loading, setLoading] = useState(true)
+export default function DashboardPage() {
+  const { id } = useParams();
+  const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfo | null>(null);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchEmployeeData()
-    fetchAttendanceRecords()
-  }, [id])
+    if (!id) return;
 
-  const fetchEmployeeData = async () => {
-    try {
-      const response = await axios.get(`/employees/${id}`)
-      setEmployeeInfo(response.data)
-    } catch (error) {
-      console.error("Failed to fetch employee data:", error)
-    }
-  }
+   const fetchData = async () => {
+  try {
+    const [employeeRes, attendanceRes] = await Promise.all([
+      axios.get(`/employees/${id}`),
+      axios.get(`/employees/${id}/attendance`),
+    ]);
+    setEmployeeInfo(employeeRes.data);
+    
+    // 👇 FIX HERE
+    const rawAttendance = attendanceRes.data;
+    const records = Array.isArray(rawAttendance)
+      ? rawAttendance
+      : rawAttendance.records || rawAttendance.data || [];
 
-  const fetchAttendanceRecords = async () => {
-    try {
-      const response = await axios.get(`/employees/${id}/attendance`)
-      setAttendanceRecords(response.data)
-    } catch (error) {
-      console.error("Failed to fetch attendance records:", error)
-    } finally {
-      setLoading(false)
-    }
+    setAttendanceRecords(records);
+  } catch (error) {
+    console.error("Failed to fetch data:", error);
+  } finally {
+    setLoading(false);
   }
+};
+
+
+    fetchData();
+  }, [id]);
 
   if (loading || !employeeInfo) {
-    return <div className="animate-pulse">Loading dashboard...</div>
+    return <div className="animate-pulse">Loading dashboard...</div>;
   }
 
-  return <PersonalDashboard employeeInfo={employeeInfo} attendanceRecords={attendanceRecords}
+  return (
+    <PersonalDashboard
+      employeeInfo={employeeInfo}
+      attendanceRecords={attendanceRecords}
+    />
+  );
+}

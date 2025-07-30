@@ -28,15 +28,14 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
 
   const handlePunchIn = async () => {
     try {
-       await axios.post(`/employees/${id}/attendance`)
-        fetchAttendanceData()
-      
+      await axios.post(`/employees/${id}/attendance`, {
+        timestamp: new Date().toISOString(),
+      });
+      fetchAttendanceData();
     } catch (error) {
-      console.error("Failed to punch in:", error)
+      console.error("Failed to punch in:", error);
     }
   }
-
-// ...existing code...
 
   const handlePunchOut = async () => {
     try {

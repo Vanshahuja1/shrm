@@ -4,24 +4,28 @@ const User = require("../models/userModel")
 // Get attendance records
 const getAttendanceRecords = async (req, res) => {
   try {
-    const { id } = req.params
-    const { startDate, endDate } = req.query
+    const { id } = req.params;
+    const { startDate, endDate } = req.query;
 
-    const query = { employeeId: id }
+    const query = { employeeId: id };
 
     if (startDate && endDate) {
-      query.date = { $gte: startDate, $lte: endDate }
+      query.date = { $gte: startDate, $lte: endDate };
     } else {
       // Default to last 30 days
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      const today = new Date().toISOString().split("T")[0]
-      const startDateDefault = thirtyDaysAgo.toISOString().split("T")[0]
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const today = new Date().toISOString().split("T")[0];
+      const startDateDefault = thirtyDaysAgo.toISOString().split("T")[0];
 
-      query.date = { $gte: startDateDefault, $lte: today }
+      query.date = { $gte: startDateDefault, $lte: today };
     }
 
-    const records = await Attendance.find(query).sort({ date: -1 })
+    // Fetch user name
+    const user = await User.findOne({ id }).select("name");
+    const employeeName = user ? user.name : "";
+
+    const records = await Attendance.find(query).sort({ date: -1 });
 
     const attendanceRecords = records.map((record) => ({
       date: record.date,
@@ -29,11 +33,13 @@ const getAttendanceRecords = async (req, res) => {
       punchOut: record.punchOut ? record.punchOut.toTimeString().slice(0, 5) : null,
       totalHours: record.totalHours,
       status: record.status,
-    }))
+      employee: id,
+      name: employeeName,
+    }));
 
     // Check if currently punched in
-    const today = new Date().toISOString().split("T")[0]
-    const todayRecord = await Attendance.findOne({ employeeId: id, date: today })
+    const today = new Date().toISOString().split("T")[0];
+    const todayRecord = await Attendance.findOne({ employeeId: id, date: today });
 
     res.json({
       records: attendanceRecords,
@@ -42,12 +48,12 @@ const getAttendanceRecords = async (req, res) => {
       totalWorkHours: todayRecord?.totalHours || 0,
       breakTime: todayRecord?.breakTime || 0,
       overtimeHours: todayRecord?.overtimeHours || 0,
-    })
+    });
   } catch (error) {
-    console.error("Get attendance records error:", error)
-    res.status(500).json({ error: "Internal server error" })
+    console.error("Get attendance records error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 
 // Punch in
 const punchIn = async (req, res) => {

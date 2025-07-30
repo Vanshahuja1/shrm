@@ -171,7 +171,7 @@ export default function MemberDetailPage() {
               <MapPin className="text-gray-500" size={20} />
               {member.contactInfo.address}
             </div>
-            {member.upperManagerName && (
+            {member.upperManager && (
               <div className="flex items-center gap-3">
                 <UserIcon className="text-gray-500" size={20} />
                 Reports to: {member.upperManagerName}
@@ -218,38 +218,32 @@ export default function MemberDetailPage() {
         {member.role.toLowerCase() === "manager" &&
           (() => {
             type ManagerWithMembers = OrganizationMember & {
-              employees?: OrganizationMember[];
-              interns?: OrganizationMember[];
+              employees?: Array<{ id: string; name?: string }>;
+              interns?: Array<{ id: string; name?: string }>;
             };
             const manager = member as ManagerWithMembers;
             return (
               <div className="space-y-4">
-                {Array.isArray(manager.employees) &&
-                  manager.employees.length > 0 && (
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 mb-2">
-                        Employees
-                      </h2>
-                      <ul className="list-disc list-inside text-gray-700 text-base ml-4">
-                        {manager.employees.map((emp) => (
-                          <li key={emp.id || emp.name}>{emp.name}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                {Array.isArray(manager.interns) &&
-                  manager.interns.length > 0 && (
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 mb-2">
-                        Interns
-                      </h2>
-                      <ul className="list-disc list-inside text-gray-700 text-base ml-4">
-                        {manager.interns.map((intern) => (
-                          <li key={intern.id || intern.name}>{intern.name}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                {Array.isArray(manager.employees) && manager.employees.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Employees</h2>
+                    <ul className="list-disc list-inside text-gray-700 text-base ml-4">
+                      {manager.employees.map((emp) => (
+                        <li key={emp.id}>{emp.name ? emp.name : emp.id}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(manager.interns) && manager.interns.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Interns</h2>
+                    <ul className="list-disc list-inside text-gray-700 text-base ml-4">
+                      {manager.interns.map((intern) => (
+                        <li key={intern.id}>{intern.name ? intern.name : intern.id}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             );
           })()}

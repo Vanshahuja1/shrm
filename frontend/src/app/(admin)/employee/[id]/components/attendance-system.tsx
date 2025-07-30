@@ -156,7 +156,7 @@ export function AttendanceSystem({
         {/* Work Hours Display */}
         <div className="grid grid-cols-4 gap-4 text-center">
           <div className="bg-blue-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600">Today's Hours</p>
+            <p className="text-sm text-gray-600">Today&apos;s Hours</p>
             <p className="text-2xl font-bold text-blue-600">{totalWorkHours.toFixed(1)}h</p>
           </div>
           <div className="bg-green-50 rounded-lg p-4">

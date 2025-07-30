@@ -15,14 +15,23 @@ const projectSchema = new mongoose.Schema(
       required: [true, "Assign date is required"],
     },
 
-    startDate: {
-      type: Date,
-    },
 
-    deadline: {
-      type: Date,
-      required: true,
-    },
+    employees: [
+      {
+        id: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        upperManager: {
+          type: String,
+          trim: true,
+        },
+      },
+    ],
+
+    interns: [
+    ],
 
     endDate: {
       type: Date,
@@ -147,6 +156,41 @@ const projectSchema = new mongoose.Schema(
         },
       },
     ],
+    sentToAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    // Additional fields for completed projects
+    budgetVsActual: {
+      type: String,
+      trim: true,
+      default: "",
+      // Example: "$60,000 / $58,000"
+    },
+    costEfficiency: {
+      type: String,
+      trim: true,
+      default: "",
+      // Example: "3% saved"
+    },
+    successRate: {
+      type: String,
+      trim: true,
+      default: "",
+      // Example: "95%"
+    },
+    qualityScore: {
+      type: String,
+      trim: true,
+      default: "",
+      // Example: "4.5/5"
+    },
+    clientSatisfaction: {
+      type: String,
+      trim: true,
+      default: "",
+      // Example: "Excellent"
+    },
   },
   {
     timestamps: true,

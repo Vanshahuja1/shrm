@@ -38,6 +38,12 @@ exports.updateProject = async (req, res) => {
     if (updateData.clientName !== undefined) updateData.client = updateData.clientName;
     if (updateData.clientInputs === undefined) updateData.clientInputs = "";
     if (updateData.effectAnalysis === undefined) updateData.effectAnalysis = "";
+    // Convert ISO string dates to Date objects
+    ["assignDate", "startDate", "deadline", "endDate"].forEach((field) => {
+      if (updateData[field] && typeof updateData[field] === "string") {
+        updateData[field] = new Date(updateData[field]);
+      }
+    });
     const updated = await Project.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,

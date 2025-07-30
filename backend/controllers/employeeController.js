@@ -1,19 +1,21 @@
-const User = require("../models/userModel")
-const Task = require("../models/taskModel")
-const TaskResponse = require("../models/taskResponseModel")
-const Attendance = require("../models/attendanceModel")
-const Overtime = require("../models/overtimeModel")
-const Performance = require("../models/performanceModel")
-const EmployeeSettings = require("../models/employeeSettingsModel")
+const User = require("../models/userModel");
+const Task = require("../models/taskModel");
+const TaskResponse = require("../models/taskResponseModel");
+const Attendance = require("../models/attendanceModel");
+const Overtime = require("../models/overtimeModel");
+const Performance = require("../models/performanceModel");
+const EmployeeSettings = require("../models/employeeSettingsModel");
 
 // Get employee basic info
 const getEmployeeInfo = async (req, res) => {
   try {
-    const { id } = req.params
+    const { id } = req.params;
 
-    const employee = await User.findOne({ id, isActive: true }).select("-password")
+    const employee = await User.findOne({ id, isActive: true }).select(
+      "-password"
+    );
     if (!employee) {
-      return res.status(404).json({ error: "Employee not found" })
+      return res.status(404).json({ error: "Employee not found" });
     }
 
     // Transform data to match frontend interface
@@ -27,13 +29,19 @@ const getEmployeeInfo = async (req, res) => {
       designation: employee.role,
       department: employee.departmentName,
       manager: employee.upperManager,
-      joinDate: employee.joiningDate ? employee.joiningDate.toISOString().split("T")[0] : "",
+      joinDate: employee.joiningDate
+        ? employee.joiningDate.toISOString().split("T")[0]
+        : "",
       personalInfo: {
-        dateOfBirth: employee.dateOfBirth ? employee.dateOfBirth.toISOString().split("T")[0] : "",
+        dateOfBirth: employee.dateOfBirth
+          ? employee.dateOfBirth.toISOString().split("T")[0]
+          : "",
         identityDocuments: employee.documents.map((doc, index) => ({
           id: index + 1,
           type: doc.title,
-          number: doc.title.includes("Aadhar") ? employee.adharCard : employee.panCard,
+          number: doc.title.includes("Aadhar")
+            ? employee.adharCard
+            : employee.panCard,
           uploadDate: doc.uploadedAt.toISOString().split("T")[0],
           status: "verified",
         })),
@@ -50,29 +58,30 @@ const getEmployeeInfo = async (req, res) => {
         total: employee.salary,
         lastAppraisal: "2024-01-15", // You might want to track this
       },
-    }
+    };
 
-    res.json(employeeInfo)
+    res.json(employeeInfo);
   } catch (error) {
-    console.error("Get employee info error:", error)
-    res.status(500).json({ error: "Internal server error" })
+    console.error("Get employee info error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 
 // Get employee tasks
 const getEmployeeTasks = async (req, res) => {
   try {
-    const { id } = req.params
+    const { id } = req.params;
 
-    const tasks = await Task.find({ "assignedTo.id": id }).sort({ createdAt: -1 })
+    const tasks = await Task.find({ "assignedTo.id": id }).sort({
+      createdAt: -1,
+    });
 
-    // Get task responses
     const tasksWithResponses = await Promise.all(
       tasks.map(async (task) => {
         const response = await TaskResponse.findOne({
           taskId: task._id,
           employeeId: id,
-        })
+        });
 
         return {
           id: task._id,
@@ -83,45 +92,52 @@ const getEmployeeTasks = async (req, res) => {
           dueDate: task.dueDate,
           dueTime: task.dueTime || "17:00",
           assignedBy: task.assignedBy?.name || "Manager",
+          assignedTo: task.assignedTo || { id, name: "Unknown" },
           createdAt: task.createdAt.toISOString(),
           weightage: task.weightage || 5,
-          response: response
-            ? {
-                id: response._id,
-                response: response.response,
-                format: response.format,
-                documents: response.documents?.map((doc) => doc.originalName) || [],
-                submittedAt: response.submittedAt.toISOString(),
-                status: response.status,
-              }
-            : null,
-        }
-      }),
-    )
+          responses: response
+            ? [
+                {
+                  id: response._id,
+                  response: response.response,
+                  format: response.format,
+                  documents:
+                    response.documents?.map((doc) => doc.originalName) || [],
+                  timestamp: response.submittedAt.toISOString(),
+                  status: response.status,
+                  employee: task.assignedTo?.name || "Unknown",
+                  rating: response.rating,
+                },
+              ]
+            : [],
+        };
+      })
+    );
 
-    res.json(tasksWithResponses)
+    res.json(tasksWithResponses);
   } catch (error) {
-    console.error("Get employee tasks error:", error)
-    res.status(500).json({ error: "Internal server error" })
+    console.error("Get employee tasks error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
+
 
 // Submit task response
 const submitTaskResponse = async (req, res) => {
   try {
-    const { id, taskId } = req.params
-    const { response, format, documents } = req.body
+    const { id, taskId } = req.params;
+    const { response, format, documents } = req.body;
 
     // Check if response already exists
-    let taskResponse = await TaskResponse.findOne({ taskId, employeeId: id })
+    let taskResponse = await TaskResponse.findOne({ taskId, employeeId: id });
 
     if (taskResponse) {
       // Update existing response
-      taskResponse.response = response
-      taskResponse.format = format
-      taskResponse.documents = documents || []
-      taskResponse.submittedAt = new Date()
-      taskResponse.status = "submitted"
+      taskResponse.response = response;
+      taskResponse.format = format;
+      taskResponse.documents = documents || [];
+      taskResponse.submittedAt = new Date();
+      taskResponse.status = "submitted";
     } else {
       // Create new response
       taskResponse = new TaskResponse({
@@ -131,15 +147,15 @@ const submitTaskResponse = async (req, res) => {
         format,
         documents: documents || [],
         status: "submitted",
-      })
+      });
     }
 
-    await taskResponse.save()
+    await taskResponse.save();
 
     // Update task status
     await Task.findByIdAndUpdate(taskId, {
       status: "in-progress",
-    })
+    });
 
     res.status(201).json({
       id: taskResponse._id,
@@ -150,15 +166,15 @@ const submitTaskResponse = async (req, res) => {
       documents: taskResponse.documents,
       submittedAt: taskResponse.submittedAt.toISOString(),
       status: taskResponse.status,
-    })
+    });
   } catch (error) {
-    console.error("Submit task response error:", error)
-    res.status(500).json({ error: "Internal server error" })
+    console.error("Submit task response error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 
 module.exports = {
   getEmployeeInfo,
   getEmployeeTasks,
   submitTaskResponse,
-}
+};

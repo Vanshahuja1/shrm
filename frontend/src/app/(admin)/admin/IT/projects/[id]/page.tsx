@@ -126,6 +126,18 @@ export default function ProjectDetailPage() {
           />
           <StatBlock
             icon={<Calendar size={20} />}
+            label="Assign Date"
+            value={project.assignDate ? new Date(project.assignDate).toLocaleDateString() : "-"}
+            color="blue"
+          />
+          <StatBlock
+            icon={<Calendar size={20} />}
+            label="Start Date"
+            value={project.startDate ? new Date(project.startDate).toLocaleDateString() : "-"}
+            color="blue"
+          />
+          <StatBlock
+            icon={<Calendar size={20} />}
             label="Deadline"
             value={project.deadline ? new Date(project.deadline).toLocaleDateString() : "-"}
             color="blue"
@@ -142,7 +154,70 @@ export default function ProjectDetailPage() {
             value={typeof project.completionPercentage === "number" ? `${project.completionPercentage}%` : "-"}
             color="orange"
           />
+          {/* Show end date and duration if project is 100% complete */}
+          {project.completionPercentage === 100 && (
+            <>
+              <StatBlock
+                icon={<Calendar size={20} />}
+                label="End Date"
+                value={project.endDate ? new Date(project.endDate).toLocaleDateString() : "-"}
+                color="green"
+              />
+              <StatBlock
+                icon={<CheckCircle size={20} />}
+                label="Duration"
+                value={project.startDate && project.endDate ? `${Math.ceil((new Date(project.endDate).getTime() - new Date(project.startDate).getTime()) / (1000 * 60 * 60 * 24))} days` : "-"}
+                color="blue"
+              />
+            </>
+          )}
         </div>
+
+        {/* Completed Project Metrics */}
+        {project.status === "completed" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            {project.budgetVsActual && (
+              <StatBlock
+                icon={<DollarSign size={20} />}
+                label="Budget vs Actual"
+                value={project.budgetVsActual}
+                color="green"
+              />
+            )}
+            {project.costEfficiency && (
+              <StatBlock
+                icon={<DollarSign size={20} />}
+                label="Cost Efficiency"
+                value={project.costEfficiency}
+                color="green"
+              />
+            )}
+            {project.successRate && (
+              <StatBlock
+                icon={<CheckCircle size={20} />}
+                label="Success Rate"
+                value={project.successRate}
+                color="blue"
+              />
+            )}
+            {project.qualityScore && (
+              <StatBlock
+                icon={<CheckCircle size={20} />}
+                label="Quality Score"
+                value={project.qualityScore}
+                color="purple"
+              />
+            )}
+            {project.clientSatisfaction && (
+              <StatBlock
+                icon={<Users size={20} />}
+                label="Client Satisfaction"
+                value={project.clientSatisfaction}
+                color="orange"
+              />
+            )}
+          </div>
+        )}
 
         <DetailItem label="Client" content={project.client} />
         <DetailItem label="Client Inputs" content={project.clientInputs} />

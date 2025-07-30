@@ -103,35 +103,53 @@ export default function EditProjectPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Field
-            label="Project Name"
+            label="Name"
             value={project.name}
-            onChange={(val) => handleChange("name", val)}
+            onChange={(val) => handleChange("name", val as string)}
           />
           <Field
-            label="Client"
-            value={project.client}
-            onChange={(val) => handleChange("client", val)}
+            label="Assign Date"
+            value={project.assignDate ? new Date(project.assignDate).toISOString().slice(0, 10) : ""}
+            type="date"
+            onChange={(val) => {
+              // Convert YYYY-MM-DD string to Date
+              handleChange("assignDate", val ? new Date(val).toISOString() : undefined);
+            }}
           />
           <Field
             label="Start Date"
-            value={
-              project.startDate
-                ? new Date(project.startDate).toISOString().slice(0, 10)
-                : ""
-            }
+            value={project.startDate ? new Date(project.startDate).toISOString().slice(0, 10) : ""}
             type="date"
-            onChange={(val) => handleChange("startDate", val)}
+            onChange={(val) => {
+              handleChange("startDate", val ? new Date(val).toISOString() : undefined);
+            }}
           />
           <Field
             label="Deadline"
-            value={
-              project.deadline
-                ? new Date(project.deadline).toISOString().slice(0, 10)
-                : ""
-            }
+            value={project.deadline ? new Date(project.deadline).toISOString().slice(0, 10) : ""}
             type="date"
-            onChange={(val) => handleChange("deadline", val)}
+            onChange={(val) => {
+              handleChange("deadline", val ? new Date(val).toISOString() : undefined);
+            }}
           />
+          {/* Show end date and duration fields if project is 100% complete or status is completed */}
+          {(project.completionPercentage === 100 || project.status === "completed") && (
+            <>
+              <Field
+                label="End Date"
+                value={project.endDate ? new Date(project.endDate).toISOString().slice(0, 10) : ""}
+                type="date"
+                onChange={(val) => handleChange("endDate", val as string)}
+              />
+              <Field
+                label="Duration (days)"
+                value={project.startDate && project.endDate ? Math.ceil((new Date(project.endDate).getTime() - new Date(project.startDate).getTime()) / (1000 * 60 * 60 * 24)) : ""}
+                type="number"
+                onChange={() => {}}
+                // Duration is calculated, not editable
+              />
+            </>
+          )}
           <Field
             label="Price"
             value={
@@ -208,6 +226,41 @@ export default function EditProjectPage() {
             value={project.effectAnalysis || ""}
             onChange={(val) => handleChange("effectAnalysis", val)}
           />
+          {/* Conditionally show additional fields if status is completed */}
+          {project.status === "completed" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Field
+                label="Budget vs Actual ($)"
+                value={project.budgetVsActual?? ""}
+                onChange={(val) => handleChange("budgetVsActual", val)}
+                placeholder="e.g. $60,000 / $58,000"
+              />
+              <Field
+                label="Cost Efficiency"
+                value={project.costEfficiency ?? ""}
+                onChange={(val) => handleChange("costEfficiency", val)}
+                placeholder="e.g. 3% saved"
+              />
+              <Field
+                label="Success Rate (%)"
+                value={project.successRate ?? ""}
+                onChange={(val) => handleChange("successRate", val)}
+                placeholder="e.g. 95%"
+              />
+              <Field
+                label="Quality Score"
+                value={project.qualityScore ?? ""}
+                onChange={(val) => handleChange("qualityScore", val)}
+                placeholder="e.g. 4.5/5"
+              />
+              <Field
+                label="Client Satisfaction"
+                value={project.clientSatisfaction ?? ""}
+                onChange={(val) => handleChange("clientSatisfaction", val)}
+                placeholder="e.g. Excellent"
+              />
+            </div>
+          )}
           <MultiSelectDropdown
             label="Departments"
             options={allDepartments}
@@ -297,9 +350,6 @@ export default function EditProjectPage() {
             getOptionLabel={(m) => m.name}
             getOptionKey={(m) => m.id}
           />
-
-
-
         </div>
       </div>
     </div>

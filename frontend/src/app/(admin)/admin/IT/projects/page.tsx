@@ -1,8 +1,3 @@
-
-
-
-
-
 "use client"
 
 import { JSX, useState, useEffect } from "react";

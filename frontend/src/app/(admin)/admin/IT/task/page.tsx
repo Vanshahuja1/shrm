@@ -10,8 +10,6 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  Edit,
-  Trash2,
 } from "lucide-react"
 import axiosInstance from "@/lib/axiosInstance"
 import type { Task } from "../../types"
@@ -29,6 +27,7 @@ export default function TaskPage() {
       try {
         setLoading(true)
         const response = await axiosInstance.get("/tasks")
+        console.log(response.data)
         setTasks(response.data)
         setError(null)
       } catch (err) {

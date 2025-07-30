@@ -1,149 +1,202 @@
-"use client"
-import { User, CreditCard, DollarSign, TrendingUp } from "lucide-react"
-import type { ManagerInfo } from "../types"
-import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { mockManagerInfo } from "../data/mockData"
-export default function PersonalDetails() {
-  const [managerInfo, setManagerInfo] = useState<ManagerInfo | null>(null)
-  const { id: managerId } = useParams()
-  const router = useRouter()
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  TrendingUp,
+  Clock,
+  Award,
+  Target,
+  UserIcon,
+} from "lucide-react";
+import axios from "@/lib/axiosInstance";
+import type { OrganizationMember } from "@/types";
+
+export default function ManagerPersonalDetailsPage() {
+  const { id } = useParams();
+  const [manager, setManager] = useState<OrganizationMember | null>(null);
 
   useEffect(() => {
-    const fetchManagerInfo = async () => {
+    const fetchManager = async () => {
       try {
-        const response = await fetch(`/api/manager/${managerId}`)
-        if (!response.ok) {
-          throw new Error("Failed to fetch manager information")
-        }
-        const data = await response.json()
-        setManagerInfo(data)
+        const response = await axios.get(`/IT/org-members/${id}`);
+        setManager(response.data);
       } catch (error) {
-        setManagerInfo(mockManagerInfo) // Fallback to mock data
+        console.error("Error fetching manager:", error);
       }
-    }
+    };
+    fetchManager();
+  }, [id]);
 
-    fetchManagerInfo()
-  }, [managerId])
+  if (!manager) return <p className="text-center text-gray-500">Loading...</p>;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Personal Details</h2>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-red-200 p-8 space-y-8">
+        {/* Header */}
+        <div className="flex items-center gap-6">
+          <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+            {manager.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{manager.name}</h1>
+            <p className="text-xl text-red-600 font-medium">
+              {manager.role} – {manager.department}
+            </p>
+          </div>
+        </div>
 
-      {/* Profile Information */}
-      <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <User className="w-6 h-6 text-red-500 mr-2" />
-          Profile Information
-        </h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.name}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.personalInfo?.employeeId}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.department}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.personalInfo?.dateOfBirth}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.email}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.phone}</p>
-          </div>
-          <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.personalInfo?.address}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.personalInfo?.emergencyContact}</p>
-          </div>
+        {/* Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <InfoCard
+            title="Tasks/Day"
+            value={`${manager.performanceMetrics.tasksPerDay}/5`}
+            icon={<Target />}
+            color="blue"
+            theme="red"
+          />
+          <InfoCard
+            title="Attendance"
+            value={`${manager.performanceMetrics.attendanceScore}%`}
+            icon={<Clock />}
+            color="green"
+            theme="red"
+          />
+          <InfoCard
+            title="Manager Rating"
+            value={`${manager.performanceMetrics.managerReviewRating}/5`}
+            icon={<Award />}
+            color="purple"
+            theme="red"
+          />
+          <InfoCard
+            title="Performance"
+            value={`${manager.performanceMetrics.combinedPercentage}%`}
+            icon={<TrendingUp />}
+            color="orange"
+            theme="red"
+          />
         </div>
-      </div>
 
-      {/* Bank Details */}
-      <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <CreditCard className="w-6 h-6 text-red-500 mr-2" />
-          Bank Details
-        </h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.bankDetails.accountNumber}</p>
+        {/* Contact + Professional Info */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-900">Contact Info</h2>
+            <div className="flex items-center gap-3">
+              <Mail className="text-gray-500" size={20} />
+              {manager.contactInfo.email}
+            </div>
+            <div className="flex items-center gap-3">
+              <Phone className="text-gray-500" size={20} />
+              {manager.contactInfo.phone}
+            </div>
+            <div className="flex items-center gap-3">
+              <MapPin className="text-gray-500" size={20} />
+              {manager.contactInfo.address}
+            </div>
+            {manager.upperManager && (
+              <div className="flex items-center gap-3">
+                <UserIcon className="text-gray-500" size={20} />
+                Reports to: {manager.upperManager}
+              </div>
+            )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.bankDetails.bankName}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.bankDetails?.ifsc}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-            <p className="text-gray-900 font-medium">{managerInfo?.bankDetails?.branch}</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Salary Information */}
-      <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <DollarSign className="w-6 h-6 text-red-500 mr-2" />
-          Salary Information
-        </h3>
-        <div className="grid grid-cols-3 gap-6">
-          <div className="text-center">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Basic Salary</label>
-            <p className="text-3xl font-bold text-gray-900">${managerInfo?.salary?.basic?.toLocaleString()}</p>
-          </div>
-          <div className="text-center">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Allowances</label>
-            <p className="text-3xl font-bold text-gray-900">${managerInfo?.salary?.allowances?.toLocaleString()}</p>
-          </div>
-          <div className="text-center">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Total Salary</label>
-            <p className="text-3xl font-bold text-red-600">${managerInfo?.salary?.total?.toLocaleString()}</p>
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-900">Professional Info</h2>
+            <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 font-semibold">
+              Salary: ${manager.salary.toLocaleString()}
+            </div>
+            <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-semibold">
+              Joining Date: {manager.joiningDate}
+            </div>
+            <div className="p-4 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 font-semibold">
+              Experience: {manager.experience}
+            </div>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-red-100">
-          <p className="text-sm text-gray-600">
-            Last Appraisal: <span className="font-medium">{managerInfo?.salary?.lastAppraisal}</span>
-          </p>
-        </div>
-      </div>
 
-      {/* Appraisal Requests */}
-      <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <TrendingUp className="w-6 h-6 text-red-500 mr-2" />
-          Appraisal Requests
-        </h3>
-        <div className="bg-red-50 rounded-lg p-4 mb-4">
-          <p className="text-red-700 mb-2">
-            <strong>Next Appraisal Due:</strong> December 2024
-          </p>
-          <p className="text-gray-600 text-sm">
-            You can request an appraisal review based on your performance metrics and achievements.
-          </p>
+        {/* Documents */}
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-gray-900">Documents</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="font-semibold text-gray-700 mb-1">PAN</p>
+              <p className="text-lg font-mono text-yellow-800">
+                {manager.documents.pan}
+              </p>
+            </div>
+            <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <p className="font-semibold text-gray-700 mb-1">Aadhar</p>
+              <p className="text-lg font-mono text-orange-800">
+                {manager.documents.aadhar}
+              </p>
+            </div>
+          </div>
         </div>
-        <button className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors font-medium">
-          <TrendingUp className="w-5 h-5 inline mr-2" />
-          Request Appraisal Review
-        </button>
+
+        {/* Projects */}
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Projects</h2>
+          <div className="flex flex-wrap gap-2">
+            {manager.projects.map((project: string, index: number) => (
+              <span
+                key={index}
+                className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+              >
+                {project}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
+}
+
+// InfoCard component
+function InfoCard({
+  title,
+  value,
+  icon,
+  color,
+  theme = "red",
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  color: "blue" | "green" | "purple" | "orange";
+  theme?: "red" | "default";
+}) {
+  const themeMap = {
+    red: {
+      blue: "bg-blue-50 text-blue-600 border-red-200",
+      green: "bg-green-50 text-green-600 border-red-200",
+      purple: "bg-purple-50 text-purple-600 border-red-200",
+      orange: "bg-orange-50 text-orange-600 border-red-200",
+    },
+    default: {
+      blue: "bg-blue-50 text-blue-600 border-blue-200",
+      green: "bg-green-50 text-green-600 border-green-200",
+      purple: "bg-purple-50 text-purple-600 border-purple-200",
+      orange: "bg-orange-50 text-orange-600 border-orange-200",
+    },
+  };
+  const bgMap = themeMap[theme][color];
+
+  return (
+    <div className={`p-4 rounded-lg border ${bgMap}`}>
+      <div className="flex items-center gap-2 mb-1 text-sm font-medium">
+        {icon}
+        {title}
+      </div>
+      <p className="text-2xl font-bold">{value}</p>
+    </div>
+  );
 }

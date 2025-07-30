@@ -29,4 +29,4 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
     return <div className="animate-pulse">Loading performance metrics...</div>
   }
 
-  return <PerformanceMetrics metrics={metrics} />
+  return (<PerformanceMetrics metrics={metrics} />);}

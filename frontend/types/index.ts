@@ -30,12 +30,14 @@ export interface OrganizationMember {
 }
 
 export interface Project {
+  assignDate: string;
   id: number | string;
   name: string;
   description: string;
   departmentsInvolved: string[];
   membersInvolved: string[];
   startDate: string;
+  endDate?: string;
   deadline: string;
   managersInvolved: string[];
   completionPercentage: number;
@@ -50,7 +52,6 @@ export interface Project {
   priority?: "Low" | "Medium" | "High" | "Urgent";
   category?: string;
   technologiesUsed?: string[];
-  clientSatisfactionRating?: number;
   roi?: number;
   budgetAllocated?: number;
   actualSpent?: number;
@@ -62,6 +63,13 @@ export interface Project {
   links?: string[];
   lessonsLearned?: string;
   clientFeedback?: string;
+
+  // Additional fields for completed projects
+  budgetVsActual?: string;
+  costEfficiency?: string;
+  successRate?: string;
+  qualityScore?: string;
+  clientSatisfaction?: string;
 }
 
 export interface Department {

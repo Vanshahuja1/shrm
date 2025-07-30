@@ -35,4 +35,4 @@ export default function DataSyncPage({ params }: { params: Promise<{ id: string 
       lastSyncTime={syncData.lastSyncTime}
       syncStatus={syncData.syncStatus}
     />
-  )
+  );}

@@ -28,6 +28,40 @@ export interface OrganizationMember {
   }
   upperManager?: string
   upperManagerName?: string;
+  employees?: { id: string| number; upperManager: string; name?: string }[];
+  interns?: { id: string| number; upperManager: string; name?: string }[];
+}
+export interface UpdateMemberPayload {
+  id: string | number;
+  name: string;
+  role: "Manager" | "Employee" | "Intern" | "Head";
+  department: string;
+  salary: number;
+  projects: string[];
+  experience: string;
+  contactInfo: {
+    email: string;
+    phone: string;
+    address: string;
+  };
+  documents: {
+    pan: string;
+    aadhar: string;
+  };
+  joiningDate: string;
+  performanceMetrics: {
+    tasksPerDay: number;
+    attendanceScore: number;
+    managerReviewRating: number;
+    combinedPercentage: number;
+  };
+  attendance: {
+    todayPresent: boolean;
+  };
+  upperManager?: string;
+  upperManagerName?: string;
+  employees?: { id: string| number; upperManager: string }[];
+  interns?: { id: string| number; upperManager: string }[];
 }
 
 export interface Department {
@@ -43,13 +77,19 @@ export interface Department {
 }
 
 export interface Project {
+  qualityScore: string
+  successRate: string
+  costEfficiency: string
+  budgetVsActual: string
   id: number
   name: string
   description: string
   departmentsInvolved: string[]
   membersInvolved: string[]
-  startDate: string
-  deadline: string
+  assignDate?: string
+  startDate?: string
+  deadline?: string
+  endDate?: string
   managersInvolved: string[]
   completionPercentage: number
   amount: number
@@ -63,7 +103,7 @@ export interface Project {
   priority?: "Low" | "Medium" | "High" | "Urgent"
   category?: string
   technologiesUsed?: string[]
-  clientSatisfactionRating?: number
+  clientSatisfaction?: string
   roi?: number
   budgetAllocated?: number
   actualSpent?: number

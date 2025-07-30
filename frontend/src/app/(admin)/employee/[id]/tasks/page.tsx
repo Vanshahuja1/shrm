@@ -1,59 +1,49 @@
-"use client"
+"use client";
 
-import { useState, useEffect, use } from "react"
-import { TaskList } from "../components/task-list"
-import type { EmployeeTask } from "@/types/employee"
+import { useState, useEffect } from "react";
+import axiosInstance from "@/lib/axiosInstance";
+import { TaskList } from "../components/task-list";
+import type { EmployeeTask } from "../../types/employees";
+import { useParams } from "next/navigation";
 
-export default function TasksPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const [tasks, setTasks] = useState<EmployeeTask[]>([])
-  const [loading, setLoading] = useState(true)
+export default function TasksPage() {
+  const { id } = useParams();
+  const [tasks, setTasks] = useState<EmployeeTask[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTasks()
-  }, [id])
+    fetchTasks();
+  }, [id]);
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch(`/api/employees/${id}/tasks`)
-      if (response.ok) {
-        const data = await response.json()
-        setTasks(data)
-      }
+      const response = await axiosInstance.get(`/employees/${id}/tasks`);
+      setTasks(response.data);
     } catch (error) {
-      console.error("Failed to fetch tasks:", error)
+      console.error("Failed to fetch tasks:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleTaskResponse = async (
     taskId: number,
     response: string,
     format: "text" | "document",
-    documents?: string[],
+    documents?: string[]
   ) => {
     try {
-      const apiResponse = await fetch(`/api/employees/${id}/tasks/${taskId}/response`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          response,
-          format,
-          documents,
-        }),
-      })
-
-      if (apiResponse.ok) {
-        // Refresh tasks after successful response submission
-        fetchTasks()
-      }
+      await axiosInstance.post(`/employees/${id}/tasks/${taskId}/response`, {
+        response,
+        format,
+        documents,
+      });
+      // Refresh tasks after successful response submission
+      fetchTasks();
     } catch (error) {
-      console.error("Failed to submit task response:", error)
+      console.error("Failed to submit task response:", error);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -71,8 +61,8 @@ export default function TasksPage({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  return <TaskList tasks={tasks} onTaskResponse={handleTaskResponse} />
+  return <TaskList tasks={tasks} onTaskResponse={handleTaskResponse} />;
 }

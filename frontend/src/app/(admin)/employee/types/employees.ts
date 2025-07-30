@@ -56,7 +56,14 @@ export type TaskResponse = {
   id: number
   response: string
   format: "text" | "document"
-  documents?: string[]
+  documents?: (string | {
+    filename?: string;
+    originalName?: string;
+    path?: string;
+    size?: number;
+    mimetype?: string;
+    uploadedAt?: string;
+  })[];
   submittedAt: string
   status: "submitted" | "reviewed"
 }
