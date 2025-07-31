@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Bell, Mail, Star, Check, Clock } from "lucide-react";
 import axios from "@/lib/axiosInstance";
@@ -61,11 +61,7 @@ export default function NotificationSystem({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [filterType]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const response = await axios.get("/notifications");
       let filteredNotifications = response.data.notifications;
@@ -78,7 +74,11 @@ export default function NotificationSystem({
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterType]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const markAsRead = async (id: string) => {
     try {
@@ -141,7 +141,7 @@ export default function NotificationSystem({
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Today's</p>
+                <p className="text-sm text-gray-600">Today&apos;s</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {notifications.filter(n => 
                     new Date(n.createdAt).toDateString() === new Date().toDateString()

@@ -110,7 +110,7 @@ const FunctionalPayslipPage: React.FC<FunctionalPayslipPageProps> = ({
     });
   };
 
-  const generatePdfFromRef = async (action: 'print' | 'download') => {
+  const generatePdfFromRef = useCallback(async (action: 'print' | 'download') => {
     if (!payslipRef.current) return;
     setIsLoading(true);
 
@@ -157,10 +157,10 @@ const FunctionalPayslipPage: React.FC<FunctionalPayslipPageProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [employee?.name]);
 
-  const handlePrint = useCallback(() => generatePdfFromRef('print'), []);
-  const handleDownload = useCallback(() => generatePdfFromRef('download'), [employee?.name]);
+  const handlePrint = useCallback(() => generatePdfFromRef('print'), [generatePdfFromRef]);
+  const handleDownload = useCallback(() => generatePdfFromRef('download'), [generatePdfFromRef]);
 
   const handleRefresh = () => {
     setIsLoading(true);

@@ -1,10 +1,11 @@
+"use client"
 import React, { useState } from "react"
 import { motion } from "framer-motion"
 import { UserMinus, TrendingUp, TrendingDown, DollarSign, AlertCircle, Mail, ChevronRight } from "lucide-react"
-import { EmailNotification, Operation, NotificationType } from "../types"
+import { EmailNotification} from "../types"
 
 const CRUDOperations = () => {
-  const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null)
+  // const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null)
   const [emailNotifications, setEmailNotifications] = useState<EmailNotification[]>([])
 
   const operations: Operation[] = [
@@ -59,15 +60,15 @@ interface Operation {
     action: string
 }
 
-interface Notification {
-    id: number
-    type: string
-    recipient: string
-    subject: string
-    message: string
-    timestamp: string
-    status: "sent" | "pending" | "failed"
-}
+// interface Notification {
+//     id: number
+//     type: string
+//     recipient: string
+//     subject: string
+//     message: string
+//     timestamp: string
+//     status: "sent" | "pending" | "failed"
+// }
 
 const handleOperation = (operation: Operation) => {
     // Map operation.id to EmailNotification.type

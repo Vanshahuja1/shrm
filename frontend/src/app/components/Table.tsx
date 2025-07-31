@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 
 interface TableProps {
   columns: string[]
-  data: Record<string, any>[]
+  data: Record<string, string | number | boolean | null | undefined>[]
 }
 
 export default function Table({ columns, data }: TableProps) {
