@@ -13,24 +13,32 @@ export default function DepartmentsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    axios.get("/departments").then((res) => {
-      const normalized = res.data.map((d: {
-        _id?: string;
-        id?: string;
-        name: string;
-        head: string;
-        budget: number;
-        managers: OrganizationMember[];
-        employees: OrganizationMember[];
-        interns: OrganizationMember[];
-        members: OrganizationMember[];
-      }) => ({
-        ...d,
-        id: d._id ?? d.id,
-      })) as Department[]
-      setDepartments(normalized)
-      console.log("Departments loaded")
-    })
+    axios.get("/departments")
+      .then((res) => {
+        if (res.data && res.data.success && Array.isArray(res.data.data)) {
+          const normalized = res.data.data.map((d: {
+            _id?: string;
+            id?: string;
+            name: string;
+            head: string;
+            budget: number;
+            managers: OrganizationMember[];
+            employees: OrganizationMember[];
+            interns: OrganizationMember[];
+            members: OrganizationMember[];
+          }) => ({
+            ...d,
+            id: d._id ?? d.id,
+          })) as Department[]
+          setDepartments(normalized)
+          console.log("Departments loaded:", normalized.length)
+        } else {
+          console.error("Invalid response format:", res.data)
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching departments:", error)
+      })
   }, [])
 
   // const handleDelete = async (id: string) => {

@@ -33,10 +33,19 @@ export default function DepartmentDetailPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
-    axios.get(`/departments/${id}`).then((res) => {
-      setDept(res.data);
-      setEditData(res.data);
-    });
+    axios.get(`/departments/${id}`)
+      .then((res) => {
+        console.log("Department response:", res.data);
+        if (res.data && res.data.success && res.data.data) {
+          setDept(res.data.data);
+          setEditData(res.data.data);
+        } else {
+          console.error("Invalid response format:", res.data);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching department:", error);
+      });
   }, [id]);
 
   const handleUpdate = async () => {

@@ -35,8 +35,31 @@ export default function AddDepartmentPage() {
   const fetchOrgMembers = async () => {
     try {
       const res = await axios.get("/IT/org-members");
-      setOrgMembers(res.data);
-    } catch{
+      console.log("API response:", res.data);
+      
+      // Ensure res.data is an array and filter out null/undefined members
+      const responseData = Array.isArray(res.data) ? res.data : [];
+      
+      const validMembers = responseData
+        .filter((member: any) => {
+          // Filter out null, undefined, or members without required properties
+          return member !== null && 
+                 member !== undefined && 
+                 member.name && 
+                 member.role &&
+                 typeof member.name === 'string' &&
+                 typeof member.role === 'string';
+        })
+        .map((member: any) => ({
+          id: member.id || member._id || String(Math.random()),
+          name: member.name,
+          role: member.role.toLowerCase() // Ensure consistent role formatting
+        }));
+      
+      console.log("Valid members:", validMembers);
+      setOrgMembers(validMembers);
+    } catch (error) {
+      console.error("Error fetching org members:", error);
       setOrgMembers(sampleMembers.map(m => ({ id: String(m.id), name: m.name, role: m.role })));
     }
   };

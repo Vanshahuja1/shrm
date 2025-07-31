@@ -287,8 +287,8 @@ userSchema.virtual("employeeInfo").get(function () {
     role: this.role,
     department: this.departmentName,
     organization: this.organizationName,
-  }
-})
+  };
+});
 
 // Pre-save middleware to populate organization and department names
 userSchema.pre("save", async function (next) {

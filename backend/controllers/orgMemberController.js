@@ -9,7 +9,11 @@ exports.getMembers = async (req, res) => {
     const members = await User.find({ organizationName: new RegExp(`^${orgName}$`, "i"), });
     console.log("Found members count:", members.length);
 
-    const formattedMembers = members.map((member) => member.Info);
+    // Use employeeInfo virtual instead of non-existing Info
+    const formattedMembers = members
+      .filter(member => member && member.employeeInfo) // Filter out any null members
+      .map((member) => member.employeeInfo);
+    
     res.status(200).json(formattedMembers);
   } catch (error) {
     console.error("Error in getMembers:", error);

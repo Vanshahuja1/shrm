@@ -15,7 +15,13 @@ exports.getAllDepartments = async (req, res) => {
       }
       departments = await Department.findByOrganization(organizationId)
     } else {
-      departments = await Department.findActive()
+      try {
+        departments = await Department.find({}).populate("organizationId", "name").sort({ name: 1 })
+      } catch (populateError) {
+        console.error("Population failed, trying without populate:", populateError)
+        // If populate fails, get departments without population
+        departments = await Department.find({}).sort({ name: 1 })
+      }
     }
 
     res.json({
