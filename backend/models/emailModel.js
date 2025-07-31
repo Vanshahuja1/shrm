@@ -10,6 +10,7 @@ const emailSchema = new mongoose.Schema({
       "penalty",
       "general",
       "notification",
+      "warning"
     ],
     default: "notification",
     required: true,

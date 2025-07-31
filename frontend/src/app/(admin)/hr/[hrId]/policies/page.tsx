@@ -4,9 +4,11 @@ import { JSX, useState } from 'react';
 import LeavePolicy from './leave/page';
 import AttendancePolicy from './attendance/page';
 import DisciplinePolicy from './discipline/page';
+import WarningPolicyPage from './warning/page';
 
-const tabs = ['Leave', 'Attendance','Discipline'] as const;
+const tabs = ['Leave', 'Attendance','Discipline','Warning'] as const;
 
+// const tabs = ['Warning'] as const;
 export default function PolicyManagementPage(): JSX.Element {
   const [activeTab, setActiveTab] = useState<number>(0);
 
@@ -30,6 +32,7 @@ export default function PolicyManagementPage(): JSX.Element {
             {tab === 'Leave' && '📄 Leave'}
             {tab === 'Attendance' && '🕒 Attendance'}
             {tab === 'Discipline' && '⚠️ Discipline'}
+            {tab === 'Warning' && '⚠️ Warning'}
           </button>
         ))}
       </div>
@@ -38,6 +41,7 @@ export default function PolicyManagementPage(): JSX.Element {
         {activeTab === 0 && <LeavePolicy />}
         {activeTab === 1 && <AttendancePolicy />}
         {activeTab === 2 && <DisciplinePolicy />}
+        {activeTab === 3 && <WarningPolicyPage />}
       </div>
     </div>
   );
