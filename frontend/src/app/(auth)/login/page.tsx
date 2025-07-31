@@ -100,7 +100,7 @@ export default function LoginPage() {
       case "manager":
         return `/manager/${id}`
       case "employee":
-        return `/employees/${id}`
+        return `/employee/${id}/tasks`
       default:
         return "/dashboard"
     }
