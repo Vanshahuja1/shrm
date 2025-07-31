@@ -101,11 +101,13 @@ departmentSchema.methods.getSummary = function () {
 
 // Static method to find departments by organization
 departmentSchema.statics.findByOrganization = function (organizationId) {
-  return this.find({ organizationId, isActive: true }).sort({ name: 1 })
+  const objectId = new mongoose.Types.ObjectId(organizationId);
+  return this.find({ organizationId:objectId }).sort({ name: 1 })
 }
 
 // Static method to find active departments
 departmentSchema.statics.findActive = function () {
+  
   return this.find({ isActive: true }).populate("organizationId", "name").sort({ name: 1 })
 }
 
