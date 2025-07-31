@@ -2,8 +2,24 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
-import { User, Briefcase, Building2, Users, CheckCircle, ArrowLeft, FileText } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  User,
+  Briefcase,
+  Building2,
+  DollarSign,
+  CreditCard,
+  Calendar,
+  Users,
+  CheckCircle,
+  ArrowLeft,
+  MapPin,
+  Camera,
+  Banknote,
+  FileText,
+  ImageIcon,
+  AlertCircle,
+} from "lucide-react"
 import Link from "next/link"
 import axiosInstance from "@/lib/axiosInstance"
 
@@ -29,17 +45,25 @@ interface DocumentFiles {
 }
 
 interface Organization {
-  _id: string // Changed from id to _id to match backend
+  _id: string
   name: string
   description?: string
 }
 
 interface Department {
-  _id: string // Changed from id to _id to match backend
+  _id: string
   name: string
   organizationId: string
   head?: string
-  description?: string
+}
+
+interface Manager {
+  _id: string
+  id: string
+  name: string
+  role: string
+  departmentId: string
+  organizationId: string
 }
 
 interface RegisterFormData {
@@ -103,7 +127,8 @@ export default function RegisterPage() {
   })
 
   const [organizations, setOrganizations] = useState<Organization[]>([])
-  const [departments, setDepartments] = useState<Department[]>([]) // This will now contain only filtered departments
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [managers, setManagers] = useState<Manager[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -113,6 +138,8 @@ export default function RegisterPage() {
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({})
   const [loadingOrganizations, setLoadingOrganizations] = useState(false)
   const [loadingDepartments, setLoadingDepartments] = useState(false)
+  const [loadingManagers, setLoadingManagers] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   const router = useRouter()
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -122,15 +149,26 @@ export default function RegisterPage() {
     fetchOrganizations()
   }, [])
 
-  // 🔥 FIXED: Fetch departments when organization is selected
+  // Fetch departments when organization is selected
   useEffect(() => {
     if (formData.organizationId) {
       fetchDepartmentsByOrganization(formData.organizationId)
     } else {
-      setDepartments([]) // Clear departments when no organization selected
-      setFormData((prev) => ({ ...prev, departmentId: "" })) // Reset department selection
+      setDepartments([])
+      setFormData((prev) => ({ ...prev, departmentId: "", upperManager: "" }))
+      setManagers([])
     }
   }, [formData.organizationId])
+
+  // Fetch managers when both organization and department are selected
+  useEffect(() => {
+    if (formData.organizationId && formData.departmentId) {
+      fetchManagersAndAdmins(formData.organizationId, formData.departmentId)
+    } else {
+      setManagers([])
+      setFormData((prev) => ({ ...prev, upperManager: "" }))
+    }
+  }, [formData.organizationId, formData.departmentId])
 
   const fetchOrganizations = async () => {
     setLoadingOrganizations(true)
@@ -149,19 +187,16 @@ export default function RegisterPage() {
     }
   }
 
-  // 🔥 NEW: Fetch departments filtered by organization
   const fetchDepartmentsByOrganization = async (organizationId: string) => {
     setLoadingDepartments(true)
-    setError("") // Clear any previous errors
+    setError("")
 
     try {
-      // Use the query parameter to filter departments by organization
       const response = await axiosInstance.get(`/departments?organizationId=${organizationId}`)
-      console.log(response.data);
+
       if (response.data.success) {
         setDepartments(response.data.data)
 
-        // If no departments found for this organization
         if (response.data.data.length === 0) {
           setError("No departments found for the selected organization")
         }
@@ -169,12 +204,50 @@ export default function RegisterPage() {
         setError("Failed to fetch departments")
         setDepartments([])
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching departments:", error)
-      setError("Error loading departments for the selected organization")
+      setError(`Error loading departments: ${error.response?.data?.message || error.message}`)
       setDepartments([])
     } finally {
       setLoadingDepartments(false)
+    }
+  }
+
+  // New function to fetch managers and admins
+  const fetchManagersAndAdmins = async (organizationId: string, departmentId: string) => {
+    setLoadingManagers(true)
+    setError("")
+
+    try {
+      // Fetch all users from the same organization
+      const response = await axiosInstance.get(`/users?organizationId=${organizationId}`)
+
+      if (response.data.success) {
+        const users = response.data.data
+
+        // Filter managers from the same department and all admins from the organization
+        const availableManagers = users.filter((user: any) => {
+          return (
+            (user.role === "manager" && user.departmentId === departmentId) ||
+            (user.role === "Admin" && user.organizationId === organizationId)
+          )
+        })
+
+        setManagers(availableManagers)
+
+        if (availableManagers.length === 0) {
+          setError("No managers or admins found for this department/organization")
+        }
+      } else {
+        setError("Failed to fetch managers")
+        setManagers([])
+      }
+    } catch (error: any) {
+      console.error("Error fetching managers:", error)
+      setError(`Error loading managers: ${error.response?.data?.message || error.message}`)
+      setManagers([])
+    } finally {
+      setLoadingManagers(false)
     }
   }
 
@@ -188,7 +261,6 @@ export default function RegisterPage() {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
-    // Enhanced particle system
     const particles = Array.from({ length: 60 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
@@ -203,7 +275,6 @@ export default function RegisterPage() {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // Draw connections between nearby particles
       particles.forEach((p1, i) => {
         particles.slice(i + 1).forEach((p2) => {
           const distance = Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
@@ -218,7 +289,6 @@ export default function RegisterPage() {
         })
       })
 
-      // Draw particles
       particles.forEach((p) => {
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
@@ -250,6 +320,15 @@ export default function RegisterPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
 
+    // Clear validation error for this field
+    if (validationErrors[name]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[name]
+        return newErrors
+      })
+    }
+
     if (name.startsWith("bankDetails.")) {
       const field = name.split(".")[1] as keyof BankDetails
       setFormData((prev) => ({
@@ -276,7 +355,6 @@ export default function RegisterPage() {
     }
   }
 
-  // File upload using your backend upload endpoint
   const handleFileUpload = async (file: File, documentType: keyof DocumentFiles | "photo") => {
     if (documentType === "photo") {
       setUploadingFiles((prev) => ({ ...prev, photo: true }))
@@ -285,7 +363,6 @@ export default function RegisterPage() {
     }
 
     try {
-      // Use your backend upload endpoint
       const uploadFormData = new FormData()
       uploadFormData.append("file", file)
 
@@ -312,6 +389,15 @@ export default function RegisterPage() {
             },
           }))
         }
+
+        // Clear validation error for this field
+        if (validationErrors[documentType]) {
+          setValidationErrors((prev) => {
+            const newErrors = { ...prev }
+            delete newErrors[documentType]
+            return newErrors
+          })
+        }
       } else {
         throw new Error(response.data.message || "Upload failed")
       }
@@ -327,8 +413,81 @@ export default function RegisterPage() {
     }
   }
 
+  // Validation functions for each step
+  const validateStep1 = () => {
+    const errors: Record<string, string> = {}
+
+    if (!formData.name.trim()) errors.name = "Name is required"
+    if (!formData.role) errors.role = "Role is required"
+    if (!formData.organizationId) errors.organizationId = "Organization is required"
+    if (!formData.departmentId) errors.departmentId = "Department is required"
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const validateStep2 = () => {
+    const errors: Record<string, string> = {}
+
+    if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required"
+    if (!formData.currentAddress.trim()) errors.currentAddress = "Current address is required"
+    if (!formData.joiningDate) errors.joiningDate = "Joining date is required"
+    if (!formData.upperManager) errors.upperManager = "Upper manager is required"
+    if (!formData.salary) errors.salary = "Salary is required"
+    if (!formData.experience) errors.experience = "Experience is required"
+    if (!formData.adharCard.trim()) errors.adharCard = "Aadhar card number is required"
+    if (!formData.panCard.trim()) errors.panCard = "PAN card number is required"
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const validateStep3 = () => {
+    const errors: Record<string, string> = {}
+
+    if (!formData.bankDetails.accountHolder.trim())
+      errors["bankDetails.accountHolder"] = "Account holder name is required"
+    if (!formData.bankDetails.accountNumber.trim()) errors["bankDetails.accountNumber"] = "Account number is required"
+    if (!formData.bankDetails.ifsc.trim()) errors["bankDetails.ifsc"] = "IFSC code is required"
+    if (!formData.bankDetails.branch.trim()) errors["bankDetails.branch"] = "Branch name is required"
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const validateStep4 = () => {
+    const errors: Record<string, string> = {}
+    const requiredDocs = [
+      "aadharFront",
+      "aadharBack",
+      "panCard",
+      "resume",
+      "passbookPhoto",
+      "tenthMarksheet",
+      "twelfthMarksheet",
+      "degreeMarksheet",
+      "policy",
+    ]
+
+    requiredDocs.forEach((doc) => {
+      if (!formData.documents[doc as keyof DocumentFiles]) {
+        errors[doc] = `${doc.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())} is required`
+      }
+    })
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validate current step before submission
+    if (!validateStep4()) {
+      setError("Please upload all required documents before submitting")
+      return
+    }
+
     setIsLoading(true)
     setError("")
     setSuccess("")
@@ -350,7 +509,7 @@ export default function RegisterPage() {
           id: response.data.data.id,
           password: response.data.data.id,
         })
-        setCurrentStep(5) // Move to success step
+        setCurrentStep(5)
         // Reset form
         setFormData({
           name: "",
@@ -398,14 +557,37 @@ export default function RegisterPage() {
   }
 
   const nextStep = () => {
-    if (currentStep < 4) setCurrentStep(currentStep + 1)
+    let isValid = false
+
+    switch (currentStep) {
+      case 1:
+        isValid = validateStep1()
+        break
+      case 2:
+        isValid = validateStep2()
+        break
+      case 3:
+        isValid = validateStep3()
+        break
+      default:
+        isValid = true
+    }
+
+    if (isValid && currentStep < 4) {
+      setCurrentStep(currentStep + 1)
+      setError("")
+    } else if (!isValid) {
+      setError("Please fill in all required fields before proceeding")
+    }
   }
 
   const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1)
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+      setError("")
+      setValidationErrors({})
+    }
   }
-
-  const isStep1Valid = formData.name && formData.role && formData.organizationId && formData.departmentId
 
   // Document upload component
   const DocumentUpload = ({
@@ -413,15 +595,23 @@ export default function RegisterPage() {
     label,
     accept = "image/*,.pdf",
     icon: Icon = FileText,
+    required = false,
   }: {
     documentType: keyof DocumentFiles
     label: string
     accept?: string
     icon?: React.ComponentType<any>
+    required?: boolean
   }) => (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+      <label className="block text-sm font-medium text-gray-700">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div
+        className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-green-500 transition-colors ${
+          validationErrors[documentType] ? "border-red-300 bg-red-50" : "border-gray-300"
+        }`}
+      >
         <Icon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
         <input
           type="file"
@@ -443,11 +633,16 @@ export default function RegisterPage() {
         {formData.documents[documentType] && (
           <p className="text-xs text-green-600 mt-2">✓ File uploaded successfully</p>
         )}
+        {validationErrors[documentType] && (
+          <p className="text-xs text-red-500 mt-2 flex items-center justify-center gap-1">
+            <AlertCircle className="w-3 h-3" />
+            {validationErrors[documentType]}
+          </p>
+        )}
       </div>
     </div>
   )
 
-  // Success screen (keeping the same)
   if (generatedCredentials && currentStep === 5) {
     return (
       <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-green-100 text-gray-900 overflow-hidden">
@@ -497,6 +692,7 @@ export default function RegisterPage() {
                   setGeneratedCredentials(null)
                   setCurrentStep(1)
                   setSuccess("")
+                  setValidationErrors({})
                 }}
                 className="w-full text-gray-600 hover:text-gray-800 py-2 transition-colors"
               >
@@ -613,16 +809,26 @@ export default function RegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Name Field */}
                   <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
-                        focusedField === "name" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
+                        validationErrors.name
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "name"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
                       <div className="flex items-center justify-center w-12 h-12">
                         <User
                           className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            focusedField === "name" ? "text-green-400" : "text-gray-400"
+                            validationErrors.name
+                              ? "text-red-400"
+                              : focusedField === "name"
+                                ? "text-green-400"
+                                : "text-gray-400"
                           }`}
                         />
                       </div>
@@ -639,20 +845,36 @@ export default function RegisterPage() {
                         disabled={isLoading}
                       />
                     </div>
+                    {validationErrors.name && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.name}
+                      </p>
+                    )}
                   </div>
 
                   {/* Role Field */}
                   <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Role <span className="text-red-500">*</span>
+                    </label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
-                        focusedField === "role" ? "border-green-500 bg-green-50" : "border-gray-300 bg-gray-50/50"
+                        validationErrors.role
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "role"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
                       <div className="flex items-center justify-center w-12 h-12">
                         <Briefcase
                           className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            focusedField === "role" ? "text-green-400" : "text-gray-400"
+                            validationErrors.role
+                              ? "text-red-400"
+                              : focusedField === "role"
+                                ? "text-green-400"
+                                : "text-gray-400"
                           }`}
                         />
                       </div>
@@ -674,22 +896,36 @@ export default function RegisterPage() {
                         <option value="hr">HR</option>
                       </select>
                     </div>
+                    {validationErrors.role && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.role}
+                      </p>
+                    )}
                   </div>
 
                   {/* Organization Name */}
                   <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Organization *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Organization <span className="text-red-500">*</span>
+                    </label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
-                        focusedField === "organizationId"
-                          ? "border-green-500 bg-green-50"
-                          : "border-gray-300 bg-gray-50/50"
+                        validationErrors.organizationId
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "organizationId"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
                       <div className="flex items-center justify-center w-12 h-12">
                         <Building2
                           className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            focusedField === "organizationId" ? "text-green-400" : "text-gray-400"
+                            validationErrors.organizationId
+                              ? "text-red-400"
+                              : focusedField === "organizationId"
+                                ? "text-green-400"
+                                : "text-gray-400"
                           }`}
                         />
                       </div>
@@ -713,22 +949,36 @@ export default function RegisterPage() {
                         ))}
                       </select>
                     </div>
+                    {validationErrors.organizationId && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.organizationId}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Department Name - 🔥 FIXED */}
+                  {/* Department Name */}
                   <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Department <span className="text-red-500">*</span>
+                    </label>
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
-                        focusedField === "departmentId"
-                          ? "border-green-500 bg-green-50"
-                          : "border-gray-300 bg-gray-50/50"
+                        validationErrors.departmentId
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "departmentId"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
                       <div className="flex items-center justify-center w-12 h-12">
                         <Users
                           className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            focusedField === "departmentId" ? "text-green-400" : "text-gray-400"
+                            validationErrors.departmentId
+                              ? "text-red-400"
+                              : focusedField === "departmentId"
+                                ? "text-green-400"
+                                : "text-gray-400"
                           }`}
                         />
                       </div>
@@ -758,7 +1008,12 @@ export default function RegisterPage() {
                         ))}
                       </select>
                     </div>
-                    {/* Show helpful message */}
+                    {validationErrors.departmentId && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.departmentId}
+                      </p>
+                    )}
                     {formData.organizationId && departments.length === 0 && !loadingDepartments && (
                       <p className="text-sm text-amber-600 mt-1">
                         No departments found for this organization. Please contact admin to add departments.
@@ -767,28 +1022,844 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Show error if any */}
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-red-600 text-sm">{error}</p>
-                  </div>
-                )}
+                {/* Error message */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      className="bg-red-50 border border-red-200 rounded-lg p-3"
+                    >
+                      <p className="text-red-600 text-sm text-center">{error}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <motion.button
                   type="button"
                   onClick={nextStep}
-                  disabled={!isStep1Valid}
-                  whileHover={{ scale: isStep1Valid ? 1.02 : 1 }}
-                  whileTap={{ scale: isStep1Valid ? 0.98 : 1 }}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25"
                 >
                   Continue to Personal Details
                 </motion.button>
               </motion.div>
             )}
 
-            {/* Keep all other steps the same - Step 2, 3, 4 */}
-            {/* ... (rest of the form steps remain unchanged) ... */}
+            {/* Step 2: Personal Information & Work Details */}
+            {currentStep === 2 && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Personal & Work Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Date of Birth */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date of Birth <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.dateOfBirth
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "dateOfBirth"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <Calendar
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.dateOfBirth
+                              ? "text-red-400"
+                              : focusedField === "dateOfBirth"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        value={formData.dateOfBirth}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("dateOfBirth")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors.dateOfBirth && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.dateOfBirth}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Joining Date */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Joining Date <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.joiningDate
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "joiningDate"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <Calendar
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.joiningDate
+                              ? "text-red-400"
+                              : focusedField === "joiningDate"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="date"
+                        name="joiningDate"
+                        value={formData.joiningDate}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("joiningDate")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors.joiningDate && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.joiningDate}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Upper Manager - Now a dropdown */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upper Manager <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.upperManager
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "upperManager"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <User
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.upperManager
+                              ? "text-red-400"
+                              : focusedField === "upperManager"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <select
+                        name="upperManager"
+                        value={formData.upperManager}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("upperManager")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 outline-none"
+                        disabled={isLoading || loadingManagers || !formData.departmentId}
+                        required
+                      >
+                        <option value="">
+                          {!formData.departmentId
+                            ? "Select department first"
+                            : loadingManagers
+                              ? "Loading managers..."
+                              : managers.length === 0
+                                ? "No managers/admins available"
+                                : "Select Manager"}
+                        </option>
+                        {managers.map((manager) => (
+                          <option key={manager._id} value={manager.id}>
+                            {manager.name} ({manager.role}) - {manager.id}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {validationErrors.upperManager && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.upperManager}
+                      </p>
+                    )}
+                    {formData.departmentId && managers.length === 0 && !loadingManagers && (
+                      <p className="text-sm text-amber-600 mt-1">
+                        No managers or admins found for this department/organization.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Salary in Rupees */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Annual Salary (₹) <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.salary
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "salary"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <DollarSign
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.salary
+                              ? "text-red-400"
+                              : focusedField === "salary"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="number"
+                        name="salary"
+                        placeholder="Enter annual salary in rupees"
+                        value={formData.salary}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("salary")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors.salary && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.salary}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Experience */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Years of Experience <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.experience
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "experience"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <Calendar
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.experience
+                              ? "text-red-400"
+                              : focusedField === "experience"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="number"
+                        name="experience"
+                        placeholder="Enter years of experience"
+                        value={formData.experience}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("experience")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors.experience && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.experience}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Profile Photo Upload */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleFileUpload(file, "photo")
+                        }}
+                        className="hidden"
+                        id="photo"
+                        disabled={uploadingFiles.photo}
+                      />
+                      <label htmlFor="photo" className="cursor-pointer text-green-600 hover:text-green-700 font-medium">
+                        {uploadingFiles.photo ? "Uploading..." : "Click to upload photo"}
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                      {formData.photo && <p className="text-xs text-green-600 mt-2">✓ Photo uploaded successfully</p>}
+                    </div>
+                  </div>
+
+                  {/* Aadhar Card Number */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Aadhar Card Number <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.adharCard
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "adharCard"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <CreditCard
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.adharCard
+                              ? "text-red-400"
+                              : focusedField === "adharCard"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="adharCard"
+                        placeholder="Enter 12-digit Aadhar number"
+                        value={formData.adharCard}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("adharCard")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors.adharCard && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.adharCard}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* PAN Card Number */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      PAN Card Number <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.panCard
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "panCard"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <CreditCard
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.panCard
+                              ? "text-red-400"
+                              : focusedField === "panCard"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="panCard"
+                        placeholder="Enter 10-character PAN number"
+                        value={formData.panCard}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("panCard")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors.panCard && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.panCard}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Current Address */}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Address <span className="text-red-500">*</span>
+                  </label>
+                  <div
+                    className={`relative flex items-start border-2 rounded-xl transition-all duration-500 ease-out ${
+                      validationErrors.currentAddress
+                        ? "border-red-500 bg-red-50"
+                        : focusedField === "currentAddress"
+                          ? "border-green-500 bg-green-50"
+                          : "border-gray-300 bg-gray-50/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center w-12 h-12 mt-1">
+                      <MapPin
+                        className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                          validationErrors.currentAddress
+                            ? "text-red-400"
+                            : focusedField === "currentAddress"
+                              ? "text-green-400"
+                              : "text-gray-400"
+                        }`}
+                      />
+                    </div>
+                    <textarea
+                      name="currentAddress"
+                      placeholder="Enter your current residential address"
+                      value={formData.currentAddress}
+                      onChange={handleInputChange}
+                      onFocus={() => setFocusedField("currentAddress")}
+                      onBlur={() => setFocusedField("")}
+                      rows={3}
+                      className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none resize-none"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  {validationErrors.currentAddress && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {validationErrors.currentAddress}
+                    </p>
+                  )}
+                </div>
+
+                {/* Error message */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      className="bg-red-50 border border-red-200 rounded-lg p-3"
+                    >
+                      <p className="text-red-600 text-sm text-center">{error}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Navigation Buttons */}
+                <div className="flex gap-4">
+                  <motion.button
+                    type="button"
+                    onClick={prevStep}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                  >
+                    Previous
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={nextStep}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25"
+                  >
+                    Continue to Bank Details
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Bank Details */}
+            {currentStep === 3 && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Bank Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Account Holder */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Account Holder Name <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors["bankDetails.accountHolder"]
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "bankDetails.accountHolder"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <User
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors["bankDetails.accountHolder"]
+                              ? "text-red-400"
+                              : focusedField === "bankDetails.accountHolder"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="bankDetails.accountHolder"
+                        placeholder="Enter account holder name"
+                        value={formData.bankDetails.accountHolder}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("bankDetails.accountHolder")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors["bankDetails.accountHolder"] && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors["bankDetails.accountHolder"]}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Account Number */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Account Number <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors["bankDetails.accountNumber"]
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "bankDetails.accountNumber"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <Banknote
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors["bankDetails.accountNumber"]
+                              ? "text-red-400"
+                              : focusedField === "bankDetails.accountNumber"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="bankDetails.accountNumber"
+                        placeholder="Enter bank account number"
+                        value={formData.bankDetails.accountNumber}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("bankDetails.accountNumber")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors["bankDetails.accountNumber"] && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors["bankDetails.accountNumber"]}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* IFSC Code */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      IFSC Code <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors["bankDetails.ifsc"]
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "bankDetails.ifsc"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <CreditCard
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors["bankDetails.ifsc"]
+                              ? "text-red-400"
+                              : focusedField === "bankDetails.ifsc"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="bankDetails.ifsc"
+                        placeholder="Enter IFSC code"
+                        value={formData.bankDetails.ifsc}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("bankDetails.ifsc")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors["bankDetails.ifsc"] && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors["bankDetails.ifsc"]}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Branch */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Branch Name <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors["bankDetails.branch"]
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "bankDetails.branch"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <Building2
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors["bankDetails.branch"]
+                              ? "text-red-400"
+                              : focusedField === "bankDetails.branch"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="bankDetails.branch"
+                        placeholder="Enter branch name"
+                        value={formData.bankDetails.branch}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("bankDetails.branch")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {validationErrors["bankDetails.branch"] && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors["bankDetails.branch"]}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Account Type */}
+                  <div className="relative md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        focusedField === "bankDetails.accountType"
+                          ? "border-green-500 bg-green-50"
+                          : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <Banknote
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            focusedField === "bankDetails.accountType" ? "text-green-400" : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <select
+                        name="bankDetails.accountType"
+                        value={formData.bankDetails.accountType}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("bankDetails.accountType")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 outline-none"
+                        disabled={isLoading}
+                      >
+                        <option value="SAVING">Savings Account</option>
+                        <option value="CURRENT">Current Account</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Error message */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      className="bg-red-50 border border-red-200 rounded-lg p-3"
+                    >
+                      <p className="text-red-600 text-sm text-center">{error}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Navigation Buttons */}
+                <div className="flex gap-4">
+                  <motion.button
+                    type="button"
+                    onClick={prevStep}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                  >
+                    Previous
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={nextStep}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25"
+                  >
+                    Continue to Documents
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 4: Document Upload */}
+            {currentStep === 4 && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Document Upload</h3>
+                <p className="text-gray-600 text-sm mb-6">
+                  Please upload all required documents. All documents should be clear and readable.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <DocumentUpload
+                    documentType="aadharFront"
+                    label="Aadhar Card (Front Side)"
+                    icon={CreditCard}
+                    required
+                  />
+                  <DocumentUpload
+                    documentType="aadharBack"
+                    label="Aadhar Card (Back Side)"
+                    icon={CreditCard}
+                    required
+                  />
+                  <DocumentUpload documentType="panCard" label="PAN Card" icon={CreditCard} required />
+                  <DocumentUpload
+                    documentType="resume"
+                    label="Resume"
+                    accept=".pdf,.doc,.docx"
+                    icon={FileText}
+                    required
+                  />
+                  <DocumentUpload
+                    documentType="experienceLetter"
+                    label="Experience Letter"
+                    accept=".pdf,.doc,.docx"
+                    icon={FileText}
+                  />
+                  <DocumentUpload documentType="passbookPhoto" label="Passbook Photo" icon={ImageIcon} required />
+                  <DocumentUpload documentType="tenthMarksheet" label="10th Marksheet" icon={FileText} required />
+                  <DocumentUpload documentType="twelfthMarksheet" label="12th Marksheet" icon={FileText} required />
+                  <DocumentUpload
+                    documentType="degreeMarksheet"
+                    label="Degree/Latest Semester Marksheet"
+                    icon={FileText}
+                    required
+                  />
+                  <DocumentUpload
+                    documentType="policy"
+                    label="Policy Document"
+                    accept=".pdf"
+                    icon={FileText}
+                    required
+                  />
+                </div>
+
+                {/* Error message */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      className="bg-red-50 border border-red-200 rounded-lg p-3"
+                    >
+                      <p className="text-red-600 text-sm text-center">{error}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Navigation Buttons */}
+                <div className="flex gap-4">
+                  <motion.button
+                    type="button"
+                    onClick={prevStep}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-4 rounded-xl font-semibold transition-all duration-300"
+                  >
+                    Previous
+                  </motion.button>
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading}
+                    whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                    whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                    className="flex-1 relative overflow-hidden bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
+                      initial={{ x: "-100%" }}
+                      animate={{ x: isLoading ? ["0%", "100%"] : "-100%" }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: isLoading ? Number.POSITIVE_INFINITY : 0,
+                        ease: "linear",
+                      }}
+                    />
+                    <span className="relative">{isLoading ? "Creating Account..." : "Create Employee Account"}</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
           </form>
         </motion.div>
       </motion.div>

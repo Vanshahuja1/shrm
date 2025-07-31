@@ -7,13 +7,10 @@ import {
   CalendarCheck,
   Wallet,
   Briefcase,
-  FileBadge,
   Bell,
-  ShieldCheck,
   Users,
   FileText,
   BarChart3,
-  Home,
   Building,
   X,
 } from 'lucide-react'

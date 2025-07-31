@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import Sidebar from './Sidebar'
-import Header from './Header'
+// import Header from './Header'
 
 export default function RootShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
