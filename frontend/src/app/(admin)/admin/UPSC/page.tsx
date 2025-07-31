@@ -28,6 +28,9 @@ import DashboardCharts from "./DashboardCharts/page";
 import TaskManagement from "./TaskManagement/page";
 import EmailSystem from "./EmailSystem/page";
 import { Faculty, Student, Batch, Department, Task } from "./types/index";
+import { Organization } from "../page";
+import axios from "@/lib/axiosInstance";
+import { useEffect } from "react";
 
 // Sample Data
 const sampleDepartments: Department[] = [
@@ -362,6 +365,14 @@ const Sidebar = ({
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean) => void;
 }) => {
+  const [org, setOrg] = useState<Organization | null>(null)
+  const fetchOrg = async () => {
+    const response = await axios.get(`/organizations/6889a9494f263f6b1e23a7e4`)
+    setOrg(response.data.data)
+  }
+  useEffect(() => {
+    fetchOrg()
+  }, [])
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: Home },
     { id: "sub-departments", label: "Sub Departments", icon: Building },
@@ -401,7 +412,7 @@ const Sidebar = ({
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">
-                    One Aim UPSC
+                    {org?.name}
                   </h1>
                   <p className="text-sm text-gray-500">Admin Dashboard</p>
                 </div>
