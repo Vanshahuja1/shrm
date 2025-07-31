@@ -411,11 +411,19 @@ const getById = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const { organizationId, departmentId, role } = req.query;
+    
+    // Build filter object
+    const filter = {};
+    if (organizationId) filter.organizationId = organizationId;
+    if (departmentId) filter.departmentId = departmentId;
+    if (role) filter.role = role.toLowerCase();
+    
+    const users = await User.find(filter).select("-password");
     if (!users || users.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "No active users found" });
+        .json({ success: false, message: "No users found" });
     }
     res.json({ success: true, data: users });
   } catch (error) {

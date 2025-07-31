@@ -102,7 +102,7 @@ export default function LoginPage() {
       case "employee":
         return `/employee/${id}/tasks`
       default:
-        return "/dashboard"
+        return `/employee/${id}/tasks`
     }
   }
 

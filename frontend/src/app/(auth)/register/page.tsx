@@ -62,7 +62,8 @@ interface Manager {
   id: string
   name: string
   role: string
-  departmentId: string
+  departmentId?: string
+  " departmentId"?: string // Handle the space issue
   organizationId: string
 }
 
@@ -93,7 +94,7 @@ interface RegisterFormData {
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterFormData>({
     name: "",
-    role: "",
+    role: "employee", // Set a default value instead of empty string
     organizationId: "",
     departmentId: "",
     dateOfBirth: "",
@@ -220,17 +221,19 @@ export default function RegisterPage() {
 
     try {
       // Fetch all users from the same organization
-      const response = await axiosInstance.get(`/users?organizationId=${organizationId}`)
+      const response = await axiosInstance.get(`/user?organizationId=${organizationId}`)
 
       if (response.data.success) {
         const users = response.data.data
 
         // Filter managers from the same department and all admins from the organization
-        const availableManagers = users.filter((user: any) => {
-          return (
-            (user.role === "manager" && user.departmentId === departmentId) ||
-            (user.role === "Admin" && user.organizationId === organizationId)
-          )
+        const availableManagers = users.filter((user: Manager) => {
+          // Handle potential leading space in departmentId field
+          const userDeptId = user.departmentId || user[" departmentId"] || ""
+          const isManager = user.role === "manager" && userDeptId === departmentId
+          const isAdmin = (user.role === "admin" || user.role === "Admin") && user.organizationId === organizationId
+          
+          return isManager || isAdmin
         })
 
         setManagers(availableManagers)
@@ -513,7 +516,7 @@ export default function RegisterPage() {
         // Reset form
         setFormData({
           name: "",
-          role: "",
+          role: "employee", // Set a default value instead of empty string
           organizationId: "",
           departmentId: "",
           dateOfBirth: "",
