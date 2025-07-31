@@ -42,7 +42,7 @@ app.use("/api/admin", adminRoutes)
 app.use("/api/projects", projectRoutes)
 app.use("/api/tasks", taskRoutes)
 app.use("/api/departments", departmentRoutes)
-app.use("/api/organizations", organizationRoutes) // Add this
+app.use("/api/organizations", organizationRoutes) 
 app.use("/api/overview", overviewRoutes)
 app.use("/api/mail/", mailRoutes)
 app.use("/api/reports", require("./routes/reportRoutes"))

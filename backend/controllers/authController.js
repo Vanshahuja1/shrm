@@ -210,7 +210,7 @@ const login = async (req, res) => {
     }
 
     const user = await User.findByEmployeeId(id)
-    if (!user) {
+    if (!user || !user.password) {
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",

@@ -341,7 +341,6 @@ userSchema.statics.getNextId = async function (role) {
     admin: "ADM",
     manager: "MAG",
     employee: "EMP",
-    sales: "SAL",
     intern: "INT",
     hr: "HR",
   }

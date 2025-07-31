@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { User, Lock, LogIn, Building2 } from "lucide-react"
 import Loading from "../../components/Authenticating"
+import axiosInstance from "@/lib/axiosInstance"
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ id: "", password: "" })
@@ -90,16 +91,19 @@ export default function LoginPage() {
   }, [])
 
   // Role-based redirect function
-  const getRedirectPath = (role: string) => {
-    const roleRoutes = {
-      admin: "/admin",
-      manager: "/manager",
-      hr: "/hr",
-      employee: "/employee",
-      sales: "/sales",
-      intern: "/intern",
+  const getRedirectPath = (role: string, id: string) => {
+    switch (role.toLowerCase()) {
+      case "admin":
+        return "/admin"
+      case "hr":
+        return "/hr"
+      case "manager":
+        return `/manager/${id}`
+      case "employee":
+        return `/employees/${id}`
+      default:
+        return "/dashboard"
     }
-    return roleRoutes[role.toLowerCase() as keyof typeof roleRoutes] || "/dashboard"
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,18 +112,12 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: formData.id.trim(),
-          password: formData.password,
-        }),
+      const response = await axiosInstance.post("/auth/login", {
+        id: formData.id.trim(),
+        password: formData.password,
       })
 
-      const data = await response.json()
+      const data = response.data
 
       if (data.success) {
         // Store authentication data
@@ -129,8 +127,8 @@ export default function LoginPage() {
         // Show success message briefly
         setError("")
 
-        // Redirect based on user role
-        const redirectPath = getRedirectPath(data.data.user.role)
+        // Redirect based on user role and id
+        const redirectPath = getRedirectPath(data.data.user.role, data.data.user.id)
 
         // Add a small delay for better UX
         setTimeout(() => {
@@ -139,9 +137,12 @@ export default function LoginPage() {
       } else {
         setError(data.message || "Login failed. Please check your credentials.")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error)
-      setError("Network error. Please check if the server is running and try again.")
+      setError(
+        error?.response?.data?.message ||
+          "Network error. Please check if the server is running and try again."
+      )
     } finally {
       setIsLoading(false)
     }
