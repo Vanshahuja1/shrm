@@ -48,9 +48,10 @@ export default function AddProjectPage() {
 
         // Fetch all departments for real names and IDs
         const deptRes = await axios.get("/departments");
-        const departments = deptRes.data || [];
+        const departments = deptRes.data?.data || deptRes.data || [];
         setAllDepartments(departments.map((d: Department) => ({ id: d._id ?? d.id, name: d.name })));
-      } catch {
+      } catch (error) {
+        console.error("Error fetching options:", error);
         setAllDepartments([]);
         setAllMembers([]);
         setAllManagers([]);

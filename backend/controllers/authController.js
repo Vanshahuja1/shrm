@@ -56,7 +56,7 @@ const register = async (req, res) => {
     }
 
     // Validate role
-    const validRoles = ["Admin", "manager", "employee", "intern", "hr"]
+    const validRoles = ["admin", "manager", "employee", "intern", "hr"]
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,

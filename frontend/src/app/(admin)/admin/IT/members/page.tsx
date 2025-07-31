@@ -64,7 +64,7 @@ export default function MembersPage() {
           </div>
         </div>
         <button
-          onClick={() => router.push("/admin/IT/members/add")}
+          onClick={() => router.push("/register")}
           className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus size={18} />
@@ -182,7 +182,7 @@ export default function MembersPage() {
                 <div className="flex justify-between text-gray-700">
                   <span>Salary</span>
                   <span className="font-medium text-green-600">
-                    ${member.salary.toLocaleString()}
+                    ${(member.salary || 0).toLocaleString()}
                   </span>
                 </div>
               </div>

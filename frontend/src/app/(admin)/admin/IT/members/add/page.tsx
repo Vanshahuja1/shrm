@@ -5,6 +5,24 @@ import { useRouter } from "next/navigation";
 import type { OrganizationMember } from "../../../../../../../types";
 import axiosInstance from "../../../../../../../lib/axiosInstance";
 
+// Additional interfaces for organizations and departments
+interface Organization {
+  _id: string;
+  name: string;
+}
+
+interface Department {
+  _id: string;
+  name: string;
+  organizationId: string | null;
+}
+
+interface DepartmentApiResponse {
+  _id: string;
+  name: string;
+  organizationId?: string | { _id: string; name: string } | null;
+}
+
 // Component interfaces
 interface FieldProps {
   label: string;
@@ -246,10 +264,14 @@ export default function AddMemberPage() {
   const [allEmployees, setAllEmployees] = useState<OrganizationMember[]>([]);
   const [allInterns, setAllInterns] = useState<OrganizationMember[]>([]);
   const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
+  const [allOrganizations, setAllOrganizations] = useState<Organization[]>([]);
+  const [allDepartments, setAllDepartments] = useState<Department[]>([]);
 
   const [name, setName] = useState("");
   const [role, setRole] = useState<OrganizationMember["role"]>("Manager");
-  const [department, setDepartment] = useState("IT");
+  const [department, setDepartment] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [organizationId, setOrganizationId] = useState("");
   const [salary, setSalary] = useState("");
   const [experience, setExperience] = useState<number | string>(0);
   const [joiningDate, setJoiningDate] = useState("");
@@ -270,18 +292,37 @@ export default function AddMemberPage() {
   const [internsUnderManager, setInternsUnderManager] = useState<OrganizationMember[]>([]);
 
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch organizations
+        const orgResponse = await axiosInstance.get("/organizations");
+        const organizationsData = orgResponse.data.data || [];
+        console.log("Organizations data:", organizationsData); // Debug log
+        setAllOrganizations(organizationsData);
+
+        // Fetch departments
+        const deptResponse = await axiosInstance.get("/departments");
+        const departmentsData = deptResponse.data.data || [];
+        console.log("Departments data:", departmentsData); // Debug log
+        setAllDepartments(departmentsData.map((dept: DepartmentApiResponse) => ({
+          _id: dept._id,
+          name: dept.name,
+          organizationId: dept.organizationId && typeof dept.organizationId === 'object' 
+            ? dept.organizationId._id 
+            : dept.organizationId || null
+        })).filter((dept: Department) => dept.organizationId)); // Filter out departments without organizationId
+
+        // Fetch members
         const response = await axiosInstance.get("/IT/org-members/empInfo");
         const allMembers = response.data;
         setAllEmployees(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "employee"));
         setAllInterns(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "intern"));
         setAllManagers(allMembers.filter((m: OrganizationMember) => m.role.toLowerCase() === "manager"));
       } catch (err) {
-        console.error("Failed to fetch members", err);
+        console.error("Failed to fetch data", err);
       }
     };
-    fetchMembers();
+    fetchData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -292,10 +333,12 @@ export default function AddMemberPage() {
       .map((p) => p.trim())
       .filter(Boolean);
 
-    const formDataToSubmit: Record<string, any> = {
+    const formDataToSubmit: Record<string, unknown> = {
       name,
       role,
       department,
+      departmentId,
+      organizationId,
       salary: salary.trim() === "" ? undefined : Number(salary),
       experience: Number(experience),
       projects: projectsList,
@@ -381,7 +424,69 @@ export default function AddMemberPage() {
               ))}
             </select>
           )}
-          <Input label="Department" value={department} onChange={setDepartment} />
+          
+          {/* Organization Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Organization <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={organizationId}
+              onChange={(e) => {
+                const orgId = e.target.value;
+                setOrganizationId(orgId);
+                // Reset department when organization changes
+                setDepartmentId("");
+                setDepartment("");
+              }}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select Organization</option>
+              {allOrganizations.map((org) => (
+                <option key={org._id} value={org._id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Department Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Department <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={departmentId}
+              onChange={(e) => {
+                const deptId = e.target.value;
+                const dept = allDepartments.find((d) => d._id === deptId);
+                setDepartmentId(deptId);
+                setDepartment(dept?.name || "");
+              }}
+              required
+              disabled={!organizationId}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+            >
+              <option value="">Select Department</option>
+              {(() => {
+                console.log("Organization ID:", organizationId);
+                console.log("All departments before filtering:", allDepartments);
+                const filteredDepts = allDepartments.filter((dept) => {
+                  if (!organizationId) return true;
+                  const match = dept.organizationId === organizationId;
+                  console.log(`Department ${dept.name} (${dept._id}) has orgId ${dept.organizationId}, matches: ${match}`);
+                  return match;
+                });
+                console.log("Filtered departments:", filteredDepts, "for org:", organizationId);
+                return filteredDepts.map((dept) => (
+                  <option key={dept._id} value={dept._id}>
+                    {dept.name}
+                  </option>
+                ));
+              })()}
+            </select>
+          </div>
           <FieldWithPrefix label="Salary" prefix="$" type="number" value={salary} onChange={setSalary} />
           <Input label="Joining Date" type="date" value={joiningDate} onChange={setJoiningDate} />
           <FieldWithSuffix label="Experience" suffix="Years" type="number" value={experience} onChange={setExperience} />

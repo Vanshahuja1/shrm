@@ -70,7 +70,7 @@ interface Manager {
 interface RegisterFormData {
   // Basic Information
   name: string
-  role: "Admin" | "manager" | "employee" | "intern" | "hr"
+  role: "admin" | "manager" | "employee" | "intern" | "hr"
   organizationId: string
   departmentId: string
   // Personal Information
@@ -231,7 +231,7 @@ export default function RegisterPage() {
           // Handle potential leading space in departmentId field
           const userDeptId = user.departmentId || user[" departmentId"] || ""
           const isManager = user.role === "manager" && userDeptId === departmentId
-          const isAdmin = (user.role === "admin" || user.role === "Admin") && user.organizationId === organizationId
+          const isAdmin = user.role === "admin" && user.organizationId === organizationId
           
           return isManager || isAdmin
         })
@@ -498,6 +498,7 @@ export default function RegisterPage() {
     try {
       const submitData = {
         ...formData,
+        role: formData.role.toLowerCase(), // Ensure role is lowercase
         salary: Number.parseFloat(formData.salary) || 0,
         experience: Number.parseInt(formData.experience) || 0,
         dateOfBirth: formData.dateOfBirth || null,
@@ -892,7 +893,7 @@ export default function RegisterPage() {
                         disabled={isLoading}
                       >
                         <option value="">Select Role</option>
-                        <option value="Admin">Admin</option>
+                        <option value="admin">Admin</option>
                         <option value="manager">Manager</option>
                         <option value="employee">Employee</option>
                         <option value="intern">Intern</option>

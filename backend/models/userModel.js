@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["Admin", "manager", "employee", "intern", "hr"],
+      enum: ["admin", "manager", "employee", "intern", "hr"],
       lowercase: true,
     },
     organizationId: {
@@ -287,6 +287,12 @@ userSchema.virtual("employeeInfo").get(function () {
     role: this.role,
     department: this.departmentName,
     organization: this.organizationName,
+    salary: this.salary || 0,
+    contactInfo: {
+      email: this.email || "",
+      phone: this.phone || "",
+      address: this.currentAddress || "",
+    },
   };
 });
 

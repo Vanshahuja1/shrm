@@ -1,15 +1,27 @@
 "use client"
 
-import StatsSection from "./stats/page"
-import ChartSection from "./chart/page"
-import TableSection from "./table/page"
+import ChartSection from "./chart/page";
+import TableSection from "./table/page";
+import StatsSection from "./stats/page";
 
-export default function OrganizationHierarchyPage() {
+export default function Page() {
   return (
-    <div className="space-y-6">
-      <StatsSection />
-      <ChartSection />
-      <TableSection />
+    <div className="container mx-auto py-10">
+      
+
+      <div className="grid grid-cols-1  gap-6">
+        <div className="md:col-span-2">
+          <ChartSection />
+        </div>
+
+        <div>
+          <StatsSection />
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <TableSection />
+      </div>
     </div>
   )
 }

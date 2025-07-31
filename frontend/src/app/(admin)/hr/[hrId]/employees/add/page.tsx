@@ -970,7 +970,7 @@ interface Department {
 interface RegisterFormData {
   // Basic Information
   name: string
-  role: "Admin" | "manager" | "employee" | "intern" | "hr"
+  role: "admin" | "manager" | "employee" | "intern" | "hr"
   organizationId: string
   departmentId: string
   // Personal Information
@@ -1592,7 +1592,7 @@ export default function RegisterPage() {
                         disabled={isLoading}
                       >
                         <option value="">Select Role</option>
-                        <option value="Admin">Admin</option>
+                        <option value="admin">Admin</option>
                         <option value="manager">Manager</option>
                         <option value="employee">Employee</option>
                         <option value="intern">Intern</option>
