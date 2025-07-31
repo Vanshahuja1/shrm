@@ -66,7 +66,13 @@ const organizationSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    url: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
+
   {
     timestamps: true,
     versionKey: false,

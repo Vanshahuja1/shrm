@@ -13,6 +13,9 @@ import {
   LogOut,
   BarChart3,
 } from "lucide-react"
+import { Organization } from "../page"
+import { useEffect, useState } from "react"
+import axios from "@/lib/axiosInstance"
 
 interface SidebarProps {
   isSidebarOpen: boolean
@@ -22,6 +25,14 @@ interface SidebarProps {
 export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [org, setOrg] = useState<Organization | null>(null)
+  const fetchOrg = async () => {
+    const response = await axios.get(`organizations/6889a9394f263f6b1e23a7e2`)
+    setOrg(response.data.data)
+  }
+  useEffect(() => {
+    fetchOrg()
+  }, [])
 
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: Home },
@@ -53,7 +64,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
                   <Building className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">One Aim IT Solutions</h1>
+                  <h1 className="text-xl font-bold text-gray-900">{org?.name}</h1>
                   <p className="text-sm text-gray-500">Enterprise Dashboard</p>
                 </div>
               </div>
