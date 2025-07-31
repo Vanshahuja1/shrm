@@ -366,4 +366,91 @@ userSchema.statics.findByEmployeeId = function (employeeId) {
     .populate("departmentId", "name")
 }
 
+
+userSchema.virtual("reportRecords").get(function () {
+  return {
+    id: this.id,
+    name: this.name,
+    email : this.email,
+    departmentName: this.departmentName,
+    role: this.role,
+    
+    joiningDate: this.joiningDate,
+    status: this.isActive ? "Active" : "Inactive",
+  };
+});
+
+
+userSchema.virtual("OrgMemberInfo").get(function () {
+  return {
+    id: this.id,
+    name: this.name,
+    role: this.role,
+    department: this.departmentName,
+    salary: this.salary,
+    projects: this.projects || [],
+    experience: (() => {
+      const exp = (this.experience || "0").toString();
+      // Remove any existing "years" and clean up, then add single "years"
+      const cleanExp = exp.replace(/\s*years?\s*/gi, "").trim();
+      return `${cleanExp} years`;
+    })(),
+    contactInfo: {
+      email: this.email || "",
+      phone: this.phone || "",
+      address: this.address || "",
+    },
+    documents: {
+      pan: this.panCard || "",
+      aadhar: this.adharCard || "",
+    },
+    joiningDate: this.joiningDate
+      ? this.joiningDate.toISOString().split("T")[0]
+      : "",
+    performanceMetrics: {
+      tasksPerDay: this.taskCountPerDay || 0,
+      attendanceScore: this.attendanceCount30Days || 0,
+      managerReviewRating: this.performance / 20 || 0, // Convert 0-100 to 0-5 scale
+      combinedPercentage: this.performance || 0,
+    },
+    attendance: {
+      last7Days: new Array(7).fill(true), // You can implement actual logic here
+      todayPresent: this.isActive,
+    },
+    upperManager: this.upperManager || null,
+    upperManagerName: null,
+  };
+});
+
+
+userSchema.post("save", async function (doc, next) {
+  // doc.wasNew is set in the pre-save hook
+  if (doc.wasNew) {
+    try {
+      // Use mongoose.model to avoid circular dependency issues
+      const Report = mongoose.model("Report");
+      console.log(doc)
+      const reportData = {
+        id: doc.id,
+        name: doc.name || "N/A",
+        designation: doc.designation || "N/A",
+        department: doc.departmentName || "N/A",
+        email: doc.email || `${doc.id || "user"}@placeholder.email`,
+        growthAndHR: {
+          joiningDate: doc.joiningDate || new Date(),
+        },
+        finance: {
+          currentSalary: (doc.salary || 0).toString(),
+        },
+      };
+      await Report.create(reportData);
+    } catch (error) {
+      console.error(`Failed to create report for new user ${doc.id}:`, error);
+    }
+  }
+  next();
+});
+
+
+
 module.exports = mongoose.model("User", userSchema)

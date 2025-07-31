@@ -60,14 +60,13 @@ export default function EmployeeRecords() {
       try {
         const response = await axios.get(`/user`);
         const apiData = response.data;
-        console.log("Fetched employee data:", apiData);
-
+      
         // Check if response has success and data properties
         const employees = apiData.success ? apiData.data : apiData;
         const transformedData = transformAPIData(employees);
         // console.log("Transformed employee data:", transformedData);
-        setRecords(transformedData);
-        console.log("Employee records set:", transformedData);
+        // console.log("Employee records set:", transformedData);
+        setRecords(transformedData)
       } catch (error) {
         console.error("Failed to fetch employees:", error);
 
