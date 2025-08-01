@@ -22,6 +22,7 @@ const register = async (req, res) => {
       // Basic Information
       name,
       role,
+      email,
       organizationId,
       departmentId,
 
@@ -48,10 +49,19 @@ const register = async (req, res) => {
     } = req.body
 
     // Validation
-    if (!name || !role || !organizationId || !departmentId) {
+    if (!name || !email || !role || !organizationId || !departmentId) {
       return res.status(400).json({
         success: false,
-        message: "Name, role, organization, and department are required",
+        message: "Name, email, role, organization, and department are required",
+      })
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid email address",
       })
     }
 
@@ -95,6 +105,15 @@ const register = async (req, res) => {
         message: "User with this name already exists in the organization",
       })
     }
+    const user  = await User.findOne({
+      email: email
+    })
+    if(user){
+      return res.status(400).json({
+        success : false,
+        message : "User with this email already exists!"
+      })
+    }
 
     // Generate unique user ID
     const userId = await User.getNextId(role)
@@ -104,10 +123,12 @@ const register = async (req, res) => {
       // Basic Information
       id: userId,
       name: name.trim(),
+      email: email?.trim() || "",
       password: userId, // Default password is the user ID
       role: role.toLowerCase(),
       organizationId,
       departmentId,
+      
 
       // Personal Information
       dateOfBirth: dateOfBirth || null,
@@ -167,6 +188,7 @@ const register = async (req, res) => {
       data: {
         id: userId,
         name: newUser.name,
+        email: newUser.email,
         role: newUser.role,
         organization: organization.name,
         department: department.name,

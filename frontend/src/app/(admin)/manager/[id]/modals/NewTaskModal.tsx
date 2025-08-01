@@ -114,22 +114,25 @@ export default function NewTaskModal({ isOpen, onClose, onSubmit, managerInfo }:
               </select>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Member</label>
-            <select
-              value={formData.assignedTo}
-              onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-              required
-            >
-              <option value="">Select Member</option>
-              {managerInfo.employees.map((employee) => (
-                <option key={employee.id} value={employee.name}>
-                  {employee.name} - {employee.department}
-                </option>
-              ))}
-            </select>
-          </div>
+                     <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Member (Employees/Interns Only)</label>
+             <select
+               value={formData.assignedTo}
+               onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+               required
+             >
+               <option value="">Select Member</option>
+               {managerInfo.employees.map((employee) => (
+                 <option key={employee.id} value={employee.name}>
+                   {employee.name} - {employee.department}
+                 </option>
+               ))}
+             </select>
+             <p className="text-xs text-gray-500 mt-1">
+               Note: "Assigned By" will automatically be set to you (current manager)
+             </p>
+           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
