@@ -348,7 +348,7 @@ userSchema.statics.getNextId = async function (role) {
     manager: "MAG",
     employee: "EMP",
     intern: "INT",
-    hr: "HR",
+    hr: "HRM",
   }
 
   const prefix = rolePrefixes[role.toLowerCase()]

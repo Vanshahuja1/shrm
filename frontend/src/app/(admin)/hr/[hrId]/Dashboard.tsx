@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { CircularProgress } from '@mui/material'
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts'
 import { motion } from 'framer-motion'
+import { useParams } from 'next/navigation'
+import axios from '@/lib/axiosInstance'
 
 type DashboardData = {
   totalEmployees: number
@@ -16,11 +18,24 @@ type DashboardData = {
   leaveList: { name: string; days: string }[]
   attendanceToday: { name: string; id: number; checkin: string; checkout: string }[]
   birthdays: { name: string; date: string }[]
+ 
 }
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<DashboardData | null>(null)
+  const [hrName, setHrName] = useState('')
+  const {hrId} = useParams()
+
+
+  useEffect(() => {
+    const fetchHrName = async () => {
+      const res = await axios.get(`user/${hrId}`)
+      setHrName(res.data.data.name)
+    }
+    fetchHrName()
+  }, [hrId])
+
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -57,7 +72,8 @@ const Dashboard = () => {
           ],
           birthdays: [
             { name: 'Kitty', date: '21 Jan 2025' }
-          ]
+          ],
+      
         })
       } finally {
         setLoading(false)
@@ -81,7 +97,7 @@ const Dashboard = () => {
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className="max-w-7xl mx-auto px-6 py-10"
     >
-      <h1 className="text-2xl font-bold mb-2">Hello, Olivia Green!</h1>
+      <h1 className="text-2xl font-bold mb-2">Hello, {hrName}!</h1>
       <p className="mb-6 text-gray-600">Hope you&apos;re having a productive day :)</p>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
