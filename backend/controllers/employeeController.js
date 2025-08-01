@@ -10,18 +10,15 @@ const EmployeeSettings = require("../models/employeeSettingsModel");
 const getEmployeeInfo = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("Fetching employee info for ID:", id);
 
     const employee = await User.findOne({ id, isActive: true }).select(
       "-password"
     );
-    
     if (!employee) {
-      console.log("Employee not found with ID:", id);
       return res.status(404).json({ error: "Employee not found" });
     }
 
-    console.log("Found employee:", employee.name, "Role:", employee.role);
+    console.log(employee.documents)
 
     // Transform data to match frontend interface
     const employeeInfo = {
@@ -41,26 +38,27 @@ const getEmployeeInfo = async (req, res) => {
         dateOfBirth: employee.dateOfBirth
           ? employee.dateOfBirth.toISOString().split("T")[0]
           : "",
-        identityDocuments: [
-          {
-            id: 1,
-            type: "Aadhar Card",
-            number: employee.adharCard || "",
-            uploadDate: employee.createdAt ? employee.createdAt.toISOString().split("T")[0] : "",
-            status: employee.adharCard ? "verified" : "pending",
-          },
-          {
-            id: 2,
-            type: "PAN Card", 
-            number: employee.panCard || "",
-            uploadDate: employee.createdAt ? employee.createdAt.toISOString().split("T")[0] : "",
-            status: employee.panCard ? "verified" : "pending",
-          }
-        ],
+        identityDocuments: Object.entries(employee.documents || {}).map(
+          ([key, url], index) => ({
+            id: index + 1,
+            type: key,  // e.g., 'aadharFront', 'panCard'
+            number:
+              key.toLowerCase().includes("aadhar")
+                ? employee.adharCard || ""
+                : key.toLowerCase().includes("pan")
+                ? employee.panCard || ""
+                : "",
+            uploadDate: employee.joiningDate
+              ? employee.joiningDate.toISOString().split("T")[0]
+              : "", // or use another date if available
+            status: url ? "verified" : "pending",
+            fileUrl: url,  // optional: add url to access file
+          })
+        ),
       },
       bankDetails: {
         accountNumber: employee.bankDetails?.accountNumber || "",
-        bankName: "Bank Name", // You might want to add this to user model
+        bankName: employee.bankDetails?.bankName || "Bank Name",
         ifsc: employee.bankDetails?.ifsc || "",
         branch: employee.bankDetails?.branch || "",
       },
@@ -68,20 +66,17 @@ const getEmployeeInfo = async (req, res) => {
         basic: employee.salary * 0.7, // Assuming 70% is basic
         allowances: employee.salary * 0.3, // 30% allowances
         total: employee.salary,
-        lastAppraisal: "2024-01-15", // You might want to track this
+        lastAppraisal: employee.lastAppraisal
+          ? employee.lastAppraisal.toISOString().split("T")[0]
+          : "2024-01-15", // fallback
       },
     };
+    
 
-    console.log("Returning employee info for:", employee.name);
     res.json(employeeInfo);
   } catch (error) {
     console.error("Get employee info error:", error);
-    console.error("Error stack:", error.stack);
-    res.status(500).json({ 
-      error: "Internal server error",
-      message: error.message,
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-    });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 

@@ -1,16 +1,16 @@
 'use client'
 
-import React, { useEffect, useState, useRef, use } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 
 import { format } from 'date-fns'
 import AttendanceDialog from './AttendanceDialog'
 import { useParams, useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Calendar, Building, Trophy, TrendingUp, BadgeCheck, Target, HeartPulse, User, DollarSign, CheckCircle, BookOpen, Download, FileText, Image, FileSpreadsheet
+  ArrowLeft, Calendar, Building, BadgeCheck, Target, HeartPulse, User, DollarSign, Download
 } from 'lucide-react'
 import { 
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, 
-  BarChart, Bar, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend
+ 
 } from 'recharts'
 import axios from '@/lib/axiosInstance'
 
@@ -75,7 +75,7 @@ type EmployeeReport = {
 }
 
 
-export default function EmployeeReportDetails({ params }: { params: Promise<{ id: string }> }) {
+export default function EmployeeReportDetails() {
   const router = useRouter()
   const { hrId } = useParams();
   const [loading, setLoading] = useState(true)
@@ -148,7 +148,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
     { day: 'Fri', hours: 9 }
   ]
 
-  const unwrappedParams = React.use(params)
+  // const unwrappedParams = React.use(params)
 
   const printReport = () => {
     window.print()
@@ -156,6 +156,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
 
   const { id  } = useParams<{id: string, hrId: string}>()
 
+  
   useEffect(() => {
     
     const fetchReport = async () => {
@@ -166,7 +167,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
     fetchReport()
 
     setLoading(false)
-  }, [])
+  }, [id])
 
   if (loading) {
     return <div className="min-h-screen bg-gray-50 p-6 text-center">Loading...</div>
@@ -177,28 +178,29 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
   }
 
   // Create visualization data from existing fields
-  const performanceData = [
-    { name: 'Attendance', value: report.performance.attendance, maxValue: 100, percentage: report.performance.attendance, color: '#10b981' },
-    { name: 'Performance', value: report.performance.performanceMeasure, maxValue: 100, percentage: report.performance.performanceMeasure, color: '#f59e0b' },
-  ]
+  // const performanceData = [
+  //   { name: 'Attendance', value: report.performance.attendance, maxValue: 100, percentage: report.performance.attendance, color: '#10b981' },
+  //   { name: 'Performance', value: report.performance.performanceMeasure, maxValue: 100, percentage: report.performance.performanceMeasure, color: '#f59e0b' },
+  // ]
 
-  const workStatsData = [
-    { name: 'Tasks', value: report.workStats.totalTasksCompleted },
-    { name: 'Courses', value: report.workStats.coursesCompleted },
-    { name: 'Certifications', value: report.workStats.certificationsEarned },
-    { name: 'Trainings', value: report.workStats.trainingsAttended }
-  ]
+  // const workStatsData = [
+  //   { name: 'Tasks', value: report.workStats.totalTasksCompleted },
+  //   { name: 'Courses', value: report.workStats.coursesCompleted },
+  //   { name: 'Certifications', value: report.workStats.certificationsEarned },
+  //   { name: 'Trainings', value: report.workStats.trainingsAttended }
+  // ]
 
-  const wellbeingData = [
-      { name: 'Health Score', value: Math.max(0, 100 - (report.wellbeing.sickLeavesTaken * 10)), fill: '#ef4444' }
-  ]
+  // const wellbeingData = [
+  //     { name: 'Health Score', value: Math.max(0, 100 - (report.wellbeing.sickLeavesTaken * 10)), fill: '#ef4444' }
+  // ]
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: {active: boolean, payload: {color: string, value: number}[], label: string}) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-800">{label}</p>
-          {payload.map((entry: any, index: number) => {
+          
+          {payload.map((entry: {color: string, value: number}, index: number) => {
             // Handle different data sources
               if (label === 'Health Score') {
               const sickDays = report?.wellbeing.sickLeavesTaken || 0
@@ -210,7 +212,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
               )
             } else {
               // For performance data
-              const data = performanceData.find(d => d.name === label)
+              // const data = performanceData.find(d => d.name === label)
               return (
                 <div key={index} style={{ color: entry.color }} className="text-sm">
                   {/* <p>Value: {data?.value}{data?.name === 'Rating' ? '/5' : data?.name === 'Attendance' ? '%' : data?.maxValue === 100 ? '%' : ''}</p>
@@ -335,7 +337,7 @@ export default function EmployeeReportDetails({ params }: { params: Promise<{ id
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip active={false} payload={[]} label={''} />} />
                 <Line type="monotone" dataKey="hours" stroke="#ef4444" strokeWidth={3} dot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>

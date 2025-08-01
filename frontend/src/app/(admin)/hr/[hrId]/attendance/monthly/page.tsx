@@ -42,7 +42,7 @@ const generateDummyStatus = (year: number, month: number): AttendanceDay[] => {
     return {
       date,
       // Only assign attendance status for past and current days
-      status: isFutureDate ? '' as any : (Math.random() > 0.2 ? 'Present' : 'Absent')
+      status: isFutureDate ? '' as 'Present' | 'Absent' | '' : (Math.random() > 0.2 ? 'Present' : 'Absent')
     }
   })
 }
@@ -118,7 +118,7 @@ export default function MonthlyCalendar() {
           const isFutureDate = date > currentDate
           
           // Find if we have attendance data for this date
-          const attendance = result.find((item: any) => {
+          const attendance = result.find((item:{date:string} ) => {
             const itemDate = new Date(item.date)
             return itemDate.getDate() === date.getDate()
           })

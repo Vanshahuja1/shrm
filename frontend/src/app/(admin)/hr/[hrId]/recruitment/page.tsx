@@ -12,9 +12,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  FunnelChart,
-  Funnel,
-  LabelList,
+ 
 } from "recharts";
 import {
   Users,
@@ -25,7 +23,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+// import { Progress } from "@/components/ui/progress";
 import { useRouter } from "next/navigation";
 
 const pieColors = [
@@ -62,12 +60,12 @@ const departmentBarData = [
   { department: "Analytics", applications: 21 },
 ];
 
-const funnelData = [
-  { name: "Application", value: 31, fill: "#81C784" },
-  { name: "Screening", value: 24, fill: "#4FC3F7" },
-  { name: "Interview", value: 24, fill: "#FFB74D" },
-  { name: "Hired", value: 21, fill: "#F06292" },
-];
+// const funnelData = [
+//   { name: "Application", value: 31, fill: "#81C784" },
+//   { name: "Screening", value: 24, fill: "#4FC3F7" },
+//   { name: "Interview", value: 24, fill: "#FFB74D" },
+//   { name: "Hired", value: 21, fill: "#F06292" },
+// ];
 
 const StatCard = ({
   title,
@@ -79,6 +77,7 @@ const StatCard = ({
 }: {
   title: string;
   value: string | number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: any;
   color: string;
   onClick?: () => void;

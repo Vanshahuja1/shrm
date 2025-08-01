@@ -994,7 +994,7 @@ interface RegisterFormData {
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterFormData>({
     name: "",
-    role: "",
+    role: "employee",
     organizationId: "",
     departmentId: "",
     dateOfBirth: "",
@@ -1031,6 +1031,7 @@ export default function RegisterPage() {
   const [departments, setDepartments] = useState<Department[]>([]) // This will now contain only filtered departments
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [success, setSuccess] = useState("")
   const [generatedCredentials, setGeneratedCredentials] = useState<{ id: string; password: string } | null>(null)
   const [focusedField, setFocusedField] = useState("")
@@ -1039,6 +1040,7 @@ export default function RegisterPage() {
   const [loadingOrganizations, setLoadingOrganizations] = useState(false)
   const [loadingDepartments, setLoadingDepartments] = useState(false)
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -1240,6 +1242,7 @@ export default function RegisterPage() {
       } else {
         throw new Error(response.data.message || "Upload failed")
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("File upload error:", error)
       setError(`Error uploading ${documentType}: ${error.response?.data?.message || error.message}`)
@@ -1279,7 +1282,7 @@ export default function RegisterPage() {
         // Reset form
         setFormData({
           name: "",
-          role: "",
+          role: "employee",
           organizationId: "",
           departmentId: "",
           dateOfBirth: "",
@@ -1314,6 +1317,7 @@ export default function RegisterPage() {
       } else {
         setError(response.data.message || "Registration failed")
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Registration error:", error)
       setError(error.response?.data?.message || "Network error. Please check if the server is running.")
@@ -1321,11 +1325,10 @@ export default function RegisterPage() {
       setIsLoading(false)
     }
   }
-
   const nextStep = () => {
     if (currentStep < 4) setCurrentStep(currentStep + 1)
   }
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const prevStep = () => {
     if (currentStep > 1) setCurrentStep(currentStep - 1)
   }
@@ -1333,6 +1336,7 @@ export default function RegisterPage() {
   const isStep1Valid = formData.name && formData.role && formData.organizationId && formData.departmentId
 
   // Document upload component
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const DocumentUpload = ({
     documentType,
     label,
@@ -1342,6 +1346,7 @@ export default function RegisterPage() {
     documentType: keyof DocumentFiles
     label: string
     accept?: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     icon?: React.ComponentType<any>
   }) => (
     <div className="space-y-2">

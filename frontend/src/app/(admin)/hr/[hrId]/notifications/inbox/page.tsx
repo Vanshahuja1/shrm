@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import axios from "@/lib/axiosInstance"
-import { Mail, Clock, Archive, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Mail, Clock,  Search } from "lucide-react"
+// import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 interface Email {

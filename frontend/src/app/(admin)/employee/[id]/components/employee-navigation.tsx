@@ -2,8 +2,8 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Target, Calendar, User, BarChart3, Clock, Zap, Database, Settings } from "lucide-react"
-import { useEffect, useState, useCallback } from "react"
+import { Target, Calendar, User, BarChart3,  Zap, Database, Settings } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
 
 interface EmployeeNavigationProps {
   employeeId: string
@@ -64,7 +64,7 @@ export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
     { id: "attendance", label: "Attendance System", icon: Calendar, href: `/employee/${employeeId}/attendance` },
     { id: "dashboard", label: "Personal Dashboard", icon: User, href: `/employee/${employeeId}/dashboard` },
     { id: "performance", label: "Performance Metrics", icon: BarChart3, href: `/employee/${employeeId}/performance` },
-    { id: "overtime", label: "Overtime Management", icon: Clock, href: `/employee/${employeeId}/overtime` },
+  
     { id: "workhours", label: "Work Hours Display", icon: Zap, href: `/employee/${employeeId}/workhours` },
     { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${employeeId}/datasync` },
     { id: "settings", label: "Settings", icon: Settings, href: `/employee/${employeeId}/settings` },

@@ -20,6 +20,7 @@ const mockEmployees: Employee[] = [
   { id: 5, name: "Lisa Anderson", email: "lisa.anderson@company.com", organization: "InnovateX", department: "Operations", role: "Operations Lead" }
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function SalaryNotificationPage({ employees = mockEmployees, hrId = "hr001" }: { employees?: Employee[], hrId?: string }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedId, setSelectedId] = useState<number | null>(null)

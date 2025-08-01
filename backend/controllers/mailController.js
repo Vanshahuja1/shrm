@@ -6,6 +6,7 @@ async function sendEmail(req, res) {
     await sendMail({
       from: req.body.from,
       to: req.body.to,
+      type : req.body.type,
       subject: req.body.subject || "Notification from OneAim Organisation",
       text:
         req.body.text ||
@@ -13,6 +14,7 @@ async function sendEmail(req, res) {
     });
 
 
+   
     // Store email data in DB
     const emailDoc = new Email({
       type: req.body.type,
@@ -27,13 +29,15 @@ async function sendEmail(req, res) {
       status: "sent",
     });
     await emailDoc.save();
-
+ 
     res.json({ success: true, message: "Email sent" });
   } catch (err) {
     await Email.create({
       type: req.body.type,
       sender: req.body.from,
       recipient: req.body.to,
+      senderId: req.body.senderId,
+      recipientId: req.body.recipientId,
       subject: req.body.subject || "Notification from OneAim Organisation",
       message:
         req.body.text ||

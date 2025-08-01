@@ -135,12 +135,12 @@ export default function IncrementNotificationPage({ employees , hrId }: { employ
     }
   }
 
-  // Update template when increment percentage or effective date changes
-  useEffect(() => {
-    if (selectedTemplate !== 'custom' && emailForm.incrementPercent) {
-      applyTemplate(selectedTemplate)
-    }
-  }, [emailForm.incrementPercent, emailForm.effectiveDate])
+
+useEffect(() => {
+  if (selectedTemplate !== 'custom' && emailForm.incrementPercent) {
+    applyTemplate(selectedTemplate)
+  }
+}, [emailForm.incrementPercent, emailForm.effectiveDate, selectedTemplate])
 
   const filtered = employees.filter(
     (emp) =>

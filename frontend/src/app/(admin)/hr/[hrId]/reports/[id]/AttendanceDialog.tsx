@@ -155,6 +155,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const StatCard = ({ title, value, subtitle, icon: Icon, color }: any) => (
     <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
       <div className="flex items-center justify-between">
@@ -329,6 +330,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
                     <XAxis dataKey="day" />
                     <YAxis />
                     <Tooltip 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(value: any) => [`${value.toFixed(1)}%`, 'Attendance Rate']}
                     />
                     <Bar dataKey="attendanceRate" fill="#3B82F6" />
@@ -347,6 +349,7 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
                     <XAxis dataKey="month" />
                     <YAxis domain={[0, 100]} />
                     <Tooltip 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(value: any) => [`${value.toFixed(1)}%`, 'Attendance Rate']}
                     />
                     <Line 

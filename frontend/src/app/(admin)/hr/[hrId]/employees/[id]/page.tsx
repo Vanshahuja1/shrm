@@ -45,7 +45,9 @@ interface EmployeeDetails {
   pastProjects: string[];
   attendanceCount30Days: number;
   taskCountPerDay: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tasks: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   responses: any[];
   managers: string[];
   photo: string;
@@ -59,6 +61,7 @@ interface EmployeeDetails {
   departmentName: string;
   designation: string;
   isActive: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   documents: any[];
   bankDetails: {
     accountHolder: string;

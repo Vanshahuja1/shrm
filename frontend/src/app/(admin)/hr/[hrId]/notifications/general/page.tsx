@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import {  useState } from 'react'
 import axios from "@/lib/axiosInstance"
 import { X } from "lucide-react"
-import { useParams } from 'next/navigation'
 
 interface Employee {
   id: number

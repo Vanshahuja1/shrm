@@ -41,8 +41,8 @@ export default function EmployeeReports() {
         // Transform API data
         const transformed = Array.isArray(apiData)
           ? apiData
-              .filter((raw: any) => raw.name) // Skip items with no name!
-              .map((raw: any, idx: number) => ({
+              .filter((raw: {name:string}) => raw.name) // Skip items with no name!
+              .map((raw: {id:string, name:string, email:string, departmentName:string, role:string, status:string, joiningDate:string}, idx: number) => ({
                 id: raw.id ?? `emp-${idx}`,
                 name: raw.name ?? "Unknown",
                 employeeId: raw.id ?? "",
@@ -53,7 +53,13 @@ export default function EmployeeReports() {
                 joinedDate: raw.joiningDate,
               }))
           : [];
-        setEmployees(transformed);
+        // Fix: Ensure status is typed as "Active" | "Inactive"
+        setEmployees(
+          transformed.map((emp) => ({
+            ...emp,
+            status: emp.status === "Active" ? "Active" : "Inactive",
+          }))
+        );
       } catch (err) {
         console.error("Failed to fetch employee data:", err);
         setEmployees([]);

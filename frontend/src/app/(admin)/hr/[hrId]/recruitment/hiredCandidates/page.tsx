@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
 const fallbackHired = [
