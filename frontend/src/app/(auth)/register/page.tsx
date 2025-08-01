@@ -18,6 +18,7 @@ import {
   FileText,
   ImageIcon,
   AlertCircle,
+  Mail,
 } from "lucide-react"
 import Link from "next/link"
 import axiosInstance from "@/lib/axiosInstance"
@@ -69,6 +70,7 @@ interface Manager {
 interface RegisterFormData {
   // Basic Information
   name: string
+  email: string
   role: "admin" | "manager" | "employee" | "intern" | "hr"
   organizationId: string
   departmentId: string
@@ -93,6 +95,7 @@ interface RegisterFormData {
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterFormData>({
     name: "",
+    email: "",
     role: "employee", // Set a default value instead of empty string
     organizationId: "",
     departmentId: "",
@@ -417,9 +420,16 @@ export default function RegisterPage() {
     const errors: Record<string, string> = {}
 
     if (!formData.name.trim()) errors.name = "Name is required"
+    if (!formData.email.trim()) errors.email = "Email is required"
     if (!formData.role) errors.role = "Role is required"
     if (!formData.organizationId) errors.organizationId = "Organization is required"
     if (!formData.departmentId) errors.departmentId = "Department is required"
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (formData.email.trim() && !emailRegex.test(formData.email)) {
+      errors.email = "Please enter a valid email address"
+    }
 
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
@@ -455,27 +465,9 @@ export default function RegisterPage() {
   }
 
   const validateStep4 = () => {
-    const errors: Record<string, string> = {}
-    const requiredDocs = [
-      "aadharFront",
-      "aadharBack",
-      "panCard",
-      "resume",
-      "passbookPhoto",
-      "tenthMarksheet",
-      "twelfthMarksheet",
-      "degreeMarksheet",
-      "policy",
-    ]
-
-    requiredDocs.forEach((doc) => {
-      if (!formData.documents[doc as keyof DocumentFiles]) {
-        errors[doc] = `${doc.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())} is required`
-      }
-    })
-
-    setValidationErrors(errors)
-    return Object.keys(errors).length === 0
+    // Documents are now optional, so no validation errors
+    setValidationErrors({})
+    return true
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -511,6 +503,7 @@ export default function RegisterPage() {
         // Reset form
         setFormData({
           name: "",
+          email: "",
           role: "employee", // Set a default value instead of empty string
           organizationId: "",
           departmentId: "",
@@ -846,6 +839,52 @@ export default function RegisterPage() {
                       <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
                         {validationErrors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email Field */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.email
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "email"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <Mail
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.email
+                              ? "text-red-400"
+                              : focusedField === "email"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="Enter your email address"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("email")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {validationErrors.email && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.email}
                       </p>
                     )}
                   </div>
@@ -1762,7 +1801,7 @@ export default function RegisterPage() {
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Document Upload</h3>
                 <p className="text-gray-600 text-sm mb-6">
-                  Please upload all required documents. All documents should be clear and readable.
+                  Please upload any relevant documents. All documents should be clear and readable. (Optional)
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1770,21 +1809,18 @@ export default function RegisterPage() {
                     documentType="aadharFront"
                     label="Aadhar Card (Front Side)"
                     icon={CreditCard}
-                    required
                   />
                   <DocumentUpload
                     documentType="aadharBack"
                     label="Aadhar Card (Back Side)"
                     icon={CreditCard}
-                    required
                   />
-                  <DocumentUpload documentType="panCard" label="PAN Card" icon={CreditCard} required />
+                  <DocumentUpload documentType="panCard" label="PAN Card" icon={CreditCard} />
                   <DocumentUpload
                     documentType="resume"
                     label="Resume"
                     accept=".pdf,.doc,.docx"
                     icon={FileText}
-                    required
                   />
                   <DocumentUpload
                     documentType="experienceLetter"
@@ -1792,21 +1828,19 @@ export default function RegisterPage() {
                     accept=".pdf,.doc,.docx"
                     icon={FileText}
                   />
-                  <DocumentUpload documentType="passbookPhoto" label="Passbook Photo" icon={ImageIcon} required />
-                  <DocumentUpload documentType="tenthMarksheet" label="10th Marksheet" icon={FileText} required />
-                  <DocumentUpload documentType="twelfthMarksheet" label="12th Marksheet" icon={FileText} required />
+                  <DocumentUpload documentType="passbookPhoto" label="Passbook Photo" icon={ImageIcon} />
+                  <DocumentUpload documentType="tenthMarksheet" label="10th Marksheet" icon={FileText} />
+                  <DocumentUpload documentType="twelfthMarksheet" label="12th Marksheet" icon={FileText} />
                   <DocumentUpload
                     documentType="degreeMarksheet"
                     label="Degree/Latest Semester Marksheet"
                     icon={FileText}
-                    required
                   />
                   <DocumentUpload
                     documentType="policy"
                     label="Policy Document"
                     accept=".pdf"
                     icon={FileText}
-                    required
                   />
                 </div>
 
@@ -1852,7 +1886,7 @@ export default function RegisterPage() {
                         ease: "linear",
                       }}
                     />
-                    <span className="relative">{isLoading ? "Creating Account..." : "Create Employee Account"}</span>
+                    <span className="relative">{isLoading ? "Creating Account..." : "Create Employee Account (Documents Optional)"}</span>
                   </motion.button>
                 </div>
               </motion.div>
