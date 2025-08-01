@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import axios from "@/lib/axiosInstance"
 import { X, ChevronDown } from "lucide-react"
 
@@ -94,7 +94,7 @@ export default function IncrementNotificationPage({ employees , hrId }: { employ
     return employees.find(emp => emp.email === emailForm.to)
   }
 
-  const applyTemplate = (templateId: string) => {
+  const applyTemplate = useCallback((templateId: string) => {
     const template = EMAIL_TEMPLATES.find(t => t.id === templateId)
     if (!template) return
 
@@ -117,7 +117,7 @@ export default function IncrementNotificationPage({ employees , hrId }: { employ
       subject: replacePlaceholders(template.subject),
       message: replacePlaceholders(template.message)
     }))
-  }
+  }, [emailForm.incrementPercent, emailForm.effectiveDate, selectedId, employees])
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId)
@@ -140,7 +140,7 @@ useEffect(() => {
   if (selectedTemplate !== 'custom' && emailForm.incrementPercent) {
     applyTemplate(selectedTemplate)
   }
-}, [emailForm.incrementPercent, emailForm.effectiveDate, selectedTemplate])
+}, [emailForm.incrementPercent, emailForm.effectiveDate, selectedTemplate, applyTemplate])
 
   const filtered = employees.filter(
     (emp) =>

@@ -1,6 +1,6 @@
 "use client"
 
-import { Menu, Bell, Settings } from "lucide-react"
+import { Menu } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 interface TopHeaderProps {

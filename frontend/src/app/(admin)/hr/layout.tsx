@@ -17,7 +17,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
       setHrName(res.data.name);
     }
     fetchEmp();
-  }, [])
+  }, [hrId])
   
 
   return (
