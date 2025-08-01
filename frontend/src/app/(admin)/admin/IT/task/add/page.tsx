@@ -40,7 +40,9 @@ export default function AddTaskPage() {
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [managers, setManagers] = useState<Employee[]>([]);
+  
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState<string | null>(null);
 
   // Fetch organizational members on component mount
@@ -51,17 +53,23 @@ export default function AddTaskPage() {
         const response = await axiosInstance.get("/IT/org-members/empInfo");
         const allMembers: Employee[] = response.data;
 
-        // All employees for "Assigned To"
-        setEmployees(allMembers);
-
-        // Filter managers and HR for "Assigned By"
-        const managersAndHR = allMembers.filter(
-          (member) =>
-            member.role?.toLowerCase().includes("manager") ||
-            member.role?.toLowerCase().includes("hr") ||
-            member.department?.toLowerCase().includes("hr")
+        // Filter only employees and interns for "Assigned To" (not managers or HR)
+        const assignableEmployees = allMembers.filter(
+          (member) => {
+            const role = member.role?.toLowerCase();
+            return role === "employee" || role === "intern";
+          }
         );
-        setManagers(managersAndHR);
+        setEmployees(assignableEmployees);
+
+        // Filter only managers for "Assigned By" (not HR or other roles)
+        const managersOnly = allMembers.filter(
+          (member) => {
+            const role = member.role?.toLowerCase();
+            return role === "manager";
+          }
+        );
+        setManagers(managersOnly);
 
         setError(null);
       } catch (err) {
@@ -75,6 +83,7 @@ export default function AddTaskPage() {
     fetchOrgMembers();
   }, []);
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -82,6 +91,18 @@ export default function AddTaskPage() {
     const today = new Date().toISOString().split("T")[0];
     if (formData.dueDate <= today) {
       setError("Due date must be greater than today");
+      return;
+    }
+
+    // Validate that a manager is assigned
+    if (!formData.assignedBy.id) {
+      setError("Please select a manager to assign the task");
+      return;
+    }
+
+    // Validate that an employee/intern is assigned
+    if (!formData.assignedTo.id) {
+      setError("Please select an employee or intern to assign the task to");
       return;
     }
 
@@ -117,6 +138,8 @@ export default function AddTaskPage() {
         onSubmit={handleSubmit}
         className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-6"
       >
+     
+        
         <div className="space-y-4">
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -151,11 +174,11 @@ export default function AddTaskPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
-              Assigned To
+              Assigned To (Employees/Interns Only)
             </label>
             {loading ? (
               <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
-                Loading employees...
+                Loading employees and interns...
               </div>
             ) : (
               <Select
@@ -174,7 +197,7 @@ export default function AddTaskPage() {
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select an employee" />
+                  <SelectValue placeholder="Select an employee or intern" />
                 </SelectTrigger>
                 <SelectContent>
                   {employees.map((employee) => (
@@ -188,7 +211,7 @@ export default function AddTaskPage() {
           </div>
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
-              Assigned By
+              Assigned By (Managers Only)
             </label>
             {loading ? (
               <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
@@ -211,7 +234,7 @@ export default function AddTaskPage() {
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select manager/HR" />
+                  <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
                 <SelectContent>
                   {managers.map((manager) => (

@@ -55,16 +55,25 @@ export default function TaskAssignment() {
       try {
         const response = await axiosInstance.get("/IT/org-members/empInfo");
         const allMembers = response.data;
-        setEmployees(allMembers);
-        setManagers(
-          allMembers.filter(
-            (member: Employee) =>
-              member.role?.toLowerCase().includes("manager") ||
-              member.role?.toLowerCase().includes("hr") ||
-              member.department?.toLowerCase().includes("hr")
-          )
+        
+        // Filter only employees and interns for "Assigned To" (not managers or HR)
+        const assignableEmployees = allMembers.filter(
+          (member: Employee) => {
+            const role = member.role?.toLowerCase();
+            return role === "employee" || role === "intern";
+          }
         );
-        const currentManager = allMembers.find((m) => m.id === managerId);
+        setEmployees(assignableEmployees);
+        
+        // Filter only managers for "Assigned By" (not HR or other roles)
+        const managersOnly = allMembers.filter(
+          (member: Employee) => {
+            const role = member.role?.toLowerCase();
+            return role === "manager";
+          }
+        );
+        setManagers(managersOnly);
+                 const currentManager = allMembers.find((m: Employee) => m.id === managerId);
         if (currentManager) {
           setFormData((prev) => ({
             ...prev,
@@ -240,34 +249,21 @@ export default function TaskAssignment() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Assigned By
-                </label>
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  value={formData.assignedBy.id}
-                  onChange={(e) => {
-                    const selected = managers.find(
-                      (mgr) => mgr.id === e.target.value
-                    );
-                    if (selected) {
-                      setFormData({
-                        ...formData,
-                        assignedBy: { id: selected.id, name: selected.name },
-                      });
-                    }
-                  }}
-                  required
-                >
-                  <option value="">Select manager/HR</option>
-                  {managers.map((mgr) => (
-                    <option key={mgr.id} value={mgr.id}>
-                      {mgr.name} ({mgr.role}) - {mgr.department}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                             <div>
+                 <label className="block mb-1 text-sm font-medium text-gray-700">
+                   Assigned By (Current Manager)
+                 </label>
+                 <input
+                   type="text"
+                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                   value={formData.assignedBy.name || "Current Manager"}
+                   readOnly
+                   disabled
+                 />
+                 <p className="text-xs text-gray-500 mt-1">
+                   Automatically set to current manager
+                 </p>
+               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Due Date
@@ -331,16 +327,7 @@ export default function TaskAssignment() {
         </div>
       )}
 
-      {/* Email System Status */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center space-x-2">
-          <Mail className="w-5 h-5 text-blue-500" />
-          <span className="font-medium text-blue-900">Email System Active</span>
-          <span className="text-blue-700">
-            - Automatic notifications sent for task assignments
-          </span>
-        </div>
-      </div>
+        
 
       <div className="grid gap-6">
         {tasks.map((task) => (
