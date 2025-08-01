@@ -1,11 +1,24 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+// Type for employee settings
+interface EmployeeSettings {
+  theme?: "light" | "dark";
+  language?: string;
+  timezone?: string;
+  notifications?: {
+    emailNotifications?: boolean;
+    taskReminders?: boolean;
+    overtimeAlerts?: boolean;
+    performanceUpdates?: boolean;
+  };
+}
+
 // GET /api/employees/[id]/settings - Get employee settings
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const settings = await getEmployeeSettings(params.id)
     return NextResponse.json(settings)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 })
   }
 }
@@ -16,12 +29,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const body = await request.json()
     const updatedSettings = await updateEmployeeSettings(params.id, body)
     return NextResponse.json(updatedSettings)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to update settings" }, { status: 500 })
   }
 }
 
 async function getEmployeeSettings(employeeId: string) {
+  // Log parameter for future database implementation
+  console.log("Getting settings for employee:", employeeId)
+  
   // Your database query here
   return {
     theme: "light",
@@ -36,7 +52,10 @@ async function getEmployeeSettings(employeeId: string) {
   }
 }
 
-async function updateEmployeeSettings(employeeId: string, settings: any) {
+async function updateEmployeeSettings(employeeId: string, settings: EmployeeSettings) {
+  // Log parameters for future database implementation
+  console.log("Updating settings for employee:", employeeId, "with data:", settings)
+  
   // Your database update here
   return settings
 }

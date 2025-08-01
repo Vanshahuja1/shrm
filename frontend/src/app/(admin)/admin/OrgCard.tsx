@@ -38,15 +38,6 @@ const colorThemes = [
 function OrgCard({ org, fetchOrgs, index = 0 }: { org: Organization, fetchOrgs: () => void, index?: number }) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ 
-    name: org.name, 
-    description: org.description,
-    address: org.address,
-    contactEmail: org.contactEmail,
-    contactPhone: org.contactPhone,
-    website: org.website
-  });
-  const [loading, setLoading] = useState(false);
 
   // Get color theme based on index
   const theme = colorThemes[index % colorThemes.length];
@@ -58,35 +49,7 @@ function OrgCard({ org, fetchOrgs, index = 0 }: { org: Organization, fetchOrgs: 
   // Open modal and prefill form
   const handleUpdate = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setForm({ 
-      name: org.name, 
-      description: org.description,
-      address: org.address,
-      contactEmail: org.contactEmail,
-      contactPhone: org.contactPhone,
-      website: org.website
-    });
     setShowModal(true);
-  };
-
-  // Handle form input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  // Submit update
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await axios.put(`/organizations/${org._id}`, form);
-      setShowModal(false);
-      fetchOrgs();
-    } catch (err) {
-      alert("Update failed");
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Delete organization

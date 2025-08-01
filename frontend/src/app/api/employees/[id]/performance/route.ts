@@ -8,13 +8,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const performance = await getPerformanceMetrics(params.id, period)
     return NextResponse.json(performance)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch performance" }, { status: 500 })
   }
 }
 
 async function getPerformanceMetrics(employeeId: string, period: string) {
-  // Your database query here
+  // Your database query here - these parameters will be used when implementing actual database logic
+  console.log(`Getting performance metrics for employee: ${employeeId}, period: ${period}`)
   return {
     combinedPercentage: 85,
     tasksPerDay: 4.2,

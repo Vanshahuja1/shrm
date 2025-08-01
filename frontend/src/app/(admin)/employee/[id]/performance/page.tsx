@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useCallback } from "react"
 import { PerformanceMetrics } from "../components/performance-metrics"
 import type { EmployeePerformanceMetricsType } from "../../types/employees";
 import axios from "@/lib/axiosInstance"
@@ -10,11 +10,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
   const [metrics, setMetrics] = useState<EmployeePerformanceMetricsType | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchPerformanceMetrics()
-  }, [id])
-
-  const fetchPerformanceMetrics = async () => {
+  const fetchPerformanceMetrics = useCallback(async () => {
     try {
       const response = await axios.get(`/employees/${id}/performance`)
       setMetrics(response.data)
@@ -23,7 +19,11 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    fetchPerformanceMetrics()
+  }, [fetchPerformanceMetrics])
 
   if (loading || !metrics) {
     return <div className="animate-pulse">Loading performance metrics...</div>

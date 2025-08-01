@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useCallback } from "react"
 import { WorkHoursDisplay } from "../components/work-hours-display"
-import type { WorkHours } from "@/types/employee"
+import type { WorkHours } from "../../types/employees"
 
 export default function WorkHoursPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -10,11 +10,7 @@ export default function WorkHoursPage({ params }: { params: Promise<{ id: string
   const [isActive, setIsActive] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchWorkHours()
-  }, [id])
-
-  const fetchWorkHours = async () => {
+  const fetchWorkHours = useCallback(async () => {
     try {
       const response = await fetch(`/api/employees/${id}/work-hours`)
       if (response.ok) {
@@ -27,7 +23,11 @@ export default function WorkHoursPage({ params }: { params: Promise<{ id: string
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    fetchWorkHours()
+  }, [fetchWorkHours])
 
   if (loading || !workHours) {
     return <div className="animate-pulse">Loading work hours...</div>

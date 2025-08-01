@@ -72,11 +72,22 @@ export default function NewOrganizationModal({ isOpen, onClose, onSuccess, organ
       if (res.status === 200 || res.status === 201) {
         alert(isEdit ? 'Organization updated' : 'Organization created');
         onSuccess();
-        fetchOrgs && fetchOrgs();
+        if (fetchOrgs) {
+          fetchOrgs();
+        }
         onClose();
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.message || `Failed to ${isEdit ? 'update' : 'create'} organization`);
+    } catch (err: unknown) {
+      let errorMessage = `Failed to ${isEdit ? 'update' : 'create'} organization`;
+      
+      if (err && typeof err === 'object' && 'response' in err) {
+        const response = (err as { response?: { data?: { message?: string } } }).response;
+        if (response?.data?.message) {
+          errorMessage = response.data.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

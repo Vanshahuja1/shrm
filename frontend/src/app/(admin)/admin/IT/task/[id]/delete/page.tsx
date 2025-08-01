@@ -17,7 +17,7 @@ export default function DeleteTaskPage() {
     } else {
       setTask(found)
     }
-  }, [id])
+  }, [id, router])
 
   const handleDelete = () => {
     console.log("Deleted Task ID:", task?._id)

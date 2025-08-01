@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { ArrowRight, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Loading from "../../components/Loading"; // Adjust path if needed
 import axios from "@/lib/axiosInstance";
 import OrgCard from "./OrgCard";
@@ -27,19 +26,9 @@ export interface Organization {
 export default function HomePage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [greeting, setGreeting] = useState("");
-  const [creativeMsgIndex, setCreativeMsgIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const router = useRouter();
-
-  const handleNavigation = (path: string) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      router.push(path);
-    }, 900); // show loading for at least 900ms
-  };
 
   const fetchOrgs = async () => {
     const response = await axios.get("/organizations");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance";
 import { TaskList } from "../components/task-list";
 import type { EmployeeTask } from "../../types/employees";
@@ -11,11 +11,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<EmployeeTask[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTasks();
-  }, [id]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       const response = await axiosInstance.get(`/employees/${id}/tasks`);
       setTasks(response.data);
@@ -24,7 +20,11 @@ export default function TasksPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const handleTaskResponse = async (
     taskId: number,

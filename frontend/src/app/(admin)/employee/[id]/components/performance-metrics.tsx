@@ -13,11 +13,6 @@ export function PerformanceMetrics({ metrics }: EmployeePerformanceMetricsProps)
     return "text-red-600 bg-red-100"
   }
 
-  const getScoreColor = (score: number, max: number) => {
-    const percentage = (score / max) * 100
-    return getPerformanceColor(percentage)
-  }
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Performance Metrics</h2>

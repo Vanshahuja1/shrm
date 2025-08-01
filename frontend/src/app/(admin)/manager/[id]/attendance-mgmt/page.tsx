@@ -6,9 +6,24 @@ import type { AttendanceRecord } from "../types/index"
 import { useParams } from "next/navigation"
 import { mockAttendanceRecords } from "../data/mockData"
 import axiosInstance from "@/lib/axiosInstance";
+
+// Type for manager's attendance data
+interface ManagerAttendance {
+  isPunchedIn: boolean;
+  workStartTime?: string;
+  totalWorkHours?: number;
+  breakTime?: number;
+  overtimeHours?: number;
+}
+
+// Type for API response data
+interface ApiResponse {
+  data?: AttendanceRecord[];
+  records?: AttendanceRecord[];
+}
 export default function AttendanceManagement() {
   // Manager's own attendance state
-  const [managerAttendance, setManagerAttendance] = useState<any>(null);
+  const [managerAttendance, setManagerAttendance] = useState<ManagerAttendance | null>(null);
   const [isManagerLoading, setIsManagerLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date())
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
@@ -35,12 +50,12 @@ useEffect(() => {
       setEmployeeMap(map);
       // Fetch attendance for all
       const attendancePromises = allIds.map((empId: string) =>
-        axiosInstance.get(`/employees/${empId}/attendance`).then((res: { data: any }) => res.data)
+        axiosInstance.get(`/employees/${empId}/attendance`).then((res: { data: ApiResponse }) => res.data)
       );
       const attendanceResults = await Promise.all(attendancePromises);
       // Flatten and filter attendance records
-      const allRecords = attendanceResults.flatMap((raw: any) => {
-        if (Array.isArray(raw)) return raw;
+      const allRecords = attendanceResults.flatMap((raw: ApiResponse) => {
+        if (Array.isArray(raw)) return raw as AttendanceRecord[];
         if (raw.records) return raw.records;
         if (raw.data) return raw.data;
         return [];

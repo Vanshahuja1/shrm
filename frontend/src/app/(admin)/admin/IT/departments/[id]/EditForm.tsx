@@ -3,10 +3,20 @@
 import { useState } from "react"
 import axios from "@/lib/axiosInstance"
 import { sampleMembers } from "@/lib/sampleData"
+import type { OrganizationMember } from "@/types"
+
+interface DepartmentEditData {
+  name: string;
+  head: string;
+  budget: number;
+  managers: OrganizationMember[];
+  employees: OrganizationMember[];
+  interns: OrganizationMember[];
+}
 
 interface DepartmentEditFormProps {
-  editData: any
-  setEditData: (data: any) => void
+  editData: DepartmentEditData
+  setEditData: (data: DepartmentEditData | ((prev: DepartmentEditData) => DepartmentEditData)) => void
   onSave: () => void
   onCancel: () => void
 }
@@ -17,7 +27,7 @@ export default function EditForm({
   onSave, 
   onCancel 
 }: DepartmentEditFormProps) {
-  const [orgMembers, setOrgMembers] = useState<any[]>([])
+  const [orgMembers, setOrgMembers] = useState<OrganizationMember[]>([])
   const [showManagerDropdown, setShowManagerDropdown] = useState(false)
   const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false)
   const [showInternDropdown, setShowInternDropdown] = useState(false)
@@ -42,9 +52,9 @@ export default function EditForm({
     if (role === "Intern") setShowInternDropdown(true)
   }
 
-  const handleSelectMember = (role: string, member: any) => {
-    const key = role.toLowerCase() + 's'
-    setEditData((prev: any) => ({ 
+  const handleSelectMember = (role: string, member: OrganizationMember) => {
+    const key = role.toLowerCase() + 's' as keyof Pick<DepartmentEditData, 'managers' | 'employees' | 'interns'>
+    setEditData((prev: DepartmentEditData) => ({ 
       ...prev, 
       [key]: [...(prev[key] || []), member] 
     }))
@@ -54,21 +64,21 @@ export default function EditForm({
   }
 
   const handleRemoveMember = (role: string, idx: number) => {
-    const key = role.toLowerCase() + 's'
-    setEditData((prev: any) => ({ 
+    const key = role.toLowerCase() + 's' as keyof Pick<DepartmentEditData, 'managers' | 'employees' | 'interns'>
+    setEditData((prev: DepartmentEditData) => ({ 
       ...prev, 
-      [key]: prev[key].filter((_: any, i: number) => i !== idx) 
+      [key]: prev[key].filter((_: OrganizationMember, i: number) => i !== idx) 
     }))
   }
 
   const getAvailableMembers = (targetRole: string) => {
     const assignedIds = new Set()
     // Get all assigned member IDs across all roles
-    ;[...(editData.managers || []), ...(editData.employees || []), ...(editData.interns || [])].forEach((member: any) => {
+    ;[...(editData.managers || []), ...(editData.employees || []), ...(editData.interns || [])].forEach((member: OrganizationMember) => {
       assignedIds.add(member.id)
     })
     
-    return orgMembers.filter((member: any) => 
+    return orgMembers.filter((member: OrganizationMember) => 
       member.role.toLowerCase() === targetRole.toLowerCase() && 
       !assignedIds.has(member.id)
     )
@@ -119,9 +129,9 @@ export default function EditForm({
             </button>
           </label>
           <div className="flex flex-wrap gap-1 mb-2">
-            {editData.managers?.map((m: any, idx: number) => (
+            {editData.managers?.map((m: OrganizationMember, idx: number) => (
               <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center text-xs">
-                {m.name || m}
+                {typeof m === 'string' ? m : m.name}
                 <button 
                   type="button" 
                   className="ml-1" 
@@ -137,14 +147,14 @@ export default function EditForm({
               {getAvailableMembers("Manager").length === 0 ? (
                 <div className="px-2 py-1 text-gray-500 text-sm">No available managers</div>
               ) : (
-                getAvailableMembers("Manager").map((m: any) => (
+                getAvailableMembers("Manager").map((m: OrganizationMember) => (
                   <div 
                     key={m.id} 
                     className="cursor-pointer hover:bg-blue-100 px-2 py-1" 
                     onClick={() => handleSelectMember("Manager", m)}
                   >
                     <div className="font-medium">{m.name}</div>
-                    <div className="text-xs text-gray-500">{m.department} • {m.organization}</div>
+                    <div className="text-xs text-gray-500">{m.department} • {m.contactInfo?.email || 'No email'}</div>
                   </div>
                 ))
               )}
@@ -165,9 +175,9 @@ export default function EditForm({
             </button>
           </label>
           <div className="flex flex-wrap gap-1 mb-2">
-            {editData.employees?.map((m: any, idx: number) => (
+            {editData.employees?.map((m: OrganizationMember, idx: number) => (
               <span key={idx} className="bg-green-100 text-green-800 px-2 py-1 rounded flex items-center text-xs">
-                {m.name || m}
+                {typeof m === 'string' ? m : m.name}
                 <button 
                   type="button" 
                   className="ml-1" 
@@ -183,14 +193,14 @@ export default function EditForm({
               {getAvailableMembers("Employee").length === 0 ? (
                 <div className="px-2 py-1 text-gray-500 text-sm">No available employees</div>
               ) : (
-                getAvailableMembers("Employee").map((m: any) => (
+                getAvailableMembers("Employee").map((m: OrganizationMember) => (
                   <div 
                     key={m.id} 
                     className="cursor-pointer hover:bg-green-100 px-2 py-1" 
                     onClick={() => handleSelectMember("Employee", m)}
                   >
                     <div className="font-medium">{m.name}</div>
-                    <div className="text-xs text-gray-500">{m.department} • {m.organization}</div>
+                    <div className="text-xs text-gray-500">{m.department} • {m.contactInfo?.email || 'No email'}</div>
                   </div>
                 ))
               )}
@@ -211,9 +221,9 @@ export default function EditForm({
             </button>
           </label>
           <div className="flex flex-wrap gap-1 mb-2">
-            {editData.interns?.map((m: any, idx: number) => (
+            {editData.interns?.map((m: OrganizationMember, idx: number) => (
               <span key={idx} className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex items-center text-xs">
-                {m.name || m}
+                {typeof m === 'string' ? m : m.name}
                 <button 
                   type="button" 
                   className="ml-1" 
@@ -229,14 +239,14 @@ export default function EditForm({
               {getAvailableMembers("Intern").length === 0 ? (
                 <div className="px-2 py-1 text-gray-500 text-sm">No available interns</div>
               ) : (
-                getAvailableMembers("Intern").map((m: any) => (
+                getAvailableMembers("Intern").map((m: OrganizationMember) => (
                   <div 
                     key={m.id} 
                     className="cursor-pointer hover:bg-yellow-100 px-2 py-1" 
                     onClick={() => handleSelectMember("Intern", m)}
                   >
                     <div className="font-medium">{m.name}</div>
-                    <div className="text-xs text-gray-500">{m.department} • {m.organization}</div>
+                    <div className="text-xs text-gray-500">{m.department} • {m.contactInfo?.email || 'No email'}</div>
                   </div>
                 ))
               )}

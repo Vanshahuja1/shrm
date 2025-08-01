@@ -1,5 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+// Type for break data
+interface BreakData {
+  type: string;
+  action: "start" | "end";
+}
+
 // POST /api/employees/[id]/attendance/breaks - Start/End break
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -14,6 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 // GET /api/employees/[id]/attendance/breaks - Get today's breaks
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    // Note: params.id should be used when implementing actual database queries
     const breaks = await getTodayBreaks(params.id)
     return NextResponse.json(breaks)
   } catch {
@@ -21,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-async function recordBreak(employeeId: string, breakData: any) {
+async function recordBreak(employeeId: string, breakData: BreakData) {
   // Your database insert/update here
   return {
     id: Date.now(),
@@ -33,6 +40,7 @@ async function recordBreak(employeeId: string, breakData: any) {
 }
 
 async function getTodayBreaks(employeeId: string) {
-  // Your database query here
+  // Your database query here - employeeId will be used when implementing actual database logic
+  console.log(`Getting breaks for employee: ${employeeId}`)
   return []
 }

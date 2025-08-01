@@ -1,7 +1,6 @@
 "use client"
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   User,
@@ -132,7 +131,6 @@ export default function RegisterPage() {
   const [managers, setManagers] = useState<Manager[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
   const [generatedCredentials, setGeneratedCredentials] = useState<{ id: string; password: string } | null>(null)
   const [focusedField, setFocusedField] = useState("")
   const [currentStep, setCurrentStep] = useState(1)
@@ -142,7 +140,6 @@ export default function RegisterPage() {
   const [loadingManagers, setLoadingManagers] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
-  const router = useRouter()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Fetch organizations on component mount
@@ -205,9 +202,9 @@ export default function RegisterPage() {
         setError("Failed to fetch departments")
         setDepartments([])
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching departments:", error)
-      setError(`Error loading departments: ${error.response?.data?.message || error.message}`)
+      setError(`Error loading departments: ${(error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (error as { message?: string })?.message}`)
       setDepartments([])
     } finally {
       setLoadingDepartments(false)
@@ -244,9 +241,9 @@ export default function RegisterPage() {
         setError("Failed to fetch managers")
         setManagers([])
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching managers:", error)
-      setError(`Error loading managers: ${error.response?.data?.message || error.message}`)
+      setError(`Error loading managers: ${(error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (error as { message?: string })?.message}`)
       setManagers([])
     } finally {
       setLoadingManagers(false)
@@ -403,9 +400,9 @@ export default function RegisterPage() {
       } else {
         throw new Error(response.data.message || "Upload failed")
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("File upload error:", error)
-      setError(`Error uploading ${documentType}: ${error.response?.data?.message || error.message}`)
+      setError(`Error uploading ${documentType}: ${(error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (error as { message?: string })?.message}`)
     } finally {
       if (documentType === "photo") {
         setUploadingFiles((prev) => ({ ...prev, photo: false }))
@@ -492,7 +489,6 @@ export default function RegisterPage() {
 
     setIsLoading(true)
     setError("")
-    setSuccess("")
 
     try {
       const submitData = {
@@ -507,7 +503,6 @@ export default function RegisterPage() {
       const response = await axiosInstance.post("/auth/register", submitData)
 
       if (response.data.success) {
-        setSuccess(response.data.message)
         setGeneratedCredentials({
           id: response.data.data.id,
           password: response.data.data.id,
@@ -551,9 +546,9 @@ export default function RegisterPage() {
       } else {
         setError(response.data.message || "Registration failed")
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Registration error:", error)
-      setError(error.response?.data?.message || "Network error. Please check if the server is running.")
+      setError((error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || "Network error. Please check if the server is running.")
     } finally {
       setIsLoading(false)
     }
@@ -603,7 +598,7 @@ export default function RegisterPage() {
     documentType: keyof DocumentFiles
     label: string
     accept?: string
-    icon?: React.ComponentType<any>
+    icon?: React.ComponentType<{ className?: string }>
     required?: boolean
   }) => (
     <div className="space-y-2">
@@ -694,7 +689,6 @@ export default function RegisterPage() {
                 onClick={() => {
                   setGeneratedCredentials(null)
                   setCurrentStep(1)
-                  setSuccess("")
                   setValidationErrors({})
                 }}
                 className="w-full text-gray-600 hover:text-gray-800 py-2 transition-colors"

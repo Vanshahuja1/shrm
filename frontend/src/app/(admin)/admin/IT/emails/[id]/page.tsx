@@ -13,13 +13,15 @@ export default function EmailDetailPage() {
   const [email, setEmail] = useState<Email | null>(null);
 
   useEffect(() => {
-    axios.get(`/mail/${id}`).then(response => {
-      console.log("Fetched email:", response.data);
-      setEmail(response.data.email);
-    }).catch(error => {
-      console.error("Error fetching email:", error);
-    });
-  }, []);
+    if (id) {
+      axios.get(`/mail/${id}`).then(response => {
+        console.log("Fetched email:", response.data);
+        setEmail(response.data.email);
+      }).catch(error => {
+        console.error("Error fetching email:", error);
+      });
+    }
+  }, [id]);
   if (!email) {
     return <p className="text-center mt-12 text-gray-500">Email not found</p>;
   }
@@ -66,7 +68,13 @@ export default function EmailDetailPage() {
             <div>
               <span className="font-semibold text-gray-700">Date:</span>
               <p className="text-gray-900">
-                {new Date(email.sentAt).toLocaleDateString()} at {new Date(email.sentAt).toLocaleTimeString()}
+                {email.sentAt ? (
+                  <>
+                    {new Date(email.sentAt).toLocaleDateString()} at {new Date(email.sentAt).toLocaleTimeString()}
+                  </>
+                ) : (
+                  'Date not available'
+                )}
               </p>
             </div>
             <div>

@@ -1,21 +1,25 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Bell, User } from "lucide-react"
 
 interface EmployeeHeaderProps {
   employeeId: string
 }
 
+interface Employee {
+  id: string
+  name: string
+  email?: string
+  role?: string
+  department?: string
+}
+
 export function EmployeeHeader({ employeeId }: EmployeeHeaderProps) {
-  const [employee, setEmployee] = useState<any>(null)
+  const [employee, setEmployee] = useState<Employee | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchEmployeeData()
-  }, [employeeId])
-
-  const fetchEmployeeData = async () => {
+  const fetchEmployeeData = useCallback(async () => {
     try {
       const response = await fetch(`/api/employees/${employeeId}`)
       if (response.ok) {
@@ -27,7 +31,11 @@ export function EmployeeHeader({ employeeId }: EmployeeHeaderProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [employeeId])
+
+  useEffect(() => {
+    fetchEmployeeData()
+  }, [fetchEmployeeData])
 
   if (loading) {
     return (

@@ -4,17 +4,30 @@ import type React from "react"
 
 import { useState } from "react"
 import { Send } from "lucide-react"
-import type { ManagerInfo } from "@/types"
+import type { ManagerInfo } from "../types"
+
+// Type for new task form data
+interface NewTaskData {
+  title: string;
+  description: string;
+  department: string;
+  team: string;
+  assignedTo: string;
+  priority: "high" | "medium" | "low";
+  weightage: string;
+  dueDate: string;
+  dueTime: string;
+}
 
 interface NewTaskModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (taskData: any) => void
+  onSubmit: (taskData: NewTaskData) => void
   managerInfo: ManagerInfo
 }
 
 export default function NewTaskModal({ isOpen, onClose, onSubmit, managerInfo }: NewTaskModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<NewTaskData>({
     title: "",
     description: "",
     department: "",
@@ -122,7 +135,7 @@ export default function NewTaskModal({ isOpen, onClose, onSubmit, managerInfo }:
               <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
               <select
                 value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value as "high" | "medium" | "low" })}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <option value="high">High Priority</option>

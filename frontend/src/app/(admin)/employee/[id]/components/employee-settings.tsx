@@ -13,7 +13,7 @@ export function EmployeeSettings({ settings, onSettingsUpdate }: EmployeeSetting
   const [localSettings, setLocalSettings] = useState<EmployeeSettingsType>(settings)
   const [hasChanges, setHasChanges] = useState(false)
 
-  const handleSettingChange = (key: keyof EmployeeSettingsType, value: any) => {
+  const handleSettingChange = (key: keyof EmployeeSettingsType, value: string | boolean | number) => {
     setLocalSettings((prev) => ({
       ...prev,
       [key]: value,

@@ -1,19 +1,23 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useCallback } from "react"
 import { DataSyncStatus } from "../components/data-sync-status"
+import type { DataToAdmin, DataToManager } from "../../types/employees"
 import axios from "@/lib/axiosInstance"
+
+interface SyncData {
+  adminData: DataToAdmin[]
+  managerData: DataToManager[]
+  lastSyncTime: string
+  syncStatus: "synced" | "pending" | "error"
+}
 
 export default function DataSyncPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [syncData, setSyncData] = useState<any>(null)
+  const [syncData, setSyncData] = useState<SyncData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchSyncData()
-  }, [id])
-
-  const fetchSyncData = async () => {
+  const fetchSyncData = useCallback(async () => {
     try {
       const response = await axios.get(`/employees/${id}/data-sync`)
       setSyncData(response.data)
@@ -22,7 +26,11 @@ export default function DataSyncPage({ params }: { params: Promise<{ id: string 
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    fetchSyncData()
+  }, [fetchSyncData])
 
   if (loading || !syncData) {
     return <div className="animate-pulse">Loading sync status...</div>

@@ -137,10 +137,10 @@ export default function LoginPage() {
       } else {
         setError(data.message || "Login failed. Please check your credentials.")
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error)
       setError(
-        error?.response?.data?.message ||
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           "Network error. Please check if the server is running and try again."
       )
     } finally {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useCallback } from "react"
 import { OvertimeManagement } from "../components/overtime-management"
 import type { OvertimeRequest } from "../../types/employees";
 import axios from "@/lib/axiosInstance"
@@ -11,11 +11,7 @@ export default function OvertimePage({ params }: { params: Promise<{ id: string 
   const [currentOvertimeHours, setCurrentOvertimeHours] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchOvertimeData()
-  }, [id])
-
-  const fetchOvertimeData = async () => {
+  const fetchOvertimeData = useCallback(async () => {
     try {
       const response = await axios.get(`/employees/${id}/overtime`)
       setOvertimeRequests(response.data.requests || [])
@@ -25,7 +21,11 @@ export default function OvertimePage({ params }: { params: Promise<{ id: string 
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    fetchOvertimeData()
+  }, [fetchOvertimeData])
 
   const handleSubmitOvertimeRequest = async (hours: number, justification: string) => {
     try {

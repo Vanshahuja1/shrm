@@ -1,5 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+// Type for employee update data
+interface EmployeeUpdateData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  designation?: string;
+  department?: string;
+  manager?: string;
+  [key: string]: unknown; // Allow additional fields
+}
+
 // GET /api/employees/[id] - Get employee basic info
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -23,7 +35,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const updatedEmployee = await updateEmployee(params.id, body)
 
     return NextResponse.json(updatedEmployee)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to update employee" }, { status: 500 })
   }
 }
@@ -46,7 +58,8 @@ async function getEmployeeById(id: string) {
   }
 }
 
-async function updateEmployee(id: string, data: any) {
+async function updateEmployee(id: string, data: EmployeeUpdateData) {
   // Your database update here
+  console.log(`Updating employee ${id} with data:`, data)
   return data
 }

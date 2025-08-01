@@ -5,7 +5,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   try {
     const syncStatus = await getDataSyncStatus(params.id)
     return NextResponse.json(syncStatus)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch sync status" }, { status: 500 })
   }
 }
@@ -15,13 +15,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   try {
     const syncResult = await forceDataSync(params.id)
     return NextResponse.json(syncResult)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to force sync" }, { status: 500 })
   }
 }
 
 async function getDataSyncStatus(employeeId: string) {
-  // Your database query here
+  // Your database query here - employeeId will be used when implementing actual database logic
+  console.log(`Getting sync status for employee: ${employeeId}`)
   return {
     adminData: [],
     managerData: [],
@@ -31,6 +32,7 @@ async function getDataSyncStatus(employeeId: string) {
 }
 
 async function forceDataSync(employeeId: string) {
-  // Your sync logic here
+  // Your sync logic here - employeeId will be used when implementing actual sync logic
+  console.log(`Forcing data sync for employee: ${employeeId}`)
   return { success: true, timestamp: new Date().toISOString() }
 }

@@ -14,21 +14,30 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import EditForm from "./EditForm";
+import type { OrganizationMember } from "@/types";
 
 export default function DepartmentDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  type Member = { id?: string; _id?: string; name?: string };
+  
   type Department = {
     name: string;
     head: string;
-    managers?: Member[];
-    employees?: Member[];
-    interns?: Member[];
-    budget?: number;
+    managers: OrganizationMember[];
+    employees: OrganizationMember[];
+    interns: OrganizationMember[];
+    budget: number;
   };
+  
   const [dept, setDept] = useState<Department | null>(null);
-  const [editData, setEditData] = useState<Department | null>(null);
+  const [editData, setEditData] = useState<Department>({
+    name: "",
+    head: "",
+    budget: 0,
+    managers: [],
+    employees: [],
+    interns: []
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -37,8 +46,16 @@ export default function DepartmentDetailPage() {
       .then((res) => {
         console.log("Department response:", res.data);
         if (res.data && res.data.success && res.data.data) {
-          setDept(res.data.data);
-          setEditData(res.data.data);
+          const deptData = {
+            name: res.data.data.name || "",
+            head: res.data.data.head || "",
+            budget: res.data.data.budget || 0,
+            managers: res.data.data.managers || [],
+            employees: res.data.data.employees || [],
+            interns: res.data.data.interns || []
+          };
+          setDept(deptData);
+          setEditData(deptData);
         } else {
           console.error("Invalid response format:", res.data);
         }
@@ -144,22 +161,22 @@ export default function DepartmentDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatCard
                 label="Managers"
-                value={dept.managers?.length || 0}
+                value={dept.managers.length}
                 color="blue"
               />
               <StatCard
                 label="Employees"
-                value={dept.employees?.length || 0}
+                value={dept.employees.length}
                 color="green"
               />
               <StatCard
                 label="Interns"
-                value={dept.interns?.length || 0}
+                value={dept.interns.length}
                 color="purple"
               />
               <StatCard
                 label="Budget"
-                value={`$${(dept.budget || 0).toLocaleString()}`}
+                value={`$${dept.budget.toLocaleString()}`}
                 color="orange"
               />
             </div>
@@ -181,31 +198,31 @@ export default function DepartmentDetailPage() {
                       Managers
                     </h3>
                     <span className="bg-blue-600 text-white text-sm px-3 py-1 rounded-full font-semibold">
-                      {dept.managers?.length || 0} Members
+                      {dept.managers.length} Members
                     </span>
                   </div>
 
                   {dept.managers && dept.managers.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {dept.managers.map((manager: Member, index: number) => (
+                      {dept.managers.map((manager: OrganizationMember, index: number) => (
                         <div
                           key={index}
                           className="bg-white rounded-lg p-5 border border-blue-200 cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-300 group"
                           onClick={() =>
                             router.push(
-                              `/admin/IT/members/${manager.id || manager._id}`
+                              `/admin/IT/members/${manager.id}`
                             )
                           }
                         >
                           <div className="flex items-start space-x-4">
                             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors">
                               <span className="text-blue-700 font-bold text-lg">
-                                {(typeof manager.name === 'string' ? manager.name : '').charAt(0).toUpperCase()}
+                                {manager.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-blue-700 transition-colors">
-                                {typeof manager.name === 'string' ? manager.name : ''}
+                                {manager.name}
                               </h4>
                             </div>
                           </div>
@@ -237,31 +254,31 @@ export default function DepartmentDetailPage() {
                       Employees
                     </h3>
                     <span className="bg-green-600 text-white text-sm px-3 py-1 rounded-full font-semibold">
-                      {dept.employees?.length || 0} Members
+                      {dept.employees.length} Members
                     </span>
                   </div>
 
                   {dept.employees && dept.employees.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {dept.employees.map((employee: Member, index: number) => (
+                      {dept.employees.map((employee: OrganizationMember, index: number) => (
                         <div
                           key={index}
                           className="bg-white rounded-lg p-5 border border-green-200 cursor-pointer hover:border-green-400 hover:shadow-lg transition-all duration-300 group"
                           onClick={() =>
                             router.push(
-                              `/admin/IT/members/${employee.id || employee._id}`
+                              `/admin/IT/members/${employee.id}`
                             )
                           }
                         >
                           <div className="flex items-start space-x-4">
                             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 transition-colors">
                               <span className="text-green-700 font-bold text-lg">
-                                {(typeof employee.name === 'string' ? employee.name : '').charAt(0).toUpperCase()}
+                                {employee.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-green-700 transition-colors">
-                                {typeof employee.name === 'string' ? employee.name : ''}
+                                {employee.name}
                               </h4>
                             </div>
                           </div>
@@ -293,31 +310,31 @@ export default function DepartmentDetailPage() {
                       Interns
                     </h3>
                     <span className="bg-yellow-600 text-white text-sm px-3 py-1 rounded-full font-semibold">
-                      {dept.interns?.length || 0} Members
+                      {dept.interns.length} Members
                     </span>
                   </div>
 
                   {dept.interns && dept.interns.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {dept.interns.map((intern: Member, index: number) => (
+                      {dept.interns.map((intern: OrganizationMember, index: number) => (
                         <div
                           key={index}
                           className="bg-white rounded-lg p-5 border border-yellow-200 cursor-pointer hover:border-yellow-400 hover:shadow-lg transition-all duration-300 group"
                           onClick={() =>
                             router.push(
-                              `/admin/IT/members/${intern.id || intern._id}`
+                              `/admin/IT/members/${intern.id}`
                             )
                           }
                         >
                           <div className="flex items-start space-x-4">
                             <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-yellow-200 transition-colors">
                               <span className="text-yellow-700 font-bold text-lg">
-                                {(typeof intern.name === 'string' ? intern.name : '').charAt(0).toUpperCase()}
+                                {intern.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-yellow-700 transition-colors">
-                                {typeof intern.name === 'string' ? intern.name : ''}
+                                {intern.name}
                               </h4>
                             </div>
                           </div>

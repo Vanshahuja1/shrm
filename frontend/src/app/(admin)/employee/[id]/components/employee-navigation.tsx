@@ -3,10 +3,17 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Target, Calendar, User, BarChart3, Clock, Zap, Database, Settings } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 
 interface EmployeeNavigationProps {
   employeeId: string
+}
+
+interface Task {
+  status: string
+  id?: string
+  title?: string
+  description?: string
 }
 
 export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
@@ -19,11 +26,7 @@ export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
     isWorking: false,
   })
 
-  useEffect(() => {
-    fetchQuickStats()
-  }, [employeeId])
-
-  const fetchQuickStats = async () => {
+  const fetchQuickStats = useCallback(async () => {
     try {
       // Fetch quick stats from multiple endpoints
       const [tasksRes, workHoursRes, performanceRes, attendanceRes] = await Promise.all([
@@ -41,7 +44,7 @@ export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
       ])
 
       setQuickStats({
-        pendingTasks: tasks.filter((t: any) => t.status === "pending").length,
+        pendingTasks: tasks.filter((t: Task) => t.status === "pending").length,
         todayHours: workHours.todayHours || 0,
         performance: performance.combinedPercentage || 0,
         attendance: performance.attendanceScore || 0,
@@ -50,7 +53,11 @@ export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
     } catch (error) {
       console.error("Failed to fetch quick stats:", error)
     }
-  }
+  }, [employeeId])
+
+  useEffect(() => {
+    fetchQuickStats()
+  }, [fetchQuickStats])
 
   const tabs = [
     { id: "tasks", label: "Task List", icon: Target, href: `/employee/${employeeId}/tasks` },
@@ -94,7 +101,7 @@ export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
             <span className="text-blue-600 font-medium">{quickStats.pendingTasks}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-600">Today's Hours:</span>
+            <span className="text-gray-600">Today&apos;s Hours:</span>
             <span className="text-green-600 font-medium">{quickStats.todayHours.toFixed(1)}h</span>
           </div>
           <div className="flex items-center justify-between">

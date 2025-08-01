@@ -1,21 +1,24 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useCallback } from "react"
 import { AttendanceSystem } from "../components/attendance-system"
 import axios from "@/lib/axiosInstance";
+
+interface AttendanceData {
+  isPunchedIn?: boolean;
+  workStartTime?: string;
+  totalWorkHours?: number;
+  breakTime?: number;
+  overtimeHours?: number;
+}
+
 export default function AttendancePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [attendanceData, setAttendanceData] = useState<any>(null)
+  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    fetchAttendanceData()
-    return () => clearInterval(timer)
-  }, [id])
-
-  const fetchAttendanceData = async () => {
+  const fetchAttendanceData = useCallback(async () => {
     try {
       const response = await axios.get(`/employees/${id}/attendance`)
       setAttendanceData(response.data)
@@ -24,7 +27,13 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    fetchAttendanceData()
+    return () => clearInterval(timer)
+  }, [fetchAttendanceData])
 
   const handlePunchIn = async () => {
     try {

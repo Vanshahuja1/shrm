@@ -1,11 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+// Type for task data
+interface TaskData {
+  title?: string;
+  description?: string;
+  priority?: "low" | "medium" | "high";
+  status?: "pending" | "in-progress" | "completed";
+  dueDate?: string;
+  dueTime?: string;
+  assignedBy?: string;
+  weightage?: number;
+}
+
 // GET /api/employees/[id]/tasks - Get all tasks for employee
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const tasks = await getEmployeeTasks(params.id)
     return NextResponse.json(tasks)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 })
   }
 }
@@ -16,12 +28,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const body = await request.json()
     const newTask = await createTask(params.id, body)
     return NextResponse.json(newTask, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 })
   }
 }
 
 async function getEmployeeTasks(employeeId: string) {
+  // Log parameter for future database implementation
+  console.log("Getting tasks for employee:", employeeId)
+  
   // Your database query here
   return [
     {
@@ -39,7 +54,10 @@ async function getEmployeeTasks(employeeId: string) {
   ]
 }
 
-async function createTask(employeeId: string, taskData: any) {
+async function createTask(employeeId: string, taskData: TaskData) {
+  // Log parameters for future database implementation
+  console.log("Creating task for employee:", employeeId, "with data:", taskData)
+  
   // Your database insert here
   return { id: Date.now(), ...taskData }
 }

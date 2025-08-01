@@ -6,7 +6,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const body = await request.json()
     const punchOut = await recordPunchOut(params.id, body.timestamp)
     return NextResponse.json(punchOut)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to punch out" }, { status: 500 })
   }
 }

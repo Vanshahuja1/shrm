@@ -5,7 +5,7 @@ import { Clock, AlertCircle, Send, Mail, MessageSquare } from "lucide-react";
 
 // Email System Component
 const EmailSystem = () => {
-  const [notifications, setNotifications] = useState([
+  const [notifications] = useState([
     {
       id: 1,
       type: "member-crud",
@@ -38,7 +38,7 @@ const EmailSystem = () => {
     },
   ]);
 
-  const getTypeColor = (type : "member-crud" | "increment" | "decrement" | "penalty") => {
+  const getTypeColor = (type: string) => {
     switch (type) {
       case "member-crud":
         return "bg-blue-100 text-blue-800";
@@ -53,7 +53,7 @@ const EmailSystem = () => {
     }
   };
 
-  const getStatusColor = (status: "sent" | "pending" | "failed") => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "sent":
         return "bg-green-100 text-green-800";

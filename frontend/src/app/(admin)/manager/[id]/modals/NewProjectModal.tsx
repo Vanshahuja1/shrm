@@ -4,14 +4,22 @@ import type React from "react"
 
 import { useState } from "react"
 
+// Type for new project form data
+interface NewProjectData {
+  name: string;
+  description: string;
+  priority: "high" | "medium" | "low";
+  budget: string;
+}
+
 interface NewProjectModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (projectData: any) => void
+  onSubmit: (projectData: NewProjectData) => void
 }
 
 export default function NewProjectModal({ isOpen, onClose, onSubmit }: NewProjectModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<NewProjectData>({
     name: "",
     description: "",
     priority: "medium",
@@ -58,7 +66,7 @@ export default function NewProjectModal({ isOpen, onClose, onSubmit }: NewProjec
             <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
             <select
               value={formData.priority}
-              onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, priority: e.target.value as "high" | "medium" | "low" })}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <option value="high">High Priority</option>

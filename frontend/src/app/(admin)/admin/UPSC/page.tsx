@@ -345,14 +345,6 @@ const monthlyData = [
   },
 ];
 
-const departmentColors = [
-  "#DC2626",
-  "#059669",
-  "#7C3AED",
-  "#EA580C",
-  "#0891B2",
-];
-
 // Sidebar Navigation
 const Sidebar = ({
   activeTab,
@@ -523,7 +515,7 @@ const TopHeader = ({ activeTab, setIsSidebarOpen }: { activeTab: string; setIsSi
 export default function UPSCAdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [departments, setDepartments] = useState(sampleDepartments);
+  const [departments] = useState(sampleDepartments);
 
   const renderContent = () => {
     switch (activeTab) {

@@ -10,13 +10,18 @@ const EmployeeSettings = require("../models/employeeSettingsModel");
 const getEmployeeInfo = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("Fetching employee info for ID:", id);
 
     const employee = await User.findOne({ id, isActive: true }).select(
       "-password"
     );
+    
     if (!employee) {
+      console.log("Employee not found with ID:", id);
       return res.status(404).json({ error: "Employee not found" });
     }
+
+    console.log("Found employee:", employee.name, "Role:", employee.role);
 
     // Transform data to match frontend interface
     const employeeInfo = {
@@ -36,15 +41,22 @@ const getEmployeeInfo = async (req, res) => {
         dateOfBirth: employee.dateOfBirth
           ? employee.dateOfBirth.toISOString().split("T")[0]
           : "",
-        identityDocuments: employee.documents.map((doc, index) => ({
-          id: index + 1,
-          type: doc.title,
-          number: doc.title.includes("Aadhar")
-            ? employee.adharCard
-            : employee.panCard,
-          uploadDate: doc.uploadedAt.toISOString().split("T")[0],
-          status: "verified",
-        })),
+        identityDocuments: [
+          {
+            id: 1,
+            type: "Aadhar Card",
+            number: employee.adharCard || "",
+            uploadDate: employee.createdAt ? employee.createdAt.toISOString().split("T")[0] : "",
+            status: employee.adharCard ? "verified" : "pending",
+          },
+          {
+            id: 2,
+            type: "PAN Card", 
+            number: employee.panCard || "",
+            uploadDate: employee.createdAt ? employee.createdAt.toISOString().split("T")[0] : "",
+            status: employee.panCard ? "verified" : "pending",
+          }
+        ],
       },
       bankDetails: {
         accountNumber: employee.bankDetails?.accountNumber || "",
@@ -60,10 +72,16 @@ const getEmployeeInfo = async (req, res) => {
       },
     };
 
+    console.log("Returning employee info for:", employee.name);
     res.json(employeeInfo);
   } catch (error) {
     console.error("Get employee info error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error stack:", error.stack);
+    res.status(500).json({ 
+      error: "Internal server error",
+      message: error.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    });
   }
 };
 

@@ -25,7 +25,7 @@ export default function EmployeeResponse() {
         ];
 
         // 2. Fetch tasks for each employee/intern
-        const allTasks: any[] = [];
+        const allTasks: Task[] = [];
         await Promise.all(
           allIds.map(async (empId: string) => {
             try {

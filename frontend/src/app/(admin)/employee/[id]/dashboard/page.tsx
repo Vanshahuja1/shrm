@@ -15,28 +15,27 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!id) return;
 
-   const fetchData = async () => {
-  try {
-    const [employeeRes, attendanceRes] = await Promise.all([
-      axios.get(`/employees/${id}`),
-      axios.get(`/employees/${id}/attendance`),
-    ]);
-    setEmployeeInfo(employeeRes.data);
-    
-    // 👇 FIX HERE
-    const rawAttendance = attendanceRes.data;
-    const records = Array.isArray(rawAttendance)
-      ? rawAttendance
-      : rawAttendance.records || rawAttendance.data || [];
+    const fetchData = async () => {
+      try {
+        const [employeeRes, attendanceRes] = await Promise.all([
+          axios.get(`/employees/${id}`),
+          axios.get(`/employees/${id}/attendance`),
+        ]);
+        setEmployeeInfo(employeeRes.data);
+        
+        // Handle different response formats
+        const rawAttendance = attendanceRes.data;
+        const records = Array.isArray(rawAttendance)
+          ? rawAttendance
+          : rawAttendance.records || rawAttendance.data || [];
 
-    setAttendanceRecords(records);
-  } catch (error) {
-    console.error("Failed to fetch data:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
+        setAttendanceRecords(records);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchData();
   }, [id]);

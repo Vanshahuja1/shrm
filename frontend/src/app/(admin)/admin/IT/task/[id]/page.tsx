@@ -273,7 +273,7 @@ export default function TaskDetailPage() {
             
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm text-gray-700">
-                Are you sure you want to delete "<span className="font-medium">{task?.title}</span>"? 
+                Are you sure you want to delete &ldquo;<span className="font-medium">{task?.title}</span>&rdquo;? 
                 This will permanently remove the task and all associated data.
               </p>
             </div>

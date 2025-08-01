@@ -1,8 +1,7 @@
 "use client"
 import React, { useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, ChevronRight, Plus, Users, GraduationCap, BookOpen, Clock
-} from "lucide-react"
+import { ChevronRight, Clock } from "lucide-react"
 import { Task } from "../types/index"
 import { Target, CheckCircle, AlertCircle } from "lucide-react"
 // Task Management Component
@@ -11,7 +10,6 @@ interface TaskManagementProps {
 }
 
 const TaskManagement: React.FC<TaskManagementProps> = ({ tasks }) => {
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filterType, setFilterType] = useState("all")
 
   const filteredTasks = tasks.filter((task) => {
@@ -120,7 +118,6 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ tasks }) => {
               key={task.id}
               whileHover={{ y: -1, scale: 1.01 }}
               className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer"
-              onClick={() => setSelectedTask(task)}
             >
               <div className="flex items-start justify-between mb-3">
                 <div>

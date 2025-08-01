@@ -1,19 +1,15 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useCallback } from "react"
 import { EmployeeSettings } from "../components/employee-settings"
-import type { EmployeeSettings as EmployeeSettingsType } from "@/types/employee"
+import type { EmployeeSettings as EmployeeSettingsType } from "../../types/employees"
 
 export default function SettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [settings, setSettings] = useState<EmployeeSettingsType | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchSettings()
-  }, [id])
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await fetch(`/api/employees/${id}/settings`)
       if (response.ok) {
@@ -25,7 +21,11 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    fetchSettings()
+  }, [fetchSettings])
 
   const handleSettingsUpdate = async (newSettings: EmployeeSettingsType) => {
     try {
