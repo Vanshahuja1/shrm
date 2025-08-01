@@ -50,8 +50,7 @@ export default function EditTaskPage() {
         const managersAndHR = allMembers.filter(
           (member) =>
             member.role?.toLowerCase().includes("manager") ||
-            member.role?.toLowerCase().includes("hr") ||
-            member.department?.toLowerCase().includes("hr")
+            member.role?.toLowerCase().includes("employee") 
         )
         setManagers(managersAndHR)
 

@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from "react"
 import { Bell, User } from "lucide-react"
+import axios from "@/lib/axiosInstance"
+import { useParams } from "next/navigation"
 
 interface EmployeeHeaderProps {
   employeeId: string
 }
 
 export function EmployeeHeader({ employeeId }: EmployeeHeaderProps) {
-  const [employee, setEmployee] = useState<any>(null)
+  const [employeeName, setEmployeeName] = useState<string>("")
   const [loading, setLoading] = useState(true)
+
+  // const {empId} = useParams()
 
   useEffect(() => {
     fetchEmployeeData()
@@ -17,11 +21,11 @@ export function EmployeeHeader({ employeeId }: EmployeeHeaderProps) {
 
   const fetchEmployeeData = async () => {
     try {
-      const response = await fetch(`/api/employees/${employeeId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setEmployee(data)
-      }
+      const response = await axios.get(`/employees/${employeeId}`)
+      
+      console.log(response.data.name);
+      setEmployeeName(response.data.name)
+
     } catch (error) {
       console.error("Failed to fetch employee data:", error)
     } finally {
@@ -48,7 +52,7 @@ export function EmployeeHeader({ employeeId }: EmployeeHeaderProps) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Employee Dashboard</h1>
-            <p className="text-blue-600 text-lg">Welcome back, {employee?.name || "Loading..."}</p>
+            <p className="text-blue-600 text-lg">Welcome back, {employeeName || "Loading..."}</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="relative">
