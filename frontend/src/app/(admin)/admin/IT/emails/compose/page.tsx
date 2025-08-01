@@ -9,6 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 
 
 
+
 export default function ComposeEmailPage() {
   const router = useRouter()
   const [formData, setFormData] = useState<Email>({
@@ -16,6 +17,7 @@ export default function ComposeEmailPage() {
     recipient: "",
     sender: "admin@oneaimit.com",
     subject: "",
+
     message: "",
     recipientEmail: "",
   })
@@ -25,7 +27,7 @@ export default function ComposeEmailPage() {
 
   const fetchMembers = async () => {
     try {
-      const response = await axios.get("/IT/org-members//empInfo")
+      const response = await axios.get("/IT/org-members/empInfo")
       setMembers(response.data)
     } catch (error) {
       console.error("Error fetching members:", error)
@@ -45,10 +47,19 @@ export default function ComposeEmailPage() {
         ? formData.recipientEmail
         : formData.recipient;
 
+    // Find the selected member to get their ID
+    let recipientId = "";
+    if (formData.recipient !== "other") {
+      const selectedMember = members.find(member => member.email === formData.recipient);
+      recipientId = selectedMember?.id || "";
+    }
+
     axios.post("/mail/send", {
       type: formData.type,
       to: recipient,
       from: formData.sender,
+      senderId: "ADM101", // Assuming admin is sending the email
+      recipientId: recipientId,
       subject: formData.subject,
       text: formData.message,
     })

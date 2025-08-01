@@ -34,20 +34,7 @@ export default function EmailDetailPage() {
         >
           ← Back to Inbox
         </button>
-        <div className="flex gap-2">
-          <button className="p-2 text-gray-400 hover:text-yellow-500">
-            <Star size={20} />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-blue-600">
-            <Reply size={20} />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-blue-600">
-            <Forward size={20} />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-red-600">
-            <Trash2 size={20} />
-          </button>
-        </div>
+       
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
@@ -66,7 +53,9 @@ export default function EmailDetailPage() {
             <div>
               <span className="font-semibold text-gray-700">Date:</span>
               <p className="text-gray-900">
-                {new Date(email.sentAt).toLocaleDateString()} at {new Date(email.sentAt).toLocaleTimeString()}
+                {email.sentAt
+                  ? `${new Date(email.sentAt).toLocaleDateString()} at ${new Date(email.sentAt).toLocaleTimeString()}`
+                  : "N/A"}
               </p>
             </div>
             <div>
