@@ -2,12 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import {
-  User,
+  
   Calendar,
-  CheckCircle,
-  Send,
-  MessageSquare,
-  Settings,
   Target,
   Wallet,
   Briefcase,

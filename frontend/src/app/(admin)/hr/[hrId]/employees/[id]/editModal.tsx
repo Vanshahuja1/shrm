@@ -27,7 +27,9 @@ import { User, Briefcase, DollarSign, FileText, Settings } from "lucide-react";
 interface EditModalProps {
     isOpen: boolean;
     onClose: () => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     employee: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSave: (updatedEmployee: any) => void;
 }
 

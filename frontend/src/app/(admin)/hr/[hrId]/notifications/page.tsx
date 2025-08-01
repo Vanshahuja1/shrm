@@ -38,6 +38,7 @@ export default function NotificationsPage() {
     const fetchEmployees = async () => {
       try {
         const response = await axios.get('/IT/org-members/empInfo')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setEmployees(response.data.map((emp: any) => ({
           id: emp._id || emp.id,
           name: emp.name || emp.email.split('@')[0],

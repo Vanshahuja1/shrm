@@ -357,6 +357,7 @@ export default function PayrollPage() {
       const data = await res.json();
       if (data.status === 'success') {
         // Transform the backend data to match frontend structure
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const transformedData = data.data.map((item: any) => ({
           id: item._id,
           name: item.name,
@@ -468,6 +469,7 @@ export default function PayrollPage() {
 
       const result = await response.json();
       if (result.status === 'success') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const transformedData = result.data.map((item: any) => ({
           id: item.employeeId,
           name: item.name,

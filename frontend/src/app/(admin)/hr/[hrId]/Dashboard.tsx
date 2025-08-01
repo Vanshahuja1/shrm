@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { CircularProgress } from '@mui/material'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts'
 import { motion } from 'framer-motion'
 
 type DashboardData = {
@@ -30,6 +30,7 @@ const Dashboard = () => {
         const apiData = await res.json()
         setData(apiData)
       } catch (error) {
+        console.log(error)
         setData({
           totalEmployees: 53,
           employeesPresent: 44,
@@ -81,7 +82,7 @@ const Dashboard = () => {
       className="max-w-7xl mx-auto px-6 py-10"
     >
       <h1 className="text-2xl font-bold mb-2">Hello, Olivia Green!</h1>
-      <p className="mb-6 text-gray-600">Hope you're having a productive day :)</p>
+      <p className="mb-6 text-gray-600">Hope you&apos;re having a productive day :)</p>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader>Total Employees</CardHeader>
@@ -101,7 +102,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>Employee's Present Today</CardHeader>
+          <CardHeader>Employee&apos;s Present Today</CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-3xl font-bold text-green-700">{data.employeesPresent}</span>
@@ -110,7 +111,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>Employee's on Leave</CardHeader>
+          <CardHeader>Employee&apos;s on Leave</CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-3xl font-bold text-red-700">{data.employeesOnLeave}</span>
@@ -119,7 +120,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>Employee's Late Today</CardHeader>
+          <CardHeader>Employee&apos;s Late Today</CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-3xl font-bold text-yellow-700">{data.employeesLate}</span>
@@ -175,7 +176,7 @@ const Dashboard = () => {
        
       </div>
       <div className="bg-white rounded-xl border shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Attendance</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Today&apos;s Attendance</h3>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-gray-500 text-left">

@@ -62,7 +62,7 @@ export default function WarningPolicyPage() {
       try {
         const response = await axios.get('/IT/org-members/empInfo');
         setEmployees(
-          response.data.map((emp: any) => ({
+          response.data.map((emp: {_id :string , name :string , email :string , organization :string , department :string , role :string , id :string }) => ({
             id: emp._id || emp.id,
             name: emp.name || emp.email.split('@')[0],
             email: emp.email,

@@ -61,6 +61,7 @@ export default function ApplicantsPage() {
         const data = await res.json();
         setApplicants(data);
       } catch (err) {
+        console.log(err)
         setApplicants(fallbackData);
       }
     }

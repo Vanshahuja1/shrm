@@ -53,6 +53,7 @@ const LeaveManagementDashboard = () => {
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [myLeaves, setMyLeaves] = useState<MyLeave[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [leaveHistory, setLeaveHistory] = useState<LeaveHistory[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [formState, setFormState] = useState({ startDate: '', endDate: '', reason: '', type: '' });
