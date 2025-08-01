@@ -1,5 +1,5 @@
 "use client";
-import { Eye, Download, Star } from "lucide-react";
+
 import {
   Accordion,
   AccordionContent,
@@ -7,7 +7,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 interface TaskResponse {
   _id: string;
@@ -41,7 +40,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 import axios from "@/lib/axiosInstance";
-import { mockTasks } from "../data/mockData";
 
 export default function EmployeeResponse() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -53,7 +51,7 @@ export default function EmployeeResponse() {
         const res = await axios.get(`/task-responses/manager/${managerId}`);
         setTasks(res.data);
       } catch {
-        setTasks(mockTasks); // Fallback to mock data
+        console.log("Failed to fetch tasks, using mock data");
       }
     };
     fetchData();
