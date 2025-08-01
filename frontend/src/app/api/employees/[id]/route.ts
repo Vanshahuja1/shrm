@@ -13,10 +13,11 @@ interface EmployeeUpdateData {
 }
 
 // GET /api/employees/[id] - Get employee basic info
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     // Replace with your actual database query
-    const employee = await getEmployeeById(params.id)
+    const employee = await getEmployeeById(id)
 
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 })
@@ -29,10 +30,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/employees/[id] - Update employee info
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
-    const updatedEmployee = await updateEmployee(params.id, body)
+    const updatedEmployee = await updateEmployee(id, body)
 
     return NextResponse.json(updatedEmployee)
   } catch {

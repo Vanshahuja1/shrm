@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useParams } from 'next/navigation'
 import axios from "@/lib/axiosInstance"
 import { X, ChevronDown } from "lucide-react"
 
@@ -74,8 +75,39 @@ Human Resources Team
   }
 ]
 
-export default function IncrementNotificationPage({ employees , hrId }: { employees: Employee[], hrId: string }) {
+export default function IncrementNotificationPage() {
+  const params = useParams()
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [hrId, setHrId] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    // Get hrId from params
+    if (params.hrId) {
+      setHrId(params.hrId as string)
+    }
+
+    // Mock employees data - replace with actual API call
+    const mockEmployees: Employee[] = [
+      {
+        id: 1,
+        name: 'John Doe',
+        email: 'john.doe@company.com',
+        organization: 'Tech Corp',
+        department: 'Engineering',
+        role: 'Software Engineer'
+      },
+      {
+        id: 2,
+        name: 'Jane Smith',
+        email: 'jane.smith@company.com',
+        organization: 'Tech Corp',
+        department: 'Marketing',
+        role: 'Marketing Manager'
+      }
+    ]
+    setEmployees(mockEmployees)
+  }, [params.hrId])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [sentIds, setSentIds] = useState<number[]>([])
   const [showModal, setShowModal] = useState(false)

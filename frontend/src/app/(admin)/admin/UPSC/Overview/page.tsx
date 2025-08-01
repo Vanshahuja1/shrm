@@ -7,18 +7,21 @@ import { BarChart, Bar } from "recharts"
 import { GraduationCap, BookOpen, Users, Building, TrendingUp, BarChart3 } from "lucide-react"
 import { monthlyData } from "../DummyData"
 const Overview = () => {
+  // Define the color type
+  type ColorType = "red" | "green" | "blue" | "purple"
+  
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: "Total Students", value: "495", change: "+7%", icon: GraduationCap, color: "red" },
-          { title: "Active Batches", value: "4", change: "+1", icon: BookOpen, color: "green" },
-          { title: "Faculty Members", value: "15", change: "0%", icon: Users, color: "blue" },
-          { title: "Departments", value: "5", change: "0%", icon: Building, color: "purple" },
+          { title: "Total Students", value: "495", change: "+7%", icon: GraduationCap, color: "red" as ColorType },
+          { title: "Active Batches", value: "4", change: "+1", icon: BookOpen, color: "green" as ColorType },
+          { title: "Faculty Members", value: "15", change: "0%", icon: Users, color: "blue" as ColorType },
+          { title: "Departments", value: "5", change: "0%", icon: Building, color: "purple" as ColorType },
         ].map((stat, index) => {
           const Icon = stat.icon
-          const colorClasses = {
+          const colorClasses: Record<ColorType, string> = {
             red: "bg-red-50 text-red-700 border-red-200",
             green: "bg-green-50 text-green-700 border-green-200",
             blue: "bg-blue-50 text-blue-700 border-blue-200",

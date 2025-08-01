@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ArrowLeft, ChevronRight, Plus, Users, GraduationCap, BookOpen, Clock } from "lucide-react"
 
@@ -20,12 +20,46 @@ interface Batch {
   subjects: string[]
 }
 
-interface OngoingBatchesProps {
-  batches: Batch[]
-}
-
-const OngoingBatches: React.FC<OngoingBatchesProps> = ({ batches }) => {
+const OngoingBatches: React.FC = () => {
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null)
+  const [batches, setBatches] = useState<Batch[]>([])
+
+  useEffect(() => {
+    // Mock data - replace with actual API call
+    const mockBatches: Batch[] = [
+      {
+        id: "1",
+        name: "UPSC Prelims 2024",
+        type: "morning",
+        startTime: "9:00 AM",
+        endTime: "1:00 PM",
+        fees: 45000,
+        studentCount: 45,
+        capacity: 50,
+        facultyInvolved: ["Dr. Rajesh Kumar", "Prof. Priya Sharma", "Mr. Anil Singh"],
+        syllabusPercentComplete: 75,
+        duration: "6 months",
+        startDate: "2024-01-15",
+        subjects: ["History", "Geography", "Polity", "Economics", "Science & Technology"]
+      },
+      {
+        id: "2",
+        name: "UPSC Mains 2024",
+        type: "evening",
+        startTime: "2:00 PM",
+        endTime: "6:00 PM",
+        fees: 55000,
+        studentCount: 30,
+        capacity: 35,
+        facultyInvolved: ["Dr. Meera Gupta", "Prof. Suresh Yadav"],
+        syllabusPercentComplete: 60,
+        duration: "8 months",
+        startDate: "2024-02-01",
+        subjects: ["Essay", "General Studies", "Optional Subject", "Ethics"]
+      }
+    ]
+    setBatches(mockBatches)
+  }, [])
 
   if (selectedBatch) {
     return (

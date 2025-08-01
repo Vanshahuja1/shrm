@@ -13,9 +13,10 @@ interface TaskData {
 }
 
 // GET /api/employees/[id]/tasks - Get all tasks for employee
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const tasks = await getEmployeeTasks(params.id)
+    const { id } = await params
+    const tasks = await getEmployeeTasks(id)
     return NextResponse.json(tasks)
   } catch {
     return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 })
@@ -23,10 +24,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // POST /api/employees/[id]/tasks - Create new task
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
-    const newTask = await createTask(params.id, body)
+    const newTask = await createTask(id, body)
     return NextResponse.json(newTask, { status: 201 })
   } catch {
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 })

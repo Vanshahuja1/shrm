@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 // GET /api/employees/[id]/work-hours - Get work hours data
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const { searchParams } = new URL(request.url)

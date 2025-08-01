@@ -8,10 +8,11 @@ interface TaskResponseData {
 }
 
 // POST /api/employees/[id]/tasks/[taskId]/response - Submit task response
-export async function POST(request: NextRequest, { params }: { params: { id: string; taskId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string; taskId: string }> }) {
   try {
+    const { id, taskId } = await params
     const body = await request.json()
-    const response = await submitTaskResponse(params.id, params.taskId, body)
+    const response = await submitTaskResponse(id, taskId, body)
     return NextResponse.json(response, { status: 201 })
   } catch {
     return NextResponse.json({ error: "Failed to submit response" }, { status: 500 })
@@ -19,9 +20,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 }
 
 // GET /api/employees/[id]/tasks/[taskId]/response - Get task response
-export async function GET(request: NextRequest, { params }: { params: { id: string; taskId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string; taskId: string }> }) {
   try {
-    const response = await getTaskResponse(params.id, params.taskId)
+    const { id, taskId } = await params
+    const response = await getTaskResponse(id, taskId)
     return NextResponse.json(response)
   } catch {
     return NextResponse.json({ error: "Failed to fetch response" }, { status: 500 })

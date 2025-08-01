@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Mail } from "lucide-react";
+import { Plus} from "lucide-react";
 import { useParams } from "next/navigation";
 import type { Employee, Task } from "../types";
 import { useEffect, useState } from "react";
@@ -28,7 +28,6 @@ export default function TaskAssignment() {
     weightage: 5,
   });
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [managers, setManagers] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,15 +64,7 @@ export default function TaskAssignment() {
         );
         setEmployees(assignableEmployees);
         
-        // Filter only managers for "Assigned By" (not HR or other roles)
-        const managersOnly = allMembers.filter(
-          (member: Employee) => {
-            const role = member.role?.toLowerCase();
-            return role === "manager";
-          }
-        );
-        setManagers(managersOnly);
-                 const currentManager = allMembers.find((m: Employee) => m.id === managerId);
+        const currentManager = allMembers.find((m: Employee) => m.id === managerId);
         if (currentManager) {
           setFormData((prev) => ({
             ...prev,
@@ -83,7 +74,6 @@ export default function TaskAssignment() {
       } catch {
         // fallback: empty
         setEmployees([]);
-        setManagers([]);
       }
     };
     fetchOrgMembers();

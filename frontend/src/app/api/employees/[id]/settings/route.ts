@@ -14,9 +14,10 @@ interface EmployeeSettings {
 }
 
 // GET /api/employees/[id]/settings - Get employee settings
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const settings = await getEmployeeSettings(params.id)
+    const { id } = await params
+    const settings = await getEmployeeSettings(id)
     return NextResponse.json(settings)
   } catch {
     return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 })
@@ -24,10 +25,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/employees/[id]/settings - Update employee settings
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
-    const updatedSettings = await updateEmployeeSettings(params.id, body)
+    const updatedSettings = await updateEmployeeSettings(id, body)
     return NextResponse.json(updatedSettings)
   } catch {
     return NextResponse.json({ error: "Failed to update settings" }, { status: 500 })

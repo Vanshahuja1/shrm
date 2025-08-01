@@ -130,7 +130,7 @@ export default function NewTaskModal({ isOpen, onClose, onSubmit, managerInfo }:
                ))}
              </select>
              <p className="text-xs text-gray-500 mt-1">
-               Note: "Assigned By" will automatically be set to you (current manager)
+               Note: &quot;Assigned By&quot; will automatically be set to you (current manager)
              </p>
            </div>
           <div className="grid grid-cols-2 gap-4">

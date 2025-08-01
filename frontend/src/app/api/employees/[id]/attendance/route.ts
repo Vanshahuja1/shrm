@@ -1,13 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 // GET /api/employees/[id]/attendance - Get attendance records
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
 
-    const attendance = await getAttendanceRecords(params.id, startDate, endDate)
+    const attendance = await getAttendanceRecords(id, startDate, endDate)
     return NextResponse.json(attendance)
   } catch {
     return NextResponse.json({ error: "Failed to fetch attendance" }, { status: 500 })
@@ -15,10 +16,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // POST /api/employees/[id]/attendance/punch-in - Punch in
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
-    const punchIn = await recordPunchIn(params.id, body.timestamp)
+    const punchIn = await recordPunchIn(id, body.timestamp)
     return NextResponse.json(punchIn, { status: 201 })
   } catch {
     return NextResponse.json({ error: "Failed to punch in" }, { status: 500 })
