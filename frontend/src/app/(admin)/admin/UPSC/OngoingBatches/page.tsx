@@ -2,13 +2,29 @@
 import React, { useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowLeft, ChevronRight, Plus, Users, GraduationCap, BookOpen, Clock } from "lucide-react"
-import { Batch } from "../types/index"
+
+// Define the Batch type inline since it's imported from a relative path
+interface Batch {
+  id: string
+  name: string
+  type: "morning" | "evening"
+  startTime: string
+  endTime: string
+  fees: number
+  studentCount: number
+  capacity: number
+  facultyInvolved: string[]
+  syllabusPercentComplete: number
+  duration: string
+  startDate: string
+  subjects: string[]
+}
 
 interface OngoingBatchesProps {
   batches: Batch[]
 }
 
- const OngoingBatches = ({ batches }: OngoingBatchesProps) => {
+const OngoingBatches: React.FC<OngoingBatchesProps> = ({ batches }) => {
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null)
 
   if (selectedBatch) {

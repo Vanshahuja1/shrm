@@ -90,9 +90,9 @@ export default function IncrementNotificationPage({ employees , hrId }: { employ
   })
   const [sending, setSending] = useState(false)
 
-  const getCurrentEmployee = () => {
+  const getCurrentEmployee = useCallback(() => {
     return employees.find(emp => emp.email === emailForm.to)
-  }
+  }, [employees, emailForm.to])
 
   const applyTemplate = useCallback((templateId: string) => {
     const template = EMAIL_TEMPLATES.find(t => t.id === templateId)
@@ -117,7 +117,7 @@ export default function IncrementNotificationPage({ employees , hrId }: { employ
       subject: replacePlaceholders(template.subject),
       message: replacePlaceholders(template.message)
     }))
-  }, [emailForm.incrementPercent, emailForm.effectiveDate, selectedId, employees])
+  }, [emailForm.incrementPercent, emailForm.effectiveDate, getCurrentEmployee])
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId)

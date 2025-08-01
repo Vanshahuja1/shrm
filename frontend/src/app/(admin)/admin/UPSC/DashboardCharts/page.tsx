@@ -1,9 +1,10 @@
 "use client"
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { Users } from "lucide-react"
 import { DollarSign  } from "lucide-react"
 import { BarChart3, TrendingUp } from "lucide-react"
 import { LineChart, Bar, BarChart, PieChart as RechartsPieChart, Pie, Cell, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+
 // Dashboard Charts Component
 type MonthlyDataItem = {
   month: string;
@@ -11,11 +12,31 @@ type MonthlyDataItem = {
   growth: number;
 };
 
-interface DashboardChartsProps {
-  monthlyData: MonthlyDataItem[];
-}
+export default function DashboardChartsPage() {
+  // eslint-disable-next-line
+  const [monthlyData, setMonthlyData] = useState<MonthlyDataItem[]>([
+    { month: "Jan", revenue: 45000, growth: 12 },
+    { month: "Feb", revenue: 52000, growth: 15 },
+    { month: "Mar", revenue: 48000, growth: 8 },
+    { month: "Apr", revenue: 61000, growth: 22 },
+    { month: "May", revenue: 55000, growth: 18 },
+    { month: "Jun", revenue: 67000, growth: 25 },
+  ])
 
-const DashboardCharts: React.FC<DashboardChartsProps> = ({monthlyData}) => {
+  // You can fetch data here if needed
+  useEffect(() => {
+    // Fetch monthly data from API if needed
+    // const fetchData = async () => {
+    //   try {
+    //     const response = await fetch('/api/dashboard/monthly-data')
+    //     const data = await response.json()
+    //     setMonthlyData(data)
+    //   } catch (error) {
+    //     console.error('Error fetching monthly data:', error)
+    //   }
+    // }
+    // fetchData()
+  }, [])
   const pieData = [
     { name: "HR", value: 12, color: "#DC2626" },
     { name: "Sales", value: 10, color: "#059669" },
@@ -154,4 +175,3 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({monthlyData}) => {
     </div>
   )
 }
-export default DashboardCharts
