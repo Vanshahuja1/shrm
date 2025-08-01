@@ -9,6 +9,8 @@ import type {
   UpdateMemberPayload,
 } from "../../../../types";
 type Subordinate = { id: string | number; upperManager: string; name?: string };
+type Organization = { _id: string; name: string };
+type Department = { _id: string; name: string };
 
 export default function EditMemberPage() {
   const { id } = useParams();
@@ -22,6 +24,24 @@ export default function EditMemberPage() {
   const [allEmployees, setAllEmployees] = useState<OrganizationMember[]>([]);
   const [allInterns, setAllInterns] = useState<OrganizationMember[]>([]);
   const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+  const [departments, setDepartments] = useState<Department[]>([]);
+  
+  const fetchDepartments = async (orgId: string) => {
+    if (!orgId) {
+      setDepartments([]);
+      return;
+    }
+    try {
+      const deptsResponse = await axios.get(`/departments/org/${orgId}`);
+      const depts = deptsResponse.data.data || deptsResponse.data;
+      setDepartments(depts);
+    } catch (error) {
+      console.log("Error fetching departments:", error);
+      setDepartments([]);
+    }
+  };
   
 
   useEffect(() => {
@@ -49,6 +69,8 @@ export default function EditMemberPage() {
       try {
         const response = await axios.get("/IT/org-members/empInfo");
         const allMembers = response.data;
+        console.log("All members:", allMembers); // Debug log
+        
         setAllEmployees(
           allMembers.filter(
             (m: OrganizationMember) => m.role.toLowerCase() === "employee"
@@ -61,17 +83,48 @@ export default function EditMemberPage() {
         );
         setAllManagers(
           allMembers.filter(
-            (m: OrganizationMember) => m.role.toLowerCase() === "manager"
+            (m: OrganizationMember) => {
+              const role = m.role.toLowerCase();
+              return role === "manager" || role === "head";
+            }
           )
         );
+        
+        console.log("Filtered managers:", allMembers.filter(
+          (m: OrganizationMember) => {
+            const role = m.role.toLowerCase();
+            return role === "manager" || role === "head";
+          }
+        )); // Debug log
+        
       } catch {
         console.log("Error fetching organization members, using sample data");
       }
     };
 
+    const fetchOrganizations = async () => {
+      try {
+        const orgsResponse = await axios.get("/organizations");
+        const orgs = orgsResponse.data.data || orgsResponse.data;
+        setOrganizations(orgs);
+      } catch (error) {
+        console.log("Error fetching organizations:", error);
+      }
+    };
+
     fetchMember();
     fetchMembers();
+    fetchOrganizations();
   }, [id, router]);
+
+  // Fetch departments when selectedOrgId changes
+  useEffect(() => {
+    if (selectedOrgId) {
+      fetchDepartments(selectedOrgId);
+    } else {
+      setDepartments([]);
+    }
+  }, [selectedOrgId]);
 
   // Helper functions (single set only)
   const handleChange = <K extends keyof OrganizationMember>(
@@ -406,19 +459,47 @@ function Field({
               handleChange("role", val as OrganizationMember["role"])
             }
           />
-          <Field
+          <SelectField
+            label="Organization"
+            value={selectedOrgId}
+            options={[
+              { label: "Select Organization", value: "" },
+              ...organizations.map((org) => ({
+                label: org.name,
+                value: org._id,
+              }))
+            ]}
+            onChange={(val: string) => {
+              setSelectedOrgId(val);
+              // Clear department when org changes
+              handleChange("department", "");
+            }}
+          />
+          <SelectField
             label="Department"
             value={member.department}
-            onChange={(val) => handleChange("department", val as string)}
+            options={[
+              { label: "Select Department", value: "" },
+              ...departments.map((dept) => ({
+                label: dept.name,
+                value: dept.name,
+              }))
+            ]}
+            onChange={(val: string) =>
+              handleChange("department", val as string)
+            }
           />
           {["employee", "intern"].includes(member.role.toLowerCase()) && (
             <SelectField
               label="Manager"
               value={member.upperManager || ""}
-              options={allManagers.map((m) => ({
-                label: m.name,
-                value: String(m.id),
-              }))}
+              options={[
+                { label: "Select Manager", value: "" },
+                ...allManagers.map((m) => ({
+                  label: m.name,
+                  value: String(m.id),
+                }))
+              ]}
               onChange={(val: string) =>
                 setMember((prev) => {
                   if (!prev) return prev;

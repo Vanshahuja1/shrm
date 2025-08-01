@@ -99,7 +99,7 @@ process.on("uncaughtException", (err) => {
 // Start Server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`)
-  console.log(`🩺 Health Check: http://localhost:${PORT}/api/health`)
+  console.log(`🩺 Health Check: https://shrm-backend.onrender.com/api/health`)
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`)
 })
 

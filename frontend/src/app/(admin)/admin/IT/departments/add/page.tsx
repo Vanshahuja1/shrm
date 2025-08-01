@@ -40,7 +40,7 @@ export default function AddDepartmentPage() {
   // Fetch all organizations
   const fetchOrganizations = async () => {
     try {
-      const res = await axios.get("/api/organizations");
+      const res = await axios.get("/organizations");
       console.log("Organizations API response:", res.data);
       
       if (res.data && res.data.success && Array.isArray(res.data.data)) {
@@ -128,14 +128,6 @@ export default function AddDepartmentPage() {
   return (
     <div className="max-w-3xl mx-auto py-10 space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Add New Department</h1>
-
-      {/* Debug info */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <p className="text-sm text-yellow-800">
-          <strong>Debug:</strong> Organization ID: {formData.organizationId || "Not set"}
-        </p>
-      </div>
-
       {loading ? (
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
           <p className="text-center text-gray-600">Loading organization data...</p>

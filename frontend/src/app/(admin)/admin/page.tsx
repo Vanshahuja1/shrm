@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { ArrowRight, Code, GraduationCap, Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Loading from "../../components/Loading"; // Adjust path if needed
 import axios from "@/lib/axiosInstance";

@@ -226,14 +226,13 @@ export default function RegisterPage() {
       if (response.data.success) {
         const users = response.data.data
 
-        // Filter managers from the same department and all admins from the organization
+        // Filter only managers from the same department (excluding admins)
         const availableManagers = users.filter((user: Manager) => {
           // Handle potential leading space in departmentId field
           const userDeptId = user.departmentId || user[" departmentId"] || ""
           const isManager = user.role === "manager" && userDeptId === departmentId
-          const isAdmin = user.role === "admin" && user.organizationId === organizationId
           
-          return isManager || isAdmin
+          return isManager
         })
 
         setManagers(availableManagers)
@@ -1188,7 +1187,7 @@ export default function RegisterPage() {
                             : loadingManagers
                               ? "Loading managers..."
                               : managers.length === 0
-                                ? "No managers/admins available"
+                                ? "No managers available"
                                 : "Select Manager"}
                         </option>
                         {managers.map((manager) => (
@@ -1206,7 +1205,7 @@ export default function RegisterPage() {
                     )}
                     {formData.departmentId && managers.length === 0 && !loadingManagers && (
                       <p className="text-sm text-amber-600 mt-1">
-                        No managers or admins found for this department/organization.
+                        No managers found for this department.
                       </p>
                     )}
                   </div>

@@ -404,7 +404,7 @@ userSchema.virtual("OrgMemberInfo").get(function () {
     contactInfo: {
       email: this.email || "",
       phone: this.phone || "",
-      address: this.address || "",
+      address: this.currentAddress || "",
     },
     documents: {
       pan: this.panCard || "",

@@ -3,6 +3,7 @@ export interface OrganizationMember {
   name: string;
   role: "Manager" | "Employee" | "Intern" | "Head";
   department: string;
+  organizationId?: string;
   salary: number;
   projects: string[];
   experience: string | number;
@@ -27,6 +28,7 @@ export interface OrganizationMember {
     todayPresent: boolean;
   };
   upperManager?: string;
+  upperManagerName?: string;
 }
 
 export interface Project {

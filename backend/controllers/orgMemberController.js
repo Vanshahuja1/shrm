@@ -6,7 +6,38 @@ exports.getMembers = async (req, res) => {
     // Get orgName from params (with mergeParams) or from custom middleware
     const orgName = req.params.orgName || req.orgName;
     console.log("Searching for members with organizationName:", orgName);
-    const members = await User.find({ organizationName: new RegExp(`^${orgName}$`, "i"), });
+    
+    // Try multiple search strategies:
+    // 1. First try by organizationName field (legacy)
+    // 2. Then try by finding organization by name and using its ID
+    let members = await User.find({ 
+      organizationName: new RegExp(`^${orgName}$`, "i") 
+    });
+    
+    // If no members found, try to find by organization ID
+    if (members.length === 0) {
+      const Organization = require("../models/organizationModel");
+      const org = await Organization.findOne({ 
+        name: new RegExp(`^${orgName}$`, "i") 
+      });
+      
+      if (org) {
+        console.log("Found organization by name:", org.name, "ID:", org._id);
+        members = await User.find({ organizationId: org._id });
+      }
+    }
+    
+    // If still no members, try broader search (for debugging)
+    if (members.length === 0) {
+      console.log("No members found with specific criteria, showing all members for debugging:");
+      const allMembers = await User.find({});
+      console.log("All users in database:", allMembers.map(m => ({
+        name: m.name,
+        organizationName: m.organizationName,
+        organizationId: m.organizationId
+      })));
+    }
+    
     console.log("Found members count:", members.length);
 
     // Use employeeInfo virtual instead of non-existing Info
@@ -35,11 +66,27 @@ exports.getMembersRaw = async (req, res) => {
 exports.getEmpInfo = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
+    console.log("getEmpInfo - Searching for organization:", orgName);
 
-    const members = await User.find({
+    // Try multiple search strategies like in getMembers
+    let members = await User.find({
       organizationName: new RegExp(`^${orgName}$`, "i"),
     });
 
+    // If no members found, try to find by organization ID
+    if (members.length === 0) {
+      const Organization = require("../models/organizationModel");
+      const org = await Organization.findOne({ 
+        name: new RegExp(`^${orgName}$`, "i") 
+      });
+      
+      if (org) {
+        console.log("getEmpInfo - Found organization by name:", org.name, "ID:", org._id);
+        members = await User.find({ organizationId: org._id });
+      }
+    }
+
+    console.log("getEmpInfo - Found members count:", members.length);
     const empInfo = members.map((member) => member.employeeInfo);
 
     res.status(200).json(empInfo);
