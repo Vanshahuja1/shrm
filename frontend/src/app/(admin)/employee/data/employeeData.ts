@@ -8,7 +8,7 @@ import type {
   DataToAdmin,
   DataToManager,
   EmployeeSettings,
-} from "@/types/employee"
+} from "../types/employees"
 
 export const mockEmployeeInfo: EmployeeInfo = {
   id: "EMP001",

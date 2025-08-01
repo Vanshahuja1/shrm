@@ -1,4 +1,4 @@
-import type { Employee } from "@/types"
+import type { Employee } from "../types"
 
 export const calculatePerformanceMetrics = (employee: Employee) => {
   const tasksScore = (employee.tasksPerDay / 5) * 100

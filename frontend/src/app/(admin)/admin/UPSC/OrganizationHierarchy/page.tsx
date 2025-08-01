@@ -1,11 +1,80 @@
 "use client"
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Activity, Award } from "lucide-react"
 import { Users } from "lucide-react"
 import { Department } from "../types/index"
 
-const OrganizationHierarchy = ({ departments }: { departments: Department[] }) => {
+const OrganizationHierarchy = () => {
+  const [departments, setDepartments] = useState<Department[]>([])
+
+  useEffect(() => {
+    // Mock departments data - replace with actual API call
+    const mockDepartments: Department[] = [
+      {
+        id: 1,
+        name: "HR",
+        managers: 1,
+        coManagers: 2,
+        employees: 8,
+        interns: 1,
+        budget: 600000,
+        head: "Priya Sharma",
+        description: "Human Resources and Employee Management",
+        members: [],
+      },
+      {
+        id: 2,
+        name: "Sales",
+        managers: 1,
+        coManagers: 1,
+        employees: 7,
+        interns: 1,
+        budget: 450000,
+        head: "Ankit Jain",
+        description: "Student Admissions and Sales Operations",
+        members: [],
+      },
+      {
+        id: 3,
+        name: "Faculty",
+        managers: 1,
+        coManagers: 0,
+        employees: 30,
+        interns: 0,
+        budget: 2400000,
+        head: "Dr. Anil Kumar",
+        description: "Academic Faculty and Teaching Staff",
+        members: [],
+      },
+      {
+        id: 4,
+        name: "IT Support",
+        managers: 1,
+        coManagers: 1,
+        employees: 6,
+        interns: 2,
+        budget: 350000,
+        head: "Sunil Verma",
+        description: "Technical Support and IT Infrastructure",
+        members: [],
+      },
+      {
+        id: 5,
+        name: "Management",
+        managers: 1,
+        coManagers: 2,
+        employees: 10,
+        interns: 1,
+        budget: 700000,
+        head: "Shalini Bhatt",
+        description: "Operations and Strategic Management",
+        members: [],
+      },
+    ]
+    setDepartments(mockDepartments)
+  }, [])
+
   const hierarchy = {
     director: { name: "Director - One Aim UPSC", position: "Director/CEO" },
     departments: [

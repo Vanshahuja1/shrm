@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 // GET /api/employees/[id]/performance - Get performance metrics
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const period = searchParams.get("period") || "monthly"
 
-    const performance = await getPerformanceMetrics(params.id, period)
+    const performance = await getPerformanceMetrics(id, period)
     return NextResponse.json(performance)
   } catch {
     return NextResponse.json({ error: "Failed to fetch performance" }, { status: 500 })

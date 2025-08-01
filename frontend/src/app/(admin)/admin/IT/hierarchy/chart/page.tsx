@@ -39,7 +39,7 @@ export default function ChartSection() {
         const head =
           users.find(
             (user) =>
-              user.role.toLowerCase() === "admin" )
+              user.role.toLowerCase() === "admin" ) || null
 
         // Separate users by role
         const managers = users.filter((user) => user.role.toLowerCase() === "manager")

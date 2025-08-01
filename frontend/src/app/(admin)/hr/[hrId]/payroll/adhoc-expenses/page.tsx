@@ -15,7 +15,6 @@ import {
   Paper,
   Chip,
 } from '@mui/material'
-import Grid from '@mui/material/Grid'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -97,8 +96,8 @@ export default function AdhocExpensesPage() {
         </Typography>
       </div>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
           <Card>
             <CardHeader title="Status Breakdown" />
             <CardContent>
@@ -122,9 +121,9 @@ export default function AdhocExpensesPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
-        <Grid item xs={12} md={6}>
+        <div>
           <Card>
             <CardHeader title="Amount by Type" />
             <CardContent>
@@ -142,10 +141,11 @@ export default function AdhocExpensesPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
+      </div>
 
-        <Grid item xs={12}>
-          <Card>
+      <div className="mt-6">
+        <Card>
             <CardHeader title="Expense Details" />
             <CardContent>
               <TableContainer component={Paper}>
@@ -180,8 +180,7 @@ export default function AdhocExpensesPage() {
               </TableContainer>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
     </motion.div>
   )
 }

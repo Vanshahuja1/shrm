@@ -8,9 +8,10 @@ interface OvertimeRequestData {
 }
 
 // GET /api/employees/[id]/overtime - Get overtime requests
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const overtimeRequests = await getOvertimeRequests(params.id)
+    const { id } = await params
+    const overtimeRequests = await getOvertimeRequests(id)
     return NextResponse.json(overtimeRequests)
   } catch {
     return NextResponse.json({ error: "Failed to fetch overtime requests" }, { status: 500 })
@@ -18,10 +19,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // POST /api/employees/[id]/overtime - Submit overtime request
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
-    const overtimeRequest = await createOvertimeRequest(params.id, body)
+    const overtimeRequest = await createOvertimeRequest(id, body)
     return NextResponse.json(overtimeRequest, { status: 201 })
   } catch {
     return NextResponse.json({ error: "Failed to create overtime request" }, { status: 500 })

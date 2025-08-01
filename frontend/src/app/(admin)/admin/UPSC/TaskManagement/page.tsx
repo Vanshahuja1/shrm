@@ -1,16 +1,65 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ChevronRight, Clock } from "lucide-react"
 import { Task } from "../types/index"
 import { Target, CheckCircle, AlertCircle } from "lucide-react"
-// Task Management Component
-interface TaskManagementProps {
-  tasks: Task[]
-}
 
-const TaskManagement: React.FC<TaskManagementProps> = ({ tasks }) => {
+// Task Management Component
+const TaskManagement: React.FC = () => {
   const [filterType, setFilterType] = useState("all")
+  const [tasks, setTasks] = useState<Task[]>([])
+
+  useEffect(() => {
+    // Mock tasks data - replace with actual API call
+    const mockTasks: Task[] = [
+      {
+        id: 1,
+        title: "Review Q1 Performance Reports",
+        description: "Analyze and review all department performance reports for Q1",
+        assignedTo: "Priya Sharma",
+        assignedBy: "Director",
+        dueDate: "2024-04-15",
+        status: "pending",
+        priority: "high",
+        type: "manager-todo",
+      },
+      {
+        id: 2,
+        title: "Update Student Database",
+        description: "Update all student records with latest contact information",
+        assignedTo: "Rahul Sinha",
+        assignedBy: "Priya Sharma",
+        dueDate: "2024-04-10",
+        status: "in-progress",
+        priority: "medium",
+        type: "employee-task",
+      },
+      {
+        id: 3,
+        title: "Prepare Faculty Schedule",
+        description: "Create and finalize the faculty schedule for next month",
+        assignedTo: "Dr. Anil Kumar",
+        assignedBy: "Director",
+        dueDate: "2024-04-20",
+        status: "completed",
+        priority: "high",
+        type: "manager-todo",
+      },
+      {
+        id: 4,
+        title: "Organize Student Orientation",
+        description: "Plan and execute orientation program for new batch",
+        assignedTo: "Ankit Jain",
+        assignedBy: "Priya Sharma",
+        dueDate: "2024-04-25",
+        status: "pending",
+        priority: "low",
+        type: "employee-task",
+      },
+    ]
+    setTasks(mockTasks)
+  }, [])
 
   const filteredTasks = tasks.filter((task) => {
     if (filterType === "all") return true

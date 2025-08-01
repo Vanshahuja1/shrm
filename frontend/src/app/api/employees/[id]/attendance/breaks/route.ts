@@ -7,10 +7,11 @@ interface BreakData {
 }
 
 // POST /api/employees/[id]/attendance/breaks - Start/End break
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await request.json()
-    const breakRecord = await recordBreak(params.id, body)
+    const breakRecord = await recordBreak(id, body)
     return NextResponse.json(breakRecord, { status: 201 })
   } catch {
     return NextResponse.json({ error: "Failed to record break" }, { status: 500 })
@@ -18,10 +19,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 }
 
 // GET /api/employees/[id]/attendance/breaks - Get today's breaks
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Note: params.id should be used when implementing actual database queries
-    const breaks = await getTodayBreaks(params.id)
+    const { id } = await params
+    // Note: id should be used when implementing actual database queries
+    const breaks = await getTodayBreaks(id)
     return NextResponse.json(breaks)
   } catch {
     return NextResponse.json({ error: "Failed to fetch breaks" }, { status: 500 })

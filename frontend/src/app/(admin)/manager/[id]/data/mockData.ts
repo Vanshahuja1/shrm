@@ -1,4 +1,4 @@
-import type { ManagerInfo, Project, Task, AttendanceRecord, EmailNotification, AdminData } from "@/types"
+import type { ManagerInfo, Project, Task, AttendanceRecord, EmailNotification, AdminData } from "../types"
 
 export const mockManagerInfo: ManagerInfo = {
   id: "MGR001",
@@ -8,7 +8,7 @@ export const mockManagerInfo: ManagerInfo = {
   phone: "+1 (555) 123-4567",
   employees: [
     {
-      id: 1,
+      id: "1",
       name: "Alice Smith",
       department: "Frontend",
       position: "Senior Developer",
@@ -19,9 +19,10 @@ export const mockManagerInfo: ManagerInfo = {
       attendance: 95,
       tasksPerDay: 4.2,
       managerRating: 4.5,
+      role: "Senior Developer",
     },
     {
-      id: 2,
+      id: "2",
       name: "Bob Wilson",
       department: "Backend",
       position: "Lead Developer",
@@ -32,9 +33,10 @@ export const mockManagerInfo: ManagerInfo = {
       attendance: 92,
       tasksPerDay: 3.8,
       managerRating: 4.0,
+      role: "Lead Developer",
     },
     {
-      id: 3,
+      id: "3",
       name: "Carol Davis",
       department: "DevOps",
       position: "DevOps Engineer",
@@ -45,6 +47,7 @@ export const mockManagerInfo: ManagerInfo = {
       attendance: 98,
       tasksPerDay: 4.5,
       managerRating: 4.8,
+      role: "DevOps Engineer",
     },
   ],
   interns: [
@@ -152,8 +155,8 @@ export const mockTasks: Task[] = [
     id: 1,
     title: "Review Q2 Performance Reports",
     description: "Analyze and review quarterly performance metrics for all team members",
-    assignedTo: "Alice Smith",
-    assignedBy: "Sarah Johnson",
+    assignedTo: { id: "1", name: "Alice Smith" },
+    assignedBy: { id: "MGR001", name: "Sarah Johnson" },
     department: "Frontend",
     team: "Development Team A",
     priority: "high",
@@ -179,8 +182,8 @@ export const mockTasks: Task[] = [
     id: 2,
     title: "Update Security Protocols",
     description: "Review and update all security protocols for the development environment",
-    assignedTo: "Carol Davis",
-    assignedBy: "Sarah Johnson",
+    assignedTo: { id: "3", name: "Carol Davis" },
+    assignedBy: { id: "MGR001", name: "Sarah Johnson" },
     department: "DevOps",
     team: "Infrastructure Team",
     priority: "high",

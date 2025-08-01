@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import axios from "@/lib/axiosInstance"
 import { Mail, Clock,  Search } from "lucide-react"
 // import { Button } from "@/components/ui/button"
@@ -19,10 +20,18 @@ interface Email {
   status: 'sent' | 'pending' | 'failed'
   sentAt: string
 }
-export default function InboxPage({ hrId }: { hrId: string }) {
+export default function InboxPage() {
+  const params = useParams()
+  const [hrId, setHrId] = useState<string>('')
   const [emails, setEmails] = useState<Email[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    if (params.hrId) {
+      setHrId(params.hrId as string)
+    }
+  }, [params.hrId])
   
   const filteredEmails = emails.filter(email => 
     email.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -31,6 +40,8 @@ export default function InboxPage({ hrId }: { hrId: string }) {
   )
  useEffect(() => {
     const fetchSentEmails = async () => {
+      if (!hrId) return
+      
       try {
         const response = await axios.get(`/mail/get/${hrId}`)
         setEmails(response.data.emails)

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 
 interface Employee {
   id: number
@@ -11,18 +12,22 @@ interface Employee {
   role: string
 }
 
-// Mock data for demonstration
-const mockEmployees: Employee[] = [
-  { id: 1, name: "Sarah Johnson", email: "sarah.johnson@company.com", organization: "TechCorp", department: "Engineering", role: "Senior Developer" },
-  { id: 2, name: "Michael Chen", email: "michael.chen@company.com", organization: "TechCorp", department: "Marketing", role: "Marketing Manager" },
-  { id: 3, name: "Emily Rodriguez", email: "emily.rodriguez@company.com", organization: "InnovateX", department: "HR", role: "HR Specialist" },
-  { id: 4, name: "David Kim", email: "david.kim@company.com", organization: "TechCorp", department: "Finance", role: "Financial Analyst" },
-  { id: 5, name: "Lisa Anderson", email: "lisa.anderson@company.com", organization: "InnovateX", department: "Operations", role: "Operations Lead" }
-]
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function SalaryNotificationPage({ employees = mockEmployees, hrId = "hr001" }: { employees?: Employee[], hrId?: string }) {
+export default function SalaryNotificationPage() {
+  const params = useParams()
+  const [employees, setEmployees] = useState<Employee[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    // Mock employees data - replace with actual API call
+    const mockEmployees: Employee[] = [
+      { id: 1, name: "Sarah Johnson", email: "sarah.johnson@company.com", organization: "TechCorp", department: "Engineering", role: "Senior Developer" },
+      { id: 2, name: "Michael Chen", email: "michael.chen@company.com", organization: "TechCorp", department: "Marketing", role: "Marketing Manager" },
+      { id: 3, name: "Emily Rodriguez", email: "emily.rodriguez@company.com", organization: "InnovateX", department: "HR", role: "HR Specialist" },
+      { id: 4, name: "David Kim", email: "david.kim@company.com", organization: "TechCorp", department: "Finance", role: "Financial Analyst" },
+      { id: 5, name: "Lisa Anderson", email: "lisa.anderson@company.com", organization: "InnovateX", department: "Operations", role: "Operations Lead" }
+    ]
+    setEmployees(mockEmployees)
+  }, [params.hrId])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [amount, setAmount] = useState('')
   const [month, setMonth] = useState('')

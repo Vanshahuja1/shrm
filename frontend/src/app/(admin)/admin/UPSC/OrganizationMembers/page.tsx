@@ -1,23 +1,117 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ArrowLeft, Star, Mail, Phone } from "lucide-react"
 import { Faculty , Student} from "../types/index"
 
 // Organization Members Component
-interface OrganizationMembersProps {
-  faculties: Faculty[];
-  students: Student[];
-}
-
 type MemberType =
   | (Faculty & { type: "faculty" })
   | (Student & { type: "student" })
   | null
 
-const OrganizationMembers = ({ faculties, students }: OrganizationMembersProps) => {
+const OrganizationMembers = () => {
   const [activeTab, setActiveTab] = useState("faculties")
   const [selectedMember, setSelectedMember] = useState<MemberType>(null)
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [students, setStudents] = useState<Student[]>([])
+
+  useEffect(() => {
+    // Mock faculties data - replace with actual API call
+    const mockFaculties: Faculty[] = [
+      {
+        id: 1,
+        name: "Dr. Anil Kumar",
+        subjects: ["Public Administration", "Governance"],
+        batchAssignments: ["Morning Batch A", "Evening Batch A"],
+        averageClassesPerDay: 4,
+        qualifications: "PhD in Public Administration, MA Political Science",
+        experience: "12 years",
+        durationInOrganization: "4 years",
+        rating: 4.8,
+        students: 120,
+        salary: 80000,
+        joinDate: "2020-03-10",
+        email: "anil.kumar@oneaimupsc.com",
+        phone: "+91-9876543216",
+        performanceMetrics: {
+          attendanceScore: 96,
+          managerReviewRating: 4.8,
+          combinedPercentage: 95,
+        },
+      },
+      {
+        id: 2,
+        name: "Prof. Manish Grover",
+        subjects: ["History", "Geography"],
+        batchAssignments: ["Morning Batch B", "Evening Batch B"],
+        averageClassesPerDay: 3,
+        qualifications: "MA History, MA Geography",
+        experience: "8 years",
+        durationInOrganization: "3 years",
+        rating: 4.6,
+        students: 95,
+        salary: 60000,
+        joinDate: "2021-09-11",
+        email: "manish.grover@oneaimupsc.com",
+        phone: "+91-9876543217",
+        performanceMetrics: {
+          attendanceScore: 94,
+          managerReviewRating: 4.6,
+          combinedPercentage: 92,
+        },
+      },
+    ]
+
+    // Mock students data - replace with actual API call
+    const mockStudents: Student[] = [
+      {
+        id: 1,
+        name: "Arjun Patel",
+        batch: "Morning Batch A",
+        enrollmentDate: "2024-01-15",
+        phone: "+91-9876543300",
+        email: "arjun.patel@email.com",
+        feeStatus: "paid",
+        basicInfo: {
+          age: 24,
+          address: "Mumbai, Maharashtra",
+          parentContact: "+91-9876543301",
+          previousEducation: "B.Tech Computer Science",
+        },
+        performanceMetrics: {
+          attendanceScore: 92,
+          testScores: [85, 78, 90, 88],
+          assignmentCompletion: 95,
+          overallGrade: "A",
+        },
+      },
+      {
+        id: 2,
+        name: "Priya Singh",
+        batch: "Evening Batch A",
+        enrollmentDate: "2024-02-01",
+        phone: "+91-9876543302",
+        email: "priya.singh@email.com",
+        feeStatus: "pending",
+        basicInfo: {
+          age: 26,
+          address: "Delhi, India",
+          parentContact: "+91-9876543303",
+          previousEducation: "MA Economics",
+        },
+        performanceMetrics: {
+          attendanceScore: 88,
+          testScores: [82, 85, 79, 91],
+          assignmentCompletion: 90,
+          overallGrade: "B+",
+        },
+      },
+    ]
+
+    setFaculties(mockFaculties)
+    setStudents(mockStudents)
+  }, [])
 
   if (selectedMember) {
     if (selectedMember.type === "faculty") {

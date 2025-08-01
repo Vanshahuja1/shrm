@@ -64,7 +64,7 @@ export default function TaskAssignment() {
               member.department?.toLowerCase().includes("hr")
           )
         );
-        const currentManager = allMembers.find((m) => m.id === managerId);
+        const currentManager: Employee | undefined = allMembers.find((m: Employee) => m.id === managerId);
         if (currentManager) {
           setFormData((prev) => ({
             ...prev,
