@@ -2,46 +2,85 @@
 
 import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance";
-import { TaskList } from "../components/task-list";
-import type { EmployeeTask } from "../../types/employees";
 import { useParams } from "next/navigation";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
-export default function TasksPage() {
-  const { id } = useParams();
+interface TaskResponse {
+  employeeId: string;
+  response: string;
+  format: "text" | "document";
+  documents: string[];
+  submittedAt: string;
+  status: string;
+  rating: number | null;
+  reviewedBy: string | null;
+  reviewComments: string;
+}
+
+interface EmployeeTask {
+  _id: string;
+  title: string;
+  description: string;
+  priority: "high" | "medium" | "low";
+  status: string;
+  dueDate: string;
+  dueTime: string;
+  assignedTo: {
+    id: string;
+    name: string;
+  };
+  responses: TaskResponse[];
+}
+
+export default function TaskResponsesPage() {
+  const { id: employeeId } = useParams();
   const [tasks, setTasks] = useState<EmployeeTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newResponse, setNewResponse] = useState("");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTaskResponses = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(`/employees/${id}/tasks`);
+      const response = await axiosInstance.get(
+        `/task-responses/employee/${employeeId}`
+      );
       setTasks(response.data);
     } catch (error) {
-      console.error("Failed to fetch tasks:", error);
+      console.error("Failed to fetch task responses:", error);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [employeeId]);
 
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    fetchTaskResponses();
+  }, [fetchTaskResponses]);
 
-  const handleTaskResponse = async (
-    taskId: number,
+  const handleAddResponse = async (
+    taskId: string,
     response: string,
     format: "text" | "document",
-    documents?: string[]
+    documents: string[] = []
   ) => {
     try {
-      await axiosInstance.post(`/employees/${id}/tasks/${taskId}/response`, {
-        response,
-        format,
-        documents,
-      });
-      // Refresh tasks after successful response submission
-      fetchTasks();
+      await axiosInstance.post(
+        `/employees/${employeeId}/tasks/${taskId}/response`,
+        {
+          response,
+          format,
+          documents,
+        }
+      );
+      setNewResponse("");
+      setSelectedTaskId(null);
+      fetchTaskResponses();
     } catch (error) {
-      console.error("Failed to submit task response:", error);
+      console.error("Failed to add response:", error);
     }
   };
 
@@ -64,5 +103,67 @@ export default function TasksPage() {
     );
   }
 
-  return <TaskList tasks={tasks} onTaskResponse={handleTaskResponse} />;
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Task Responses</h2>
+      {tasks.map((task) => (
+        <div key={task._id} className="border border-gray-300 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-800">{task.title}</h3>
+          <p className="text-sm text-gray-600">{task.description}</p>
+          <p className="text-sm text-gray-600">Priority: {task.priority}</p>
+          <p className="text-sm text-gray-600">Status: {task.status}</p>
+          <p className="text-sm text-gray-600">
+            Due: {task.dueDate} at {task.dueTime}
+          </p>
+
+          <Accordion type="single" collapsible className="mt-4">
+            <AccordionItem value="responses">
+              <AccordionTrigger>Responses</AccordionTrigger>
+              <AccordionContent>
+                {task.responses.map((response, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-100 rounded-lg p-3 mt-2 border border-gray-300"
+                  >
+                    <p className="text-sm text-gray-800">{response.response}</p>
+                    <p className="text-xs text-gray-600">
+                      Submitted at:{" "}
+                      {new Date(response.submittedAt).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Status: {response.status}
+                    </p>
+                  </div>
+                ))}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          {selectedTaskId === task._id ? (
+            <div className="mt-4">
+              <textarea
+                value={newResponse}
+                onChange={(e) => setNewResponse(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2"
+                placeholder="Add your response here"
+              ></textarea>
+              <button
+                onClick={() => handleAddResponse(task._id, newResponse, "text")}
+                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
+              >
+                Submit Response
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSelectedTaskId(task._id)}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+            >
+              Add Response
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }

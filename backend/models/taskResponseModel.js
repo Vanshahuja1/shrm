@@ -68,8 +68,11 @@ const taskResponseSchema = new mongoose.Schema(
   },
 )
 
-taskResponseSchema.index({ taskId: 1, employeeId: 1 }, { unique: true })
+// Removed the unique constraint on taskId and employeeId to allow multiple responses for the same task by the same employee.
+// taskResponseSchema.index({ taskId: 1, employeeId: 1 }, { unique: true })
 taskResponseSchema.index({ employeeId: 1 })
 taskResponseSchema.index({ status: 1 })
 
-module.exports = mongoose.model("TaskResponse", taskResponseSchema)
+const TaskResponse = mongoose.model("TaskResponse", taskResponseSchema)
+
+module.exports = TaskResponse

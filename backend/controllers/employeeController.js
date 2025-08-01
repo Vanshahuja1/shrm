@@ -141,27 +141,16 @@ const submitTaskResponse = async (req, res) => {
     const { id, taskId } = req.params;
     const { response, format, documents } = req.body;
 
-    // Check if response already exists
-    let taskResponse = await TaskResponse.findOne({ taskId, employeeId: id });
-
-    if (taskResponse) {
-      // Update existing response
-      taskResponse.response = response;
-      taskResponse.format = format;
-      taskResponse.documents = documents || [];
-      taskResponse.submittedAt = new Date();
-      taskResponse.status = "submitted";
-    } else {
-      // Create new response
-      taskResponse = new TaskResponse({
-        taskId,
-        employeeId: id,
-        response,
-        format,
-        documents: documents || [],
-        status: "submitted",
-      });
-    }
+    // Create a new response
+    const taskResponse = new TaskResponse({
+      taskId,
+      employeeId: id,
+      response,
+      format,
+      documents: documents || [],
+      status: "submitted",
+      submittedAt: new Date(),
+    });
 
     await taskResponse.save();
 

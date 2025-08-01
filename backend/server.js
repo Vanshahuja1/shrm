@@ -13,7 +13,7 @@ const overviewRoutes = require("./routes/overviewRoutes")
 const mailRoutes = require("./routes/mailRoutes")
 const employeeRoutes = require("./routes/employeeRoutes")
 const uploadRoutes = require("./routes/uploadRoutes") // Update this
-
+const taskResponseRoutes = require("./routes/taskResponseRoutes") // Update this
 const app = express()
 const PORT = process.env.PORT || 5000
 
@@ -49,6 +49,7 @@ app.use("/api/reports", require("./routes/reportRoutes"))
 app.use("/api/employees", employeeRoutes)
 app.use("/api/upload", uploadRoutes)
 app.use("/api/files", require("./routes/fileRoutes"))
+app.use("/api/task-responses", taskResponseRoutes);
 app.use(
   "/api/:orgName/org-members",
   (req, res, next) => {
