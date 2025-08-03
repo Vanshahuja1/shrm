@@ -208,6 +208,7 @@ export default function LoginPage() {
           </motion.div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">SHRM Portal</h1>
           <p className="text-gray-600 text-sm">Employee Management System</p>
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">Member Login</h1>
         </motion.div>
 
         {/* Login form */}
@@ -234,7 +235,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Employee ID "
+                  placeholder="Member ID "
                   value={formData.id}
                   onChange={(e) => setFormData({ ...formData, id: e.target.value.toUpperCase() })}
                   onFocus={() => setFocusedField("id")}
@@ -323,8 +324,29 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          {/* Footer */}
+          {/* Registration Option */}
           <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            className="mt-6 text-center"
+          >
+            <p className="text-gray-600 text-sm mb-3">New to the organization?</p>
+            <motion.button
+              onClick={() => router.push('/register')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border border-gray-300 hover:border-red-300 transition-all duration-300 px-6 py-3 rounded-xl text-gray-700 hover:text-red-600 font-medium shadow-sm hover:shadow-md"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <User className="w-4 h-4" />
+                <span>Register as New Member</span>
+              </div>
+            </motion.button>
+          </motion.div>
+
+          {/* Footer */}
+          {/* <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
@@ -336,7 +358,7 @@ export default function LoginPage() {
                 support@enterprise.com
               </motion.span>
             </p>
-          </motion.div>
+          </motion.div> */}
         </motion.div>
       </motion.div>
 
