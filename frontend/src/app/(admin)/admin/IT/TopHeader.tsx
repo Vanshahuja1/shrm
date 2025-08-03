@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation"
 
 interface TopHeaderProps {
   setIsSidebarOpen: (open: boolean) => void
+  adminName?: string
 }
 
-export default function TopHeader({ setIsSidebarOpen }: TopHeaderProps) {
+export default function TopHeader({ setIsSidebarOpen, adminName }: TopHeaderProps) {
   const pathname = usePathname()
 
   const getPageTitle = (path: string) => {
@@ -34,7 +35,7 @@ export default function TopHeader({ setIsSidebarOpen }: TopHeaderProps) {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{getPageTitle(pathname)}</h1>
-            <p className="text-sm text-gray-500">Welcome back, manage your organization efficiently</p>
+            <p className="text-sm text-gray-500">Welcome back{adminName ? `, ${adminName}` : ""}</p>
           </div>
         </div>
       </div>

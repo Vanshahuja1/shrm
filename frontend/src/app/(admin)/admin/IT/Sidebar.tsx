@@ -20,9 +20,11 @@ import axios from "@/lib/axiosInstance"
 interface SidebarProps {
   isSidebarOpen: boolean
   setIsSidebarOpen: (open: boolean) => void
+  adminName?: string
+  organizationName?: string
 }
 
-export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
+export default function Sidebar({ isSidebarOpen, setIsSidebarOpen, adminName, organizationName }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [org, setOrg] = useState<Organization | null>(null)
@@ -64,8 +66,8 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
                   <Building className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">{org?.name}</h1>
-                  <p className="text-sm text-gray-500">Enterprise Dashboard</p>
+                  <h1 className="text-xl font-bold text-gray-900">{organizationName || org?.name || "Organization"}</h1>
+                  <p className="text-sm text-gray-500">Admin Dashboard</p>
                 </div>
               </div>
               <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-gray-600">
@@ -109,7 +111,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
                 A
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">Admin User</p>
+                <p className="font-semibold text-gray-900">{adminName || "Admin User"}</p>
                 <p className="text-sm text-gray-500">System Administrator</p>
               </div>
               <button className="text-gray-400 hover:text-blue-600">

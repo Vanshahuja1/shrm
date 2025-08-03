@@ -19,6 +19,7 @@ import {
   ImageIcon,
   AlertCircle,
   Mail,
+  Building2Icon,
 } from "lucide-react"
 import Link from "next/link"
 import axiosInstance from "@/lib/axiosInstance"
@@ -263,13 +264,14 @@ export default function RegisterPage() {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
-    const particles = Array.from({ length: 60 }, () => ({
+    // Enhanced particle system with red color scheme
+    const particles = Array.from({ length: 80 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       r: Math.random() * 2 + 0.5,
-      dx: (Math.random() - 0.5) * 0.6,
-      dy: (Math.random() - 0.5) * 0.6,
-      opacity: Math.random() * 0.4 + 0.2,
+      dx: (Math.random() - 0.5) * 0.8,
+      dy: (Math.random() - 0.5) * 0.8,
+      opacity: Math.random() * 0.5 + 0.2,
       pulse: Math.random() * 0.02 + 0.01,
     }))
 
@@ -277,14 +279,15 @@ export default function RegisterPage() {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+      // Draw connections between nearby particles
       particles.forEach((p1, i) => {
         particles.slice(i + 1).forEach((p2) => {
           const distance = Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
-          if (distance < 100) {
+          if (distance < 120) {
             ctx.beginPath()
             ctx.moveTo(p1.x, p1.y)
             ctx.lineTo(p2.x, p2.y)
-            ctx.strokeStyle = `rgba(34, 197, 94, ${0.1 * (1 - distance / 100)})`
+            ctx.strokeStyle = `rgba(220, 38, 38, ${0.15 * (1 - distance / 120)})`
             ctx.lineWidth = 0.5
             ctx.stroke()
           }
@@ -295,8 +298,8 @@ export default function RegisterPage() {
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
         p.opacity += p.pulse
-        if (p.opacity > 0.6 || p.opacity < 0.1) p.pulse *= -1
-        ctx.fillStyle = `rgba(34, 197, 94, ${p.opacity * 0.5})`
+        if (p.opacity > 0.8 || p.opacity < 0.1) p.pulse *= -1
+        ctx.fillStyle = `rgba(220, 38, 38, ${p.opacity * 0.6})`
         ctx.fill()
         p.x += p.dx
         p.y += p.dy
@@ -441,7 +444,12 @@ export default function RegisterPage() {
     if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required"
     if (!formData.currentAddress.trim()) errors.currentAddress = "Current address is required"
     if (!formData.joiningDate) errors.joiningDate = "Joining date is required"
-    if (!formData.upperManager) errors.upperManager = "Upper manager is required"
+    
+    // Only validate upperManager for roles other than admin and manager
+    if (!["admin", "manager"].includes(formData.role) && !formData.upperManager) {
+      errors.upperManager = "Upper manager is required"
+    }
+    
     if (!formData.salary) errors.salary = "Salary is required"
     if (!formData.experience) errors.experience = "Experience is required"
     if (!formData.adharCard.trim()) errors.adharCard = "Aadhar card number is required"
@@ -599,7 +607,7 @@ export default function RegisterPage() {
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div
-        className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-green-500 transition-colors ${
+        className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-red-500 transition-colors ${
           validationErrors[documentType] ? "border-red-300 bg-red-50" : "border-gray-300"
         }`}
       >
@@ -615,14 +623,14 @@ export default function RegisterPage() {
           id={documentType}
           disabled={uploadingFiles[documentType]}
         />
-        <label htmlFor={documentType} className="cursor-pointer text-green-600 hover:text-green-700 font-medium">
+        <label htmlFor={documentType} className="cursor-pointer text-red-600 hover:text-red-700 font-medium">
           {uploadingFiles[documentType] ? "Uploading..." : "Click to upload"}
         </label>
         <p className="text-xs text-gray-500 mt-1">
           {accept.includes("image") ? "PNG, JPG, PDF up to 5MB" : "PDF up to 10MB"}
         </p>
         {formData.documents[documentType] && (
-          <p className="text-xs text-green-600 mt-2">✓ File uploaded successfully</p>
+          <p className="text-xs text-red-600 mt-2">✓ File uploaded successfully</p>
         )}
         {validationErrors[documentType] && (
           <p className="text-xs text-red-500 mt-2 flex items-center justify-center gap-1">
@@ -636,37 +644,37 @@ export default function RegisterPage() {
 
   if (generatedCredentials && currentStep === 5) {
     return (
-      <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-green-100 text-gray-900 overflow-hidden">
+      <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900 overflow-hidden">
         <canvas ref={canvasRef} className="absolute inset-0 z-0" />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="z-10 w-full max-w-md mx-4"
         >
-          <motion.div className="bg-white/90 backdrop-blur-xl border border-green-200 rounded-3xl p-8 shadow-2xl shadow-green-900/10 text-center">
+          <motion.div className="bg-white/90 backdrop-blur-xl border border-red-200 rounded-3xl p-8 shadow-2xl shadow-red-900/10 text-center">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full mb-6"
+              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full mb-6"
             >
               <CheckCircle className="w-8 h-8 text-white" />
             </motion.div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Registration Successful!</h2>
             <p className="text-gray-600 mb-6">Your employee account has been created successfully.</p>
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
-              <h3 className="font-semibold text-green-800 mb-4">Your Login Credentials</h3>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+              <h3 className="font-semibold text-red-800 mb-4">Your Login Credentials</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-white rounded-lg">
                   <span className="text-gray-600">Employee ID:</span>
-                  <span className="font-mono font-bold text-green-700">{generatedCredentials.id}</span>
+                  <span className="font-mono font-bold text-red-700">{generatedCredentials.id}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-white rounded-lg">
                   <span className="text-gray-600">Password:</span>
-                  <span className="font-mono font-bold text-green-700">{generatedCredentials.password}</span>
+                  <span className="font-mono font-bold text-red-700">{generatedCredentials.password}</span>
                 </div>
               </div>
-              <p className="text-green-600 text-sm mt-4">
+              <p className="text-red-600 text-sm mt-4">
                 <strong>Important:</strong> Save these credentials securely. You can change your password after first
                 login.
               </p>
@@ -674,7 +682,7 @@ export default function RegisterPage() {
             <div className="space-y-3">
               <Link
                 href="/login"
-                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-green-500/25"
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-red-500/25"
               >
                 Login Now
               </Link>
@@ -696,7 +704,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-green-100 text-gray-900 overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900 overflow-hidden">
       <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
       {/* Background geometric shapes */}
@@ -707,10 +715,10 @@ export default function RegisterPage() {
             scale: [1, 1.1, 1],
           }}
           transition={{
-            rotate: { duration: 25, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
-            scale: { duration: 5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" },
+            rotate: { duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+            scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" },
           }}
-          className="absolute top-1/4 left-1/4 w-32 h-32 border border-green-500/30 rounded-full"
+          className="absolute top-1/4 left-1/4 w-32 h-32 border border-red-500/30 rounded-full"
         />
         <motion.div
           animate={{
@@ -718,10 +726,10 @@ export default function RegisterPage() {
             scale: [1, 0.9, 1],
           }}
           transition={{
-            rotate: { duration: 30, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
-            scale: { duration: 7, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" },
+            rotate: { duration: 25, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+            scale: { duration: 6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" },
           }}
-          className="absolute bottom-1/4 right-1/4 w-24 h-24 border border-green-400/40 rounded-lg"
+          className="absolute bottom-1/4 right-1/4 w-24 h-24 border border-red-400/40 rounded-lg"
         />
       </div>
 
@@ -745,21 +753,15 @@ export default function RegisterPage() {
         >
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mb-4 shadow-lg shadow-green-500/25"
+            className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl mb-4 shadow-lg shadow-red-500/25"
           >
-            <Users className="w-8 h-8 text-white" />
+            {/* <Users className="w-8 h-8 text-white" /> */}
+            <Building2Icon className="w-8 h-8 text-white" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Employee Registration</h1>
-          <p className="text-gray-600">Create a comprehensive employee profile</p>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 mt-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Login
-          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">SHRM Portal</h1>
+          <p className="text-gray-600">Employee Management System</p>
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">Member Registration</h1>
         </motion.div>
-
         {/* Progress Steps */}
         <div className="flex justify-center mb-8">
           <div className="flex items-center space-x-2">
@@ -767,7 +769,7 @@ export default function RegisterPage() {
               <div key={step} className="flex items-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-                    currentStep >= step ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"
+                    currentStep >= step ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {step}
@@ -775,7 +777,7 @@ export default function RegisterPage() {
                 {step < 4 && (
                   <div
                     className={`w-8 h-1 mx-1 transition-all duration-300 ${
-                      currentStep > step ? "bg-green-500" : "bg-gray-200"
+                      currentStep > step ? "bg-red-500" : "bg-gray-200"
                     }`}
                   />
                 )}
@@ -784,12 +786,13 @@ export default function RegisterPage() {
           </div>
         </div>
 
+
         {/* Form Container */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-3xl p-8 shadow-2xl shadow-gray-900/10"
+          className="bg-white/80 backdrop-blur-xl border border-red-200/50 rounded-3xl p-8 shadow-2xl shadow-red-900/10"
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Step 1: Basic Information */}
@@ -807,7 +810,7 @@ export default function RegisterPage() {
                         validationErrors.name
                           ? "border-red-500 bg-red-50"
                           : focusedField === "name"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -817,7 +820,7 @@ export default function RegisterPage() {
                             validationErrors.name
                               ? "text-red-400"
                               : focusedField === "name"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -853,7 +856,7 @@ export default function RegisterPage() {
                         validationErrors.email
                           ? "border-red-500 bg-red-50"
                           : focusedField === "email"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -863,7 +866,7 @@ export default function RegisterPage() {
                             validationErrors.email
                               ? "text-red-400"
                               : focusedField === "email"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -899,7 +902,7 @@ export default function RegisterPage() {
                         validationErrors.role
                           ? "border-red-500 bg-red-50"
                           : focusedField === "role"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -909,7 +912,7 @@ export default function RegisterPage() {
                             validationErrors.role
                               ? "text-red-400"
                               : focusedField === "role"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -950,7 +953,7 @@ export default function RegisterPage() {
                         validationErrors.organizationId
                           ? "border-red-500 bg-red-50"
                           : focusedField === "organizationId"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -960,7 +963,7 @@ export default function RegisterPage() {
                             validationErrors.organizationId
                               ? "text-red-400"
                               : focusedField === "organizationId"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1003,7 +1006,7 @@ export default function RegisterPage() {
                         validationErrors.departmentId
                           ? "border-red-500 bg-red-50"
                           : focusedField === "departmentId"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1013,7 +1016,7 @@ export default function RegisterPage() {
                             validationErrors.departmentId
                               ? "text-red-400"
                               : focusedField === "departmentId"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1077,10 +1080,22 @@ export default function RegisterPage() {
                   onClick={nextStep}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25"
+                  className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-red-500/25"
                 >
                   Continue to Personal Details
                 </motion.button>
+
+                {/* Login Link */}
+                <div className="text-center mt-4">
+                  <p className="text-gray-600 text-sm mb-2">Already a member?</p>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors font-medium"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Login
+                  </Link>
+                </div>
               </motion.div>
             )}
 
@@ -1099,7 +1114,7 @@ export default function RegisterPage() {
                         validationErrors.dateOfBirth
                           ? "border-red-500 bg-red-50"
                           : focusedField === "dateOfBirth"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1109,7 +1124,7 @@ export default function RegisterPage() {
                             validationErrors.dateOfBirth
                               ? "text-red-400"
                               : focusedField === "dateOfBirth"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1144,7 +1159,7 @@ export default function RegisterPage() {
                         validationErrors.joiningDate
                           ? "border-red-500 bg-red-50"
                           : focusedField === "joiningDate"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1154,7 +1169,7 @@ export default function RegisterPage() {
                             validationErrors.joiningDate
                               ? "text-red-400"
                               : focusedField === "joiningDate"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1179,69 +1194,71 @@ export default function RegisterPage() {
                     )}
                   </div>
 
-                  {/* Upper Manager - Now a dropdown */}
-                  <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upper Manager <span className="text-red-500">*</span>
-                    </label>
-                    <div
-                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
-                        validationErrors.upperManager
-                          ? "border-red-500 bg-red-50"
-                          : focusedField === "upperManager"
-                            ? "border-green-500 bg-green-50"
-                            : "border-gray-300 bg-gray-50/50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-center w-12 h-12">
-                        <User
-                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            validationErrors.upperManager
-                              ? "text-red-400"
-                              : focusedField === "upperManager"
-                                ? "text-green-400"
-                                : "text-gray-400"
-                          }`}
-                        />
-                      </div>
-                      <select
-                        name="upperManager"
-                        value={formData.upperManager}
-                        onChange={handleInputChange}
-                        onFocus={() => setFocusedField("upperManager")}
-                        onBlur={() => setFocusedField("")}
-                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 outline-none"
-                        disabled={isLoading || loadingManagers || !formData.departmentId}
-                        required
+                  {/* Upper Manager - Only show for employee, intern, and hr roles */}
+                  {formData.role && !["admin", "manager"].includes(formData.role) && (
+                    <div className="relative">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Upper Manager <span className="text-red-500">*</span>
+                      </label>
+                      <div
+                        className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                          validationErrors.upperManager
+                            ? "border-red-500 bg-red-50"
+                            : focusedField === "upperManager"
+                              ? "border-red-500 bg-red-50"
+                              : "border-gray-300 bg-gray-50/50"
+                        }`}
                       >
-                        <option value="">
-                          {!formData.departmentId
-                            ? "Select department first"
-                            : loadingManagers
-                              ? "Loading managers..."
-                              : managers.length === 0
-                                ? "No managers available"
-                                : "Select Manager"}
-                        </option>
-                        {managers.map((manager) => (
-                          <option key={manager._id} value={manager.id}>
-                            {manager.name} ({manager.role}) - {manager.id}
+                        <div className="flex items-center justify-center w-12 h-12">
+                          <User
+                            className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                              validationErrors.upperManager
+                                ? "text-red-400"
+                                : focusedField === "upperManager"
+                                  ? "text-red-400"
+                                  : "text-gray-400"
+                            }`}
+                          />
+                        </div>
+                        <select
+                          name="upperManager"
+                          value={formData.upperManager}
+                          onChange={handleInputChange}
+                          onFocus={() => setFocusedField("upperManager")}
+                          onBlur={() => setFocusedField("")}
+                          className="bg-transparent flex-1 px-4 py-3 text-gray-900 outline-none"
+                          disabled={isLoading || loadingManagers || !formData.departmentId}
+                          required
+                        >
+                          <option value="">
+                            {!formData.departmentId
+                              ? "Select department first"
+                              : loadingManagers
+                                ? "Loading managers..."
+                                : managers.length === 0
+                                  ? "No managers available"
+                                  : "Select Manager"}
                           </option>
-                        ))}
-                      </select>
+                          {managers.map((manager) => (
+                            <option key={manager._id} value={manager.id}>
+                              {manager.name} ({manager.role}) - {manager.id}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {validationErrors.upperManager && (
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {validationErrors.upperManager}
+                        </p>
+                      )}
+                      {formData.departmentId && managers.length === 0 && !loadingManagers && (
+                        <p className="text-sm text-amber-600 mt-1">
+                          No managers found for this department.
+                        </p>
+                      )}
                     </div>
-                    {validationErrors.upperManager && (
-                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {validationErrors.upperManager}
-                      </p>
-                    )}
-                    {formData.departmentId && managers.length === 0 && !loadingManagers && (
-                      <p className="text-sm text-amber-600 mt-1">
-                        No managers found for this department.
-                      </p>
-                    )}
-                  </div>
+                  )}
 
                   {/* Salary in Rupees */}
                   <div className="relative">
@@ -1253,7 +1270,7 @@ export default function RegisterPage() {
                         validationErrors.salary
                           ? "border-red-500 bg-red-50"
                           : focusedField === "salary"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1263,7 +1280,7 @@ export default function RegisterPage() {
                             validationErrors.salary
                               ? "text-red-400"
                               : focusedField === "salary"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1299,7 +1316,7 @@ export default function RegisterPage() {
                         validationErrors.experience
                           ? "border-red-500 bg-red-50"
                           : focusedField === "experience"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1309,7 +1326,7 @@ export default function RegisterPage() {
                             validationErrors.experience
                               ? "text-red-400"
                               : focusedField === "experience"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1338,7 +1355,7 @@ export default function RegisterPage() {
                   {/* Profile Photo Upload */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-red-500 transition-colors">
                       <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <input
                         type="file"
@@ -1351,11 +1368,11 @@ export default function RegisterPage() {
                         id="photo"
                         disabled={uploadingFiles.photo}
                       />
-                      <label htmlFor="photo" className="cursor-pointer text-green-600 hover:text-green-700 font-medium">
+                      <label htmlFor="photo" className="cursor-pointer text-red-600 hover:text-red-700 font-medium">
                         {uploadingFiles.photo ? "Uploading..." : "Click to upload photo"}
                       </label>
                       <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-                      {formData.photo && <p className="text-xs text-green-600 mt-2">✓ Photo uploaded successfully</p>}
+                      {formData.photo && <p className="text-xs text-red-600 mt-2">✓ Photo uploaded successfully</p>}
                     </div>
                   </div>
 
@@ -1369,7 +1386,7 @@ export default function RegisterPage() {
                         validationErrors.adharCard
                           ? "border-red-500 bg-red-50"
                           : focusedField === "adharCard"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1379,7 +1396,7 @@ export default function RegisterPage() {
                             validationErrors.adharCard
                               ? "text-red-400"
                               : focusedField === "adharCard"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1415,7 +1432,7 @@ export default function RegisterPage() {
                         validationErrors.panCard
                           ? "border-red-500 bg-red-50"
                           : focusedField === "panCard"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1425,7 +1442,7 @@ export default function RegisterPage() {
                             validationErrors.panCard
                               ? "text-red-400"
                               : focusedField === "panCard"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1462,7 +1479,7 @@ export default function RegisterPage() {
                       validationErrors.currentAddress
                         ? "border-red-500 bg-red-50"
                         : focusedField === "currentAddress"
-                          ? "border-green-500 bg-green-50"
+                          ? "border-red-500 bg-red-50"
                           : "border-gray-300 bg-gray-50/50"
                     }`}
                   >
@@ -1472,7 +1489,7 @@ export default function RegisterPage() {
                           validationErrors.currentAddress
                             ? "text-red-400"
                             : focusedField === "currentAddress"
-                              ? "text-green-400"
+                              ? "text-red-400"
                               : "text-gray-400"
                         }`}
                       />
@@ -1528,7 +1545,7 @@ export default function RegisterPage() {
                     onClick={nextStep}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25"
+                    className="flex-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-red-500/25"
                   >
                     Continue to Bank Details
                   </motion.button>
@@ -1551,7 +1568,7 @@ export default function RegisterPage() {
                         validationErrors["bankDetails.accountHolder"]
                           ? "border-red-500 bg-red-50"
                           : focusedField === "bankDetails.accountHolder"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1561,7 +1578,7 @@ export default function RegisterPage() {
                             validationErrors["bankDetails.accountHolder"]
                               ? "text-red-400"
                               : focusedField === "bankDetails.accountHolder"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1597,7 +1614,7 @@ export default function RegisterPage() {
                         validationErrors["bankDetails.accountNumber"]
                           ? "border-red-500 bg-red-50"
                           : focusedField === "bankDetails.accountNumber"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1607,7 +1624,7 @@ export default function RegisterPage() {
                             validationErrors["bankDetails.accountNumber"]
                               ? "text-red-400"
                               : focusedField === "bankDetails.accountNumber"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1643,7 +1660,7 @@ export default function RegisterPage() {
                         validationErrors["bankDetails.ifsc"]
                           ? "border-red-500 bg-red-50"
                           : focusedField === "bankDetails.ifsc"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1653,7 +1670,7 @@ export default function RegisterPage() {
                             validationErrors["bankDetails.ifsc"]
                               ? "text-red-400"
                               : focusedField === "bankDetails.ifsc"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1689,7 +1706,7 @@ export default function RegisterPage() {
                         validationErrors["bankDetails.branch"]
                           ? "border-red-500 bg-red-50"
                           : focusedField === "bankDetails.branch"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -1699,7 +1716,7 @@ export default function RegisterPage() {
                             validationErrors["bankDetails.branch"]
                               ? "text-red-400"
                               : focusedField === "bankDetails.branch"
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         />
@@ -1731,14 +1748,14 @@ export default function RegisterPage() {
                     <div
                       className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
                         focusedField === "bankDetails.accountType"
-                          ? "border-green-500 bg-green-50"
+                          ? "border-red-500 bg-red-50"
                           : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
                       <div className="flex items-center justify-center w-12 h-12">
                         <Banknote
                           className={`w-5 h-5 transition-colors duration-500 ease-out ${
-                            focusedField === "bankDetails.accountType" ? "text-green-400" : "text-gray-400"
+                            focusedField === "bankDetails.accountType" ? "text-red-400" : "text-gray-400"
                           }`}
                         />
                       </div>
@@ -1788,7 +1805,7 @@ export default function RegisterPage() {
                     onClick={nextStep}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25"
+                    className="flex-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-red-500/25"
                   >
                     Continue to Documents
                   </motion.button>
@@ -1874,7 +1891,7 @@ export default function RegisterPage() {
                     disabled={isLoading}
                     whileHover={{ scale: isLoading ? 1 : 1.02 }}
                     whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                    className="flex-1 relative overflow-hidden bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 relative overflow-hidden bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-500 ease-out px-6 py-4 rounded-xl text-white font-semibold shadow-lg shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
@@ -1896,7 +1913,7 @@ export default function RegisterPage() {
       </motion.div>
 
       {/* Bottom decorative elements */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-green-500/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500/30 to-transparent" />
     </div>
   )
 }

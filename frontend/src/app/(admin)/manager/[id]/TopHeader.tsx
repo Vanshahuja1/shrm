@@ -1,6 +1,6 @@
 "use client"
 
-import { Menu, Bell, Settings } from "lucide-react"
+import { Menu} from "lucide-react"
 import { usePathname, useParams } from "next/navigation"
 import { useEffect, useState } from "react";
 import axios from "@/lib/axiosInstance";
@@ -55,7 +55,7 @@ export default function TopHeader({ setIsSidebarOpen, managerName }: TopHeaderPr
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        {/* <div className="flex items-center gap-4">
           <button className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 relative">
             <Bell size={20} />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full"></span>
@@ -63,7 +63,7 @@ export default function TopHeader({ setIsSidebarOpen, managerName }: TopHeaderPr
           <button className="p-2 rounded-lg text-gray-600 hover:bg-gray-100">
             <Settings size={20} />
           </button>
-        </div>
+        </div> */}
       </div>
     </header>
   );

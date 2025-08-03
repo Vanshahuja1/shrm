@@ -9,9 +9,10 @@ interface SidebarProps {
   setIsSidebarOpen: (open: boolean) => void
   managerName?: string
   managerId: string
+  organizationName?: string
 }
 
-export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName, managerId}: SidebarProps) {
+export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName, managerId, organizationName}: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
 
@@ -45,8 +46,8 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName,
                   <Building className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">One Aim IT Solutions</h1>
-                  <p className="text-sm text-gray-500">Enterprise Dashboard</p>
+                  <h1 className="text-xl font-bold text-gray-900">{organizationName || "Organization"}</h1>
+                  <p className="text-sm text-gray-500">Manager Dashboard</p>
                 </div>
               </div>
               <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-gray-600">
@@ -86,7 +87,8 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName,
                 M
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">{managerName ? managerName : "Manager"}</p>
+                <p className="font-semibold text-gray-900">{managerName || "Manager"}</p>
+                <p className="text-sm text-gray-500">Manager</p>
               </div>
               <button className="text-gray-400 hover:text-red-600">
                 <LogOut size={18} />
