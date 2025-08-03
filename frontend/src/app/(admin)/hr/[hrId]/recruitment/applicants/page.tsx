@@ -5,74 +5,42 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import axios from "@/lib/axiosInstance";
+import { format } from "date-fns";
 
-const fallbackData = [
-  {
-    id: 1,
-    name: "Cameron Riley",
-    email: "cameron@acr.com",
-    jobTitle: "Process Associate",
-    appliedDate: "XX/XX/XXXX",
-    status: "Hired",
-  },
-  {
-    id: 2,
-    name: "Bev Davis",
-    email: "davis@fgl.com",
-    jobTitle: "Executive Officer",
-    appliedDate: "XX/XX/XXXX",
-    status: "Applications",
-  },
-  {
-    id: 3,
-    name: "Noel Jones",
-    email: "noel@dp.com",
-    jobTitle: "Analyst",
-    appliedDate: "XX/XX/XXXX",
-    status: "Application",
-  },
-  {
-    id: 4,
-    name: "Robin Macdonald",
-    email: "Text Here",
-    jobTitle: "Text Here",
-    appliedDate: "XX/XX/XXXX",
-    status: "Text Here",
-  },
-  {
-    id: 5,
-    name: "River Henderson",
-    email: "Text Here",
-    jobTitle: "Text Here",
-    appliedDate: "XX/XX/XXXX",
-    status: "Text Here",
-  },
-];
+type Candidate = {
+  _id: string;
+  name: string;
+  email: string;
+  appliedDate: string;
+  jobTitle: string;
+  status: string;
+};
 
-export default function ApplicantsPage() {
-  const [applicants, setApplicants] = useState(fallbackData);
+export default function CandidatesPage() {
+  const { hrId } = useParams();
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchApplicants() {
+    async function fetchCandidates() {
       try {
-        const res = await fetch("/api/applicants");
-        const data = await res.json();
-        setApplicants(data);
+        const res = await axios.get(`/recruitment/candidates`);
+
+        setCandidates(res.data);
       } catch (err) {
-        console.log(err)
-        setApplicants(fallbackData);
+        console.log(err);
       }
     }
-    fetchApplicants();
+    fetchCandidates();
   }, []);
 
   return (
     <div className="min-h-screen bg-neutral p-6">
       <div className="text-sm text-accent mb-4">
         <Link
-          href="/hr/recruitment"
+          href={`/hr/${hrId}/recruitment`}
           className="inline-flex items-center gap-1 text-sm font-medium text-primary underline "
         >
           ← Back to Recruitment Dashboard
@@ -84,6 +52,11 @@ export default function ApplicantsPage() {
           <CardTitle className="text-lg font-semibold text-contrast">
             Application Details
           </CardTitle>
+          <CardTitle
+          onClick={() => router.push(`/hr/${hrId}/recruitment/applicants/add`)}
+          className="text-sm text-muted-foreground cursor-pointer">
+            Add new 
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -91,7 +64,7 @@ export default function ApplicantsPage() {
               <thead>
                 <tr className="bg-primary text-white">
                   <th className="px-4 py-2 text-left w-12">S.No.</th>
-                  <th className="px-4 py-2 text-left pl-6">Application Name</th>
+                  <th className="px-4 py-2 text-left pl-6">Applicant</th>
                   <th className="px-4 py-2 text-left">Email</th>
                   <th className="px-4 py-2 text-left">Job Title</th>
                   <th className="px-4 py-2 text-left">Job Applied Date</th>
@@ -99,32 +72,36 @@ export default function ApplicantsPage() {
                 </tr>
               </thead>
               <tbody>
-                {applicants.map((applicant, index) => (
+                {candidates.map((candidate, index) => (
                   <motion.tr
                     key={index}
                     className="cursor-pointer hover:bg-[#FDD0C4] transition-colors"
                     whileHover={{ y: -2 }}
                     onClick={() =>
-                      router.push(`/hr/recruitment/applicants/${applicant.id}`)
+                      router.push(
+                        `/hr/${hrId}/recruitment/applicants/${candidate._id}`
+                      )
                     }
                   >
                     <td className="px-4 py-2 border-b text-contrast font-medium">
                       {index + 1}
                     </td>
                     <td className="px-4 py-2 border-b text-contrast">
-                      {applicant.name}
+                      {candidate.name}
                     </td>
                     <td className="px-4 py-2 border-b text-contrast">
-                      {applicant.email}
+                      {candidate.email}
                     </td>
                     <td className="px-4 py-2 border-b text-contrast">
-                      {applicant.jobTitle}
+                      {candidate.jobTitle}
                     </td>
                     <td className="px-4 py-2 border-b text-contrast">
-                      {applicant.appliedDate}
+                      {candidate.appliedDate
+                        ? format(new Date(candidate.appliedDate), "dd MMM yyyy")
+                        : "-"}
                     </td>
                     <td className="px-4 py-2 border-b">
-                      <Badge variant="secondary">{applicant.status}</Badge>
+                      <Badge variant="secondary">{candidate.status}</Badge>
                     </td>
                   </motion.tr>
                 ))}

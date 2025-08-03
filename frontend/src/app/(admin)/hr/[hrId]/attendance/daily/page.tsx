@@ -2,51 +2,128 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Clock, User, Building, Phone, Mail, Calendar, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 
-interface AttendanceRecord {
+// Mock axios for demo - replace with your actual axios instance
+import axios from '@/lib/axiosInstance'
+import { useParams } from 'next/navigation'
+
+interface EmployeeInfo {
+  id: string
+  email: string
+  phone: string
   name: string
+  role: string
   department: string
-  present: number
-  absent: number
-  leaves: number
+  organization: string
+  salary: number
+  contactInfo: {
+    email: string
+    phone: string
+    address: string
+  }
 }
 
-function getPreviousMonthName(): string {
-  const now = new Date()
-  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1)
-  return prevMonth.toLocaleString('default', { month: 'long', year: 'numeric' })
+interface AttendanceInfo {
+  date: string
+  punchIn: string
+  punchOut: string | null
+  totalHours: number
+  status: string
+}
+
+interface EmployeeAttendanceRecord {
+  employeeInfo: EmployeeInfo
+  attendance: AttendanceInfo | null
+}
+
+function getStatusIcon(status: string) {
+  switch (status) {
+    case 'present':
+      return <CheckCircle className="w-5 h-5 text-green-500" />
+    case 'absent':
+      return <XCircle className="w-5 h-5 text-red-500" />
+    default:
+      return <AlertCircle className="w-5 h-5 text-yellow-500" />
+  }
+}
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'present':
+      return 'bg-green-50 border-green-200 text-green-800'
+    case 'absent':
+      return 'bg-red-50 border-red-200 text-red-800'
+    default:
+      return 'bg-yellow-50 border-yellow-200 text-yellow-800'
+  }
 }
 
 function getToday(): string {
   return new Date().toLocaleDateString(undefined, {
-    weekday: 'short',
+    weekday: 'long',
     day: 'numeric',
-    month: 'short',
+    month: 'long',
     year: 'numeric',
   })
 }
 
+function formatTime(time: string | null): string {
+  if (!time) return '--:--'
+  return time
+}
+
+function formatHours(hours: number): string {
+  if (hours === 0) return '--'
+  return `${hours.toFixed(1)}h`
+}
+
 export default function DailyAttendance() {
-  const [data, setData] = useState<AttendanceRecord[] | null>(null)
+  const [data, setData] = useState<EmployeeAttendanceRecord[] | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Mock hrId - replace with actual useParams
+  const hrId = useParams().hrId || 'HRM101'
 
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const res = await fetch('/api/attendance/daily')
-        const data: AttendanceRecord[] = await res.json()
-        setData(data)
-      } catch {
-        setData([
-          { name: 'Alice Sharma', department: 'Engineering', present: 22, absent: 2, leaves: 3 },
-          { name: 'Bob Verma', department: 'Marketing', present: 20, absent: 4, leaves: 2 },
-          { name: 'Neha Reddy', department: 'HR', present: 21, absent: 3, leaves: 4 },
-          { name: 'Vikram Patel', department: 'Sales', present: 23, absent: 1, leaves: 1 },
-          { name: 'Sara Ali', department: 'Finance', present: 19, absent: 5, leaves: 5 }
-        ])
+        setLoading(true)
+        const res = await axios.get(`/attendance/hr/${hrId}`)
+        setData(res.data.attendanceRecords || [])
+      } catch (error) {
+        console.error('Failed to fetch attendance data:', error)
+      } finally {
+        setLoading(false)
       }
+      console.log('Fetched attendance data:', data);
     }
     fetchAttendance()
-  }, [])
+  }, [hrId])
+
+  // Calculate summary statistics
+  const summary = data ? {
+    total: data.length,
+    present: data.filter(record => record.attendance?.status === 'present').length,
+    absent: data.filter(record => !record.attendance || record.attendance.status === 'absent').length,
+    onLeave: data.filter(record => record.attendance?.status === 'leave').length
+  } : null
+
+  if (loading) {
+    return (
+      <div className="bg-white border rounded-xl p-6 shadow-sm text-gray-800">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-20 bg-gray-100 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <motion.div
@@ -55,82 +132,118 @@ export default function DailyAttendance() {
       transition={{ duration: 0.6 }}
       className="bg-white border rounded-xl p-6 shadow-sm text-gray-800"
     >
-      <h2 className="text-lg font-semibold mb-2">📅 Daily Attendance</h2>
+      <div className="flex items-center gap-2 mb-2">
+        <Calendar className="w-5 h-5 text-blue-600" />
+        <h2 className="text-lg font-semibold">Daily Attendance</h2>
+      </div>
       <p className="text-sm text-gray-600 mb-6">
-        Overview as of <span className="font-medium">{getToday()}</span>
+        Overview for <span className="font-medium">{getToday()}</span>
       </p>
 
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        transition={{ type: 'spring', stiffness: 160 }}
-        className="mb-6 border border-red-100 rounded-lg p-4 bg-red-50/40"
-      >
-        <p className="font-semibold text-red-600 mb-1">Today’s Snapshot</p>
-        <div className="text-sm text-gray-700">
-          ✔️ Present: <span className="font-medium text-blue-600">45</span> | ❌ Absent:{' '}
-          <span className="font-medium text-red-600">6</span> | 📋 Leaves:{' '}
-          <span className="font-medium text-purple-600">2</span>
-        </div>
-      </motion.div>
-
-      {data && (
+      {/* Summary Cards */}
+      {summary && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="grid grid-cols-4 gap-4 mb-6"
         >
-          <h3 className="text-md font-semibold text-gray-700 mb-3">
-            📊 Monthly Summary — <span className="text-red-600">{getPreviousMonthName()}</span>
-          </h3>
-
-          <div className="block sm:hidden space-y-4">
-            {data.map((emp, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ scale: 1.01 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-                className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm shadow-sm"
-              >
-                <p><span className="font-semibold">Name:</span> {emp.name}</p>
-                <p><span className="font-semibold">Department:</span> {emp.department}</p>
-                <p><span className="text-blue-600 font-medium">Present:</span> {emp.present}</p>
-                <p><span className="text-red-600 font-medium">Absent:</span> {emp.absent}</p>
-                <p><span className="text-purple-600 font-medium">Leaves:</span> {emp.leaves}</p>
-              </motion.div>
-            ))}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="text-2xl font-bold text-blue-600">{summary.total}</div>
+            <div className="text-xs text-blue-700">Total</div>
           </div>
-
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="min-w-full text-sm border rounded-lg overflow-hidden">
-              <thead className="bg-red-50 text-gray-800">
-                <tr>
-                  <th className="text-left px-4 py-2 border-b">Name</th>
-                  <th className="text-left px-4 py-2 border-b">Department</th>
-                  <th className="text-left px-4 py-2 border-b text-blue-600">Present</th>
-                  <th className="text-left px-4 py-2 border-b text-red-600">Absent</th>
-                  <th className="text-left px-4 py-2 border-b text-purple-600">Leaves</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((emp, i) => (
-                  <motion.tr
-                    key={i}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-                    className="border-t hover:bg-red-50"
-                  >
-                    <td className="px-4 py-2 border-b">{emp.name}</td>
-                    <td className="px-4 py-2 border-b">{emp.department}</td>
-                    <td className="px-4 py-2 border-b text-blue-600 font-medium">{emp.present}</td>
-                    <td className="px-4 py-2 border-b text-red-600 font-medium">{emp.absent}</td>
-                    <td className="px-4 py-2 border-b text-purple-600 font-medium">{emp.leaves}</td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="text-2xl font-bold text-green-600">{summary.present}</div>
+            <div className="text-xs text-green-700">Present</div>
           </div>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="text-2xl font-bold text-red-600">{summary.absent}</div>
+            <div className="text-xs text-red-700">Absent</div>
+          </div>
+         
         </motion.div>
       )}
+
+      {/* Employee Records */}
+      <div className="space-y-4">
+        {data?.map((record, index) => {
+          const status = record.attendance?.status || 'absent'
+          const isPresent = record.attendance !== null && status === 'present'
+          
+          return (
+            <motion.div
+              key={record.employeeInfo.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 * index }}
+              whileHover={{ scale: 1.01 }}
+              className={`border rounded-lg p-4 transition-all ${getStatusColor(status)}`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    {getStatusIcon(status)}
+                    <div>
+                      <h3 className="font-semibold text-lg">{record.employeeInfo.name}</h3>
+                      <p className="text-sm opacity-75">
+                        {record.employeeInfo.role} • {record.employeeInfo.department}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      <span>{record.employeeInfo.id}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      <span className="truncate">{record.employeeInfo.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      <span>{record.employeeInfo.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Building className="w-4 h-4" />
+                      <span>{record.employeeInfo.organization}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="text-right">
+                  {record.attendance ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="w-4 h-4" />
+                        <span>In: {formatTime(record.attendance.punchIn)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="w-4 h-4" />
+                        <span>Out: {formatTime(record.attendance.punchOut)}</span>
+                      </div>
+                      <div className="text-sm font-medium">
+                        Hours: {formatHours(record.attendance.totalHours)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-medium text-red-600">
+                      Marked Absent
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {!data || data.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <AlertCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+          <p>No attendance records found for today</p>
+        </div>
+      ) : null}
     </motion.div>
   )
 }

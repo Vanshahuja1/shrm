@@ -7,7 +7,7 @@ import MonthlyCalendar from './monthly/page'
 import LeaveManagement from './leave/page'
 
 export default function AttendancePage() {
-  const [tab, setTab] = useState<'refresh' | 'monthly' | 'leave'>('refresh')
+  const [tab, setTab] = useState<'refresh' | 'monthly' >('refresh')
 
   return (
     <motion.div
@@ -21,7 +21,7 @@ export default function AttendancePage() {
       </h1>
 
       <div className="flex flex-wrap gap-3 sm:gap-4 mb-6">
-        {['refresh', 'monthly', 'leave'].map((key) => (
+        {['refresh', 'monthly'].map((key) => (
           <button
             key={key}
             onClick={() => setTab(key as typeof tab)}
@@ -33,7 +33,7 @@ export default function AttendancePage() {
           >
             {key === 'refresh' && '🔁 Daily Attendance'}
             {key === 'monthly' && '📅 Monthly Attendance'}
-            {key === 'leave' && '📤 Leave Management'}
+            {/* {key === 'leave' && '📤 Leave Management'} */}
           </button>
         ))}
       </div>
@@ -47,7 +47,7 @@ export default function AttendancePage() {
       >
         {tab === 'refresh' && <DailyAttendance />}
         {tab === 'monthly' && <MonthlyCalendar />}
-        {tab === 'leave' && <LeaveManagement />}
+        {/* {tab === 'leave' && <LeaveManagement />} */}
       </motion.div>
     </motion.div>
   )

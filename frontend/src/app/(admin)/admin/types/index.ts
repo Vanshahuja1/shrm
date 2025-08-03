@@ -5,7 +5,7 @@ export interface OrganizationMember {
   department: string
   salary: number
   projects: string[]
-  experience: string | number
+  experience:  number
   contactInfo: {
     email: string
     phone: string
@@ -38,7 +38,7 @@ export interface UpdateMemberPayload {
   department: string;
   salary: number;
   projects: string[];
-  experience: string;
+  experience: number;
   contactInfo: {
     email: string;
     phone: string;

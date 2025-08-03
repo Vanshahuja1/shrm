@@ -211,9 +211,7 @@ export default function EditMemberPage() {
       salary: member.salary,
       projects: projectsList,
       experience:
-        typeof member.experience === "string"
-          ? member.experience
-          : String(member.experience),
+        member.experience,
       contactInfo: {
         email: member.contactInfo?.email || "",
         phone: member.contactInfo?.phone || "",

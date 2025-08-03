@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // import { Progress } from "@/components/ui/progress";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 const pieColors = [
   "#4FC3F7",
@@ -107,6 +107,9 @@ const StatCard = ({
 );
 
 export default function HRDashboard() {
+
+  const {hrId} =useParams();
+
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
 
@@ -131,7 +134,7 @@ export default function HRDashboard() {
           value="100"
           icon={Users}
           color="#212121"
-          onClick={() => router.push("/hr/recruitment/applicants")}
+          onClick={() => router.push(`/hr/${hrId}/recruitment/applicants`)}
           className="transition-shadow duration-200 hover:shadow-[0_0_12px_rgba(0,0,0,0.4)]"
         />
         <StatCard
@@ -139,7 +142,7 @@ export default function HRDashboard() {
           value="92"
           icon={UserCheck}
           color="#1976D2"
-          onClick={() => router.push("/hr/recruitment/shortlistedCandidates")}
+          onClick={() => router.push(`/hr/${hrId}/recruitment/shortlistedCandidates`)}
           className="transition-shadow duration-200 hover:shadow-[0_0_12px_rgba(25,118,210,0.5)]"
         />
         <StatCard
@@ -147,7 +150,7 @@ export default function HRDashboard() {
           value="18"
           icon={UserPlus}
           color="#388E3C"
-          onClick={() => router.push("/hr/recruitment/hiredCandidates")}
+          onClick={() => router.push(`/hr/${hrId}/recruitment/hiredCandidates`)}
           className="transition-shadow duration-200 hover:shadow-[0_0_12px_rgba(25,118,210,0.5)]"
         />
         <StatCard
@@ -155,7 +158,7 @@ export default function HRDashboard() {
           value="8"
           icon={UserX}
           color="#D32F2F"
-          onClick={() => router.push("/hr/recruitment/rejectedCandidates")}
+          onClick={() => router.push(`/hr/${hrId}/recruitment/rejectedCandidates`)}
           className="transition-shadow duration-200 hover:shadow-[0_0_12px_rgba(0,0,0,0.4)]"
         />
         <StatCard
@@ -169,7 +172,7 @@ export default function HRDashboard() {
           value="$ 175"
           icon={DollarSign}
           color="#FF8F00"
-          onClick={() => router.push("/hr/recruitment/cost")}
+          onClick={() => router.push(`/hr/${hrId}/recruitment/cost`)}
           className="transition-shadow duration-200 hover:shadow-[0_0_12px_rgba(0,0,0,0.4)]"
         />
       </div>

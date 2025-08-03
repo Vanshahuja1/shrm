@@ -68,6 +68,19 @@ const attendanceSchema = new mongoose.Schema(
   },
 )
 
+
+// Pre-save hook to calculate totalHours
+attendanceSchema.pre('save', function(next) {
+  if (this.punchIn) {
+    const endTime = this.punchOut || new Date();
+    const workingMilliseconds = endTime - this.punchIn;
+    const workingHours = workingMilliseconds / (1000 * 60 * 60);
+    
+    this.totalHours = Math.max(0, parseFloat(workingHours.toFixed(2)));
+  }
+  next(); 
+});
+
 // Compound index for efficient queries
 attendanceSchema.index({ employeeId: 1, date: 1 }, { unique: true })
 attendanceSchema.index({ date: 1 })

@@ -6,45 +6,50 @@ exports.getMembers = async (req, res) => {
     // Get orgName from params (with mergeParams) or from custom middleware
     const orgName = req.params.orgName || req.orgName;
     console.log("Searching for members with organizationName:", orgName);
-    
+
     // Try multiple search strategies:
     // 1. First try by organizationName field (legacy)
     // 2. Then try by finding organization by name and using its ID
-    let members = await User.find({ 
-      organizationName: new RegExp(`^${orgName}$`, "i") 
+    let members = await User.find({
+      organizationName: new RegExp(`^${orgName}$`, "i"),
     });
-    
+
     // If no members found, try to find by organization ID
     if (members.length === 0) {
       const Organization = require("../models/organizationModel");
-      const org = await Organization.findOne({ 
-        name: new RegExp(`^${orgName}$`, "i") 
+      const org = await Organization.findOne({
+        name: new RegExp(`^${orgName}$`, "i"),
       });
-      
+
       if (org) {
         console.log("Found organization by name:", org.name, "ID:", org._id);
         members = await User.find({ organizationId: org._id });
       }
     }
-    
+
     // If still no members, try broader search (for debugging)
     if (members.length === 0) {
-      console.log("No members found with specific criteria, showing all members for debugging:");
+      console.log(
+        "No members found with specific criteria, showing all members for debugging:"
+      );
       const allMembers = await User.find({});
-      console.log("All users in database:", allMembers.map(m => ({
-        name: m.name,
-        organizationName: m.organizationName,
-        organizationId: m.organizationId
-      })));
+      console.log(
+        "All users in database:",
+        allMembers.map((m) => ({
+          name: m.name,
+          organizationName: m.organizationName,
+          organizationId: m.organizationId,
+        }))
+      );
     }
-    
+
     console.log("Found members count:", members.length);
 
     // Use employeeInfo virtual instead of non-existing Info
     const formattedMembers = members
-      .filter(member => member && member.employeeInfo) // Filter out any null members
+      .filter((member) => member && member.employeeInfo) // Filter out any null members
       .map((member) => member.employeeInfo);
-    
+
     res.status(200).json(formattedMembers);
   } catch (error) {
     console.error("Error in getMembers:", error);
@@ -56,7 +61,9 @@ exports.getMembers = async (req, res) => {
 exports.getMembersRaw = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
-    const members = await User.find({ organizationName:  new RegExp(`^${orgName}$`, "i"), });
+    const members = await User.find({
+      organizationName: new RegExp(`^${orgName}$`, "i"),
+    });
     res.status(200).json(members);
   } catch (error) {
     res.status(500).json({ message: "Error fetching members" });
@@ -66,23 +73,35 @@ exports.getMembersRaw = async (req, res) => {
 exports.getEmpInfo = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
-    console.log("getEmpInfo - Searching for organization:", orgName);
+    const { role } = req.query;
+    console.log("getEmpInfo - Received orgName:", orgName, "Role:", role);
+
+   
 
     // Try multiple search strategies like in getMembers
     let members = await User.find({
       organizationName: new RegExp(`^${orgName}$`, "i"),
+      ...(role ? { role: new RegExp(`^${role}$`, "i") } : {}),
     });
 
     // If no members found, try to find by organization ID
     if (members.length === 0) {
       const Organization = require("../models/organizationModel");
-      const org = await Organization.findOne({ 
-        name: new RegExp(`^${orgName}$`, "i") 
+      const org = await Organization.findOne({
+        name: new RegExp(`^${orgName}$`, "i"),
       });
-      
+
       if (org) {
-        console.log("getEmpInfo - Found organization by name:", org.name, "ID:", org._id);
-        members = await User.find({ organizationId: org._id });
+        console.log(
+          "getEmpInfo - Found organization by name:",
+          org.name,
+          "ID:",
+          org._id
+        );
+        members = await User.find({
+          organizationId: org._id,
+          ...(role ? { role: new RegExp(`^${role}$`, "i") } : {}),
+        });
       }
     }
 
@@ -95,7 +114,6 @@ exports.getEmpInfo = async (req, res) => {
     res.status(500).json({ message: "Error fetching employee information" });
   }
 };
-
 
 exports.createMember = async (req, res) => {
   try {
@@ -341,7 +359,8 @@ exports.updateMember = async (req, res) => {
 
     // Direct upperManager override (optional)
     if (req.body.upperManager) updateData.upperManager = req.body.upperManager;
-    if (req.body.upperManagerName) updateData.upperManagerName = req.body.upperManagerName;
+    if (req.body.upperManagerName)
+      updateData.upperManagerName = req.body.upperManagerName;
 
     // 🔄 Update the member itself
     const updatedMember = await User.findOneAndUpdate(
@@ -428,9 +447,9 @@ exports.getMembersByDepartment = async (req, res) => {
   try {
     const orgName = req.params.orgName || req.orgName;
     const members = await User.find({
-  organizationName: new RegExp(`^${orgName}$`, 'i'),
-  departmentName: new RegExp(`^${req.params.department}$`, 'i'),
-});
+      organizationName: new RegExp(`^${orgName}$`, "i"),
+      departmentName: new RegExp(`^${req.params.department}$`, "i"),
+    });
 
     const formattedMembers = members.map((member) => member.Info);
     res.status(200).json(formattedMembers);
@@ -445,8 +464,8 @@ exports.getMembersByRole = async (req, res) => {
     const orgName = req.params.orgName || req.orgName;
 
     const members = await User.find({
-      organizationName: new RegExp(`^${orgName}$`, 'i'),
-      role: new RegExp(`^${req.params.role}$`, 'i'),
+      organizationName: new RegExp(`^${orgName}$`, "i"),
+      role: new RegExp(`^${req.params.role}$`, "i"),
     });
 
     const formattedMembers = members.map((member) => member.Info);

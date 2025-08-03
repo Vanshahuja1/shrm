@@ -1,10 +1,10 @@
 "use client"
 
-import { usePathname } from "next/navigation"
+import { useParams, usePathname } from "next/navigation"
 import Link from "next/link"
-import { Target, Calendar, User, BarChart3,  Zap, Database, Settings } from "lucide-react"
+import { Target, Calendar, User, BarChart3, Zap, Database, Settings } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
-
+import axios from "@/lib/axiosInstance"
 interface EmployeeNavigationProps {
   employeeId: string
 }
@@ -18,53 +18,30 @@ interface Task {
 
 export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
   const pathname = usePathname()
-  const [quickStats, setQuickStats] = useState({
-    pendingTasks: 0,
-    todayHours: 0,
-    performance: 0,
-    attendance: 0,
+
+  const [stats, setStats] = useState<{ isWorking: boolean, workingHrs: number }>({
     isWorking: false,
+    workingHrs: 0
   })
 
-  const fetchQuickStats = useCallback(async () => {
-    try {
-      // Fetch quick stats from multiple endpoints
-      const [tasksRes, workHoursRes, performanceRes, attendanceRes] = await Promise.all([
-        fetch(`/api/employees/${employeeId}/tasks`),
-        fetch(`/api/employees/${employeeId}/work-hours`),
-        fetch(`/api/employees/${employeeId}/performance`),
-        fetch(`/api/employees/${employeeId}/attendance`),
-      ])
+  const { id: empId } = useParams()
 
-      const [tasks, workHours, performance, attendance] = await Promise.all([
-        tasksRes.json(),
-        workHoursRes.json(),
-        performanceRes.json(),
-        attendanceRes.json(),
-      ])
-
-      setQuickStats({
-        pendingTasks: tasks.filter((t: Task) => t.status === "pending").length,
-        todayHours: workHours.todayHours || 0,
-        performance: performance.combinedPercentage || 0,
-        attendance: performance.attendanceScore || 0,
-        isWorking: attendance.isPunchedIn || false,
-      })
-    } catch (error) {
-      console.error("Failed to fetch quick stats:", error)
-    }
-  }, [employeeId])
-
-  useEffect(() => {
-    fetchQuickStats()
-  }, [fetchQuickStats])
+useEffect(() => {
+  const fetchStats = async()=>{
+    const res =await axios.get(`attendance/employee/stats/${empId}`)
+    setStats({
+      isWorking: res.data.isPunchedIn,
+      workingHrs: res.data.attendanceRecord?.totalHours || 0
+    })
+  }
+  fetchStats()
+}, [employeeId])
 
   const tabs = [
     { id: "tasks", label: "Task List", icon: Target, href: `/employee/${employeeId}/tasks` },
     { id: "attendance", label: "Attendance System", icon: Calendar, href: `/employee/${employeeId}/attendance` },
     { id: "dashboard", label: "Personal Dashboard", icon: User, href: `/employee/${employeeId}/dashboard` },
     { id: "performance", label: "Performance Metrics", icon: BarChart3, href: `/employee/${employeeId}/performance` },
-  
     { id: "workhours", label: "Work Hours Display", icon: Zap, href: `/employee/${employeeId}/workhours` },
     { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${employeeId}/datasync` },
     { id: "settings", label: "Settings", icon: Settings, href: `/employee/${employeeId}/settings` },
@@ -81,9 +58,8 @@ export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
             <Link
               key={tab.id}
               href={tab.href}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors font-medium ${
-                isActive ? "bg-blue-500 text-white shadow-md" : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-              }`}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors font-medium ${isActive ? "bg-blue-500 text-white shadow-md" : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                }`}
             >
               <Icon className="w-5 h-5" />
               <span className="text-sm">{tab.label}</span>
@@ -93,36 +69,19 @@ export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
       </nav>
 
       {/* Quick Stats */}
-      <div className="mt-6 pt-6 border-t border-blue-200">
-        <h4 className="text-sm font-medium text-gray-900 mb-3">Quick Stats</h4>
-        <div className="space-y-2 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Pending Tasks:</span>
-            <span className="text-blue-600 font-medium">{quickStats.pendingTasks}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Today&apos;s Hours:</span>
-            <span className="text-green-600 font-medium">{quickStats.todayHours.toFixed(1)}h</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Performance:</span>
-            <span className="text-purple-600 font-medium">{quickStats.performance}%</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Attendance:</span>
-            <span className="text-orange-600 font-medium">{quickStats.attendance}%</span>
-          </div>
-        </div>
-      </div>
+
 
       {/* Status Indicator */}
       <div className="mt-6 pt-6 border-t border-blue-200">
         <div className="flex items-center space-x-2">
           <div
-            className={`w-3 h-3 rounded-full ${quickStats.isWorking ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}
+            className={`w-3 h-3 rounded-full ${stats.isWorking ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}
           ></div>
-          <span className="text-sm text-gray-600">{quickStats.isWorking ? "Currently Working" : "Not Clocked In"}</span>
+          <span className="text-sm text-gray-600">{stats.isWorking ? "Currently Working" : "Not Clocked In"}</span>
         </div>
+        <div
+          className={`w-3 h-3 rounded-full`}
+        > {stats.workingHrs} </div>
       </div>
     </div>
   )

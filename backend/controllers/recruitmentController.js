@@ -1,0 +1,87 @@
+
+import Candidate from '../models/candidateModel.js';
+
+// Create a new candidate
+export const createCandidate = async (req, res) => {
+  try {
+    const candidate = new Candidate(req.body);
+    await candidate.save();
+    res.status(201).json(candidate);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Get all candidates
+export const getAllCandidates = async (req, res) => {
+  try {
+    const candidates = await Candidate.find().select("name _id email appliedDate status jobTitle");
+    res.json(candidates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get a single candidate by ID
+export const getCandidateById = async (req, res) => {
+  try {
+    const candidate = await Candidate.findById(req.params.id);
+    if (!candidate) {
+      return res.status(404).json({ message: 'Candidate not found' });
+    }
+    res.json(candidate);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update candidate by ID
+export const updateCandidate = async (req, res) => {
+  try {
+    const candidate = await Candidate.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!candidate) {
+      return res.status(404).json({ message: 'Candidate not found' });
+    }
+    res.json(candidate);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Delete candidate by ID
+export const deleteCandidate = async (req, res) => {
+  try {
+    const candidate = await Candidate.findByIdAndDelete(req.params.id);
+    if (!candidate) {
+      return res.status(404).json({ message: 'Candidate not found' });
+    }
+    res.json({ message: 'Candidate deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Schedule interview for candidate
+export const scheduleInterview = async (req, res) => {
+  try {
+    const { scheduledDate, interviewer } = req.body;
+    const candidate = await Candidate.findById(req.params.id);
+    if (!candidate) {
+      return res.status(404).json({ message: 'Candidate not found' });
+    }
+
+    candidate.interviewScheduled = {
+      isScheduled: true,
+      scheduledDate,
+      interviewer
+    };
+    await candidate.save();
+    res.json({ message: 'Interview scheduled successfully', candidate });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};

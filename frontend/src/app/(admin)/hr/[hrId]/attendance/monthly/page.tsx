@@ -2,18 +2,39 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, Search, X, User } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 interface AttendanceDay {
   date: Date
   status: 'Present' | 'Absent' | ''  // Empty string for future dates
+  punchIn?: string
+  punchOut?: string
+  totalHours?: number
+  breakTime?: number
 }
 
 interface Employee {
-  id: number
+  id: string
   name: string
   department?: string
-  avatar?: string
+  email?: string
+  phone?: string
+  role?: string
+  organization?: string
+  salary?: number
+}
+
+interface AttendanceRecord {
+  date: string
+  punchIn: string | null
+  punchOut: string | null
+  totalHours: number
+  status: string
+  breakTime: number
+}
+
+interface ApiResponse {
+  employeeInfo: Employee
+  attendanceRecords: AttendanceRecord[]
 }
 
 const months = [
@@ -21,57 +42,52 @@ const months = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
-// Simulate a larger dataset
-const dummyEmployees: Employee[] = [
-  { id: 1, name: 'Alice Sharma', department: 'Engineering' },
-  { id: 2, name: 'Bob Verma', department: 'Marketing' },
-  { id: 3, name: 'Neha Reddy', department: 'HR' },
-  { id: 4, name: 'Raj Patel', department: 'Sales' },
-]
-
-const generateDummyStatus = (year: number, month: number): AttendanceDay[] => {
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const today = new Date()
-  const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  
-  return Array.from({ length: daysInMonth }, (_, i) => {
-    const date = new Date(year, month, i + 1)
-    // Compare dates to check if it's a future date
-    const isFutureDate = date > currentDate
-    
-    return {
-      date,
-      // Only assign attendance status for past and current days
-      status: isFutureDate ? '' as 'Present' | 'Absent' | '' : (Math.random() > 0.2 ? 'Present' : 'Absent')
-    }
-  })
-}
+import axiosInstance from '@/lib/axiosInstance'
 
 export default function MonthlyCalendar() {
   const today = new Date()
   const [data, setData] = useState<AttendanceDay[]>([])
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth())
   const [selectedYear, setSelectedYear] = useState(today.getFullYear())
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee>(dummyEmployees[0])
-  
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const searchRef = useRef<HTMLDivElement>(null)
+
+  // Filter employees based on search
+  const filteredEmployees = searchTerm 
+    ? employees.filter(emp =>
+        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : []
+
   const exportToCSV = () => {
-    // Create CSV content
-    const headers = ['Date', 'Day', 'Status']
-    const rows = data.map(({ date, status }) => [
+    if (!selectedEmployee) return
+    
+    const headers = ['Date', 'Day', 'Status', 'Punch In', 'Punch Out', 'Total Hours', 'Break Time']
+    const rows = data.map(({ date, status, punchIn, punchOut, totalHours, breakTime }) => [
       date.toLocaleDateString(),
       date.toLocaleDateString('en-US', { weekday: 'long' }),
-      status || 'Upcoming'
+      status || 'Upcoming',
+      punchIn || '',
+      punchOut || '',
+      totalHours?.toString() || '',
+      breakTime?.toString() || ''
     ])
     
     const csvContent = [
       headers.join(','),
       ...rows.map(row => row.map(cell => 
-        // Escape special characters and wrap in quotes if needed
         /[,"\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell
       ).join(','))
     ].join('\n')
     
-    // Create and trigger download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
@@ -82,79 +98,92 @@ export default function MonthlyCalendar() {
     link.click()
     document.body.removeChild(link)
   }
-  
-  // Search/autocomplete state
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([])
-  const [highlightedIndex, setHighlightedIndex] = useState(-1)
-  const searchRef = useRef<HTMLDivElement>(null)
 
+  // Fetch employees on component mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchEmployees = async () => {
       try {
-        // First try to fetch from your API
-        const res = await fetch(`/api/attendance/monthly?empId=${selectedEmployee.id}&month=${selectedMonth + 1}&year=${selectedYear}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch')
-        }
-
-        const result = await res.json()
-        
-        // Convert the fetched data to match our AttendanceDay format
-        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate()
-        const today = new Date()
-        const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-        
-        // Create an array for all days in the month
-        const monthData: AttendanceDay[] = Array.from({ length: daysInMonth }, (_, i) => {
-          const date = new Date(selectedYear, selectedMonth, i + 1)
-          const isFutureDate = date > currentDate
-          
-          // Find if we have attendance data for this date
-          const attendance = result.find((item:{date:string} ) => {
-            const itemDate = new Date(item.date)
-            return itemDate.getDate() === date.getDate()
-          })
-          
-          return {
-            date,
-            // If it's a future date, empty status
-            // If we have attendance data, use it
-            // If no attendance data found for past date, mark as Absent
-            status: isFutureDate ? '' : (attendance ? attendance.status : 'Absent')
-          }
-        })
-        
-        setData(monthData)
+        setLoading(true)
+        const res = await axiosInstance.get(`IT/org-members/empInfo`)
+        setEmployees(res.data)
       } catch (error) {
-        // If API call fails, fall back to dummy data
-        console.log('Failed to fetch attendance data, using dummy data instead:', error)
-        setData(generateDummyStatus(selectedYear, selectedMonth))
+        console.error('Error fetching employees:', error)
+      } finally {
+        setLoading(false)
       }
     }
-    fetchData()
-  }, [selectedMonth, selectedYear, selectedEmployee])
+    fetchEmployees()
+  }, [])
 
-  // Filter employees based on search
+  // Generate calendar data based on attendance records
+  const generateCalendarData = (attendanceRecords: AttendanceRecord[], year: number, month: number): AttendanceDay[] => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const today = new Date()
+    const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    
+    return Array.from({ length: daysInMonth }, (_, i) => {
+      const date = new Date(year, month, i + 1)
+      const isFutureDate = date > currentDate
+      
+      // Find attendance record for this date
+      const attendanceRecord = attendanceRecords.find(record => {
+        const recordDate = new Date(record.date)
+        return recordDate.getDate() === date.getDate() &&
+               recordDate.getMonth() === date.getMonth() &&
+               recordDate.getFullYear() === date.getFullYear()
+      })
+      
+      if (isFutureDate) {
+        return { date, status: '' as const }
+      }
+      
+      if (attendanceRecord) {
+        return {
+          date,
+          status: attendanceRecord.status === 'present' ? 'Present' as const : 'Absent' as const,
+          punchIn: attendanceRecord.punchIn || undefined,
+          punchOut: attendanceRecord.punchOut || undefined,
+          totalHours: attendanceRecord.totalHours,
+          breakTime: attendanceRecord.breakTime
+        }
+      }
+      
+      // No record found for past date - mark as absent
+      return { date, status: 'Absent' as const }
+    })
+  }
+
+  // Fetch attendance data when employee, month, or year changes
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = dummyEmployees.filter(emp =>
-        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.department?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      setFilteredEmployees(filtered)
-      setHighlightedIndex(-1)
-    } else {
-      setFilteredEmployees([])
+    if (!selectedEmployee) {
+      setData([])
+      return
     }
-  }, [searchTerm])
+
+    const fetchAttendanceData = async () => {
+      try {
+        setLoading(true)
+        const res = await axiosInstance.get(`/attendance/hr/employee/${selectedEmployee.id}`)
+        console.log('API Response:', res.data)
+        
+        const calendarData = generateCalendarData(
+          res.data.attendanceRecords || [], 
+          selectedYear, 
+          selectedMonth
+        )
+        setData(calendarData)
+        
+      } catch (error) {
+        console.error('Error fetching attendance data:', error)
+        // Generate empty calendar on error
+        setData(generateCalendarData([], selectedYear, selectedMonth))
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAttendanceData()
+  }, [selectedEmployee, selectedMonth, selectedYear])
 
   // Handle clicking outside search
   useEffect(() => {
@@ -188,6 +217,7 @@ export default function MonthlyCalendar() {
     setSelectedEmployee(employee)
     setIsSearchOpen(false)
     setSearchTerm('')
+    setHighlightedIndex(-1)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -220,19 +250,24 @@ export default function MonthlyCalendar() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="bg-white border rounded-xl p-6 shadow"
-    >
+    <div className="bg-white border rounded-xl p-6 shadow relative">
+      {loading && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-20 rounded-xl">
+          <div className="flex items-center gap-2 text-blue-600">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span>Loading...</span>
+          </div>
+        </div>
+      )}
+      
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-semibold text-gray-800 whitespace-nowrap">📆 Monthly Attendance</h2>
             <button
-              onClick={() => exportToCSV()}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200 transition-colors"
+              onClick={exportToCSV}
+              disabled={loading || !selectedEmployee}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200 transition-colors disabled:opacity-50"
               title="Export current month's attendance"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,12 +284,20 @@ export default function MonthlyCalendar() {
               <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border w-full">
                 <User size={18} className="text-gray-600 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm text-gray-800 truncate">
-                    {selectedEmployee.name}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {selectedEmployee.department}
-                  </div>
+                  {selectedEmployee ? (
+                    <>
+                      <div className="font-medium text-sm text-gray-800 truncate">
+                        {selectedEmployee.name} ({selectedEmployee.id})
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {selectedEmployee.department} • {selectedEmployee.email}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="font-medium text-sm text-gray-500">
+                      Select Employee
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => setIsSearchOpen(true)}
@@ -267,17 +310,13 @@ export default function MonthlyCalendar() {
 
             {/* Search Input */}
             {isSearchOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-10 w-full sm:w-72 md:w-80"
-              >
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-10 w-full sm:w-72 md:w-80">
                 <div className="p-3 border-b">
                   <div className="relative">
                     <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Search employees..."
+                      placeholder="Search by name, ID, email, or department..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       onKeyDown={handleKeyDown}
@@ -314,16 +353,16 @@ export default function MonthlyCalendar() {
                       <User size={18} className="text-gray-600 flex-shrink-0" />
                       <div className="min-w-0">
                         <div className="font-medium text-sm text-gray-800 truncate">
-                          {employee.name}
+                          {employee.name} ({employee.id})
                         </div>
                         <div className="text-xs text-gray-500 truncate">
-                          {employee.department}
+                          {employee.department} • {employee.email}
                         </div>
                       </div>
                     </button>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
@@ -332,7 +371,8 @@ export default function MonthlyCalendar() {
           <div className="flex items-center gap-1 bg-gray-50 border rounded-lg p-1">
             <button 
               onClick={() => handleMonthChange(-1)} 
-              className="p-1.5 rounded-md text-gray-600 hover:bg-gray-200 hover:text-gray-800 transition-colors"
+              disabled={loading}
+              className="p-1.5 rounded-md text-gray-600 hover:bg-gray-200 hover:text-gray-800 transition-colors disabled:opacity-50"
               aria-label="Previous month"
             >
               <ChevronLeft size={18} />
@@ -342,6 +382,7 @@ export default function MonthlyCalendar() {
                 className="bg-transparent border-none rounded py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                disabled={loading}
                 aria-label="Select month"
               >
                 {months.map((m, idx) => (
@@ -352,6 +393,7 @@ export default function MonthlyCalendar() {
                 className="bg-transparent border-none rounded py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
+                disabled={loading}
                 aria-label="Select year"
               >
                 {Array.from({ length: 20 }, (_, i) => 2010 + i).map(year => (
@@ -361,7 +403,8 @@ export default function MonthlyCalendar() {
             </div>
             <button 
               onClick={() => handleMonthChange(1)} 
-              className="p-1.5 rounded-md text-gray-600 hover:bg-gray-200 hover:text-gray-800 transition-colors"
+              disabled={loading}
+              className="p-1.5 rounded-md text-gray-600 hover:bg-gray-200 hover:text-gray-800 transition-colors disabled:opacity-50"
               aria-label="Next month"
             >
               <ChevronRight size={18} />
@@ -395,39 +438,42 @@ export default function MonthlyCalendar() {
         {Array.from({ length: firstDay }).map((_, i) => (
           <div key={`pad-${i}`} />
         ))}
-        {data.map(({ date, status }) => {
+        {data.map(({ date, status, punchIn, punchOut, totalHours }) => {
           const isToday =
             date.getDate() === today.getDate() &&
             date.getMonth() === today.getMonth() &&
             date.getFullYear() === today.getFullYear()
             
-          // Check if it's a future date (empty status)
           const isFutureDate = status === ''
           
-          // Only apply color classes for past or present days with attendance status
           let colorClass = ''
           if (!isFutureDate) {
             colorClass = status === 'Present' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
           } else {
-            // Style for future dates
             colorClass = 'bg-gray-50 text-gray-400'
           }
 
+          const tooltipText = isFutureDate 
+            ? `Upcoming: ${date.toDateString()}` 
+            : `${status} on ${date.toDateString()}${punchIn ? `\nPunch In: ${punchIn}` : ''}${punchOut ? `\nPunch Out: ${punchOut}` : ''}${totalHours ? `\nTotal Hours: ${totalHours}` : ''}`
+
           return (
-            <motion.div
+            <div
               key={date.toISOString()}
-              initial={{ scale: 0.85, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              title={isFutureDate ? `Upcoming: ${date.toDateString()}` : `${status} on ${date.toDateString()}`}
-              className={`h-16 sm:h-20 flex flex-col items-center justify-center border font-medium rounded-md overflow-hidden
+              title={tooltipText}
+              className={`h-16 sm:h-20 flex flex-col items-center justify-center border font-medium rounded-md overflow-hidden relative
                 ${colorClass} ${isToday ? 'ring-2 ring-blue-500' : ''} ${!isFutureDate ? 'hover:scale-105' : ''} transition-transform duration-200`}
             >
-              {date.getDate()}
-            </motion.div>
+              <div className="text-sm font-semibold">{date.getDate()}</div>
+              {punchIn && (
+                <div className="text-xs opacity-75 mt-1">
+                  {punchIn}
+                </div>
+              )}
+            </div>
           )
         })}
       </div>
-    </motion.div>
+    </div>
   )
 }

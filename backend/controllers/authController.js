@@ -22,6 +22,7 @@ const register = async (req, res) => {
       // Basic Information
       name,
       role,
+      phone,
       email,
       organizationId,
       departmentId,
@@ -123,6 +124,7 @@ const register = async (req, res) => {
       // Basic Information
       id: userId,
       name: name.trim(),
+      phone: phone?.trim() || "",
       email: email?.trim() || "",
       password: userId, // Default password is the user ID
       role: role.toLowerCase(),

@@ -19,6 +19,7 @@ import {
   ImageIcon,
   AlertCircle,
   Mail,
+  Phone,
 } from "lucide-react"
 import Link from "next/link"
 import axiosInstance from "@/lib/axiosInstance"
@@ -71,6 +72,7 @@ interface RegisterFormData {
   // Basic Information
   name: string
   email: string
+  phone:string
   role: "admin" | "manager" | "employee" | "intern" | "hr"
   organizationId: string
   departmentId: string
@@ -96,6 +98,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterFormData>({
     name: "",
     email: "",
+    phone:"",
     role: "employee", // Set a default value instead of empty string
     organizationId: "",
     departmentId: "",
@@ -421,6 +424,7 @@ export default function RegisterPage() {
 
     if (!formData.name.trim()) errors.name = "Name is required"
     if (!formData.email.trim()) errors.email = "Email is required"
+    if (!formData.phone.trim()) errors.phone = "Phone number is required"
     if (!formData.role) errors.role = "Role is required"
     if (!formData.organizationId) errors.organizationId = "Organization is required"
     if (!formData.departmentId) errors.departmentId = "Department is required"
@@ -429,6 +433,12 @@ export default function RegisterPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (formData.email.trim() && !emailRegex.test(formData.email)) {
       errors.email = "Please enter a valid email address"
+    }
+
+    // Phone validation
+    const phoneRegex = /^\d{10}$/
+    if (formData.phone.trim() && !phoneRegex.test(formData.phone)) {
+      errors.phone = "Please enter a valid 10-digit phone number"
     }
 
     setValidationErrors(errors)
@@ -504,6 +514,7 @@ export default function RegisterPage() {
         setFormData({
           name: "",
           email: "",
+          phone:"",
           role: "employee", // Set a default value instead of empty string
           organizationId: "",
           departmentId: "",
@@ -844,6 +855,50 @@ export default function RegisterPage() {
                   </div>
 
                   {/* Email Field */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`relative flex items-center border-2 rounded-xl transition-all duration-500 ease-out ${
+                        validationErrors.phone
+                          ? "border-red-500 bg-red-50"
+                          : focusedField === "phone"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12">
+                        <Phone
+                          className={`w-5 h-5 transition-colors duration-500 ease-out ${
+                            validationErrors.phone
+                              ? "text-red-400"
+                              : focusedField === "phone"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="phone"
+                        placeholder="Enter your phone number"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        onFocus={() => setFocusedField("phone")}
+                        onBlur={() => setFocusedField("")}
+                        className="bg-transparent flex-1 px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {validationErrors.phone && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {validationErrors.phone}
+                      </p>
+                    )}
+                  </div>
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Email Address <span className="text-red-500">*</span>
