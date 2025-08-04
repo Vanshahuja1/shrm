@@ -83,31 +83,31 @@ const AddCandidateForm: React.FC = () => {
   }, []);
 
   const sourceOptions = [
-    'LinkedIn',
-    'Indeed',
-    'Company Website',
-    'Referral',
-    'Job Board',
-    'Recruitment Agency',
-    'Direct Application',
-    'Career Fair',
-    'Social Media',
-    'Other'
+    { value: 'linkedin', label: 'LinkedIn' },
+    { value: 'indeed', label: 'Indeed' },
+    { value: 'company website', label: 'Company Website' },
+    { value: 'referral', label: 'Referral' },
+    { value: 'job board', label: 'Job Board' },
+    { value: 'recruitment agency', label: 'Recruitment Agency' },
+    { value: 'direct application', label: 'Direct Application' },
+    { value: 'career fair', label: 'Career Fair' },
+    { value: 'social media', label: 'Social Media' },
+    { value: 'other', label: 'Other' }
   ];
 
   const statusOptions = [
-    'Application Received',
-    'Under Review',
-    'Phone Screening',
-    'Technical Interview',
-    'Final Interview',
-    'Reference Check',
-    'Offer Extended',
-    'Offer Accepted',
-    'Offer Declined',
-    'Rejected',
-    'Withdrawn',
-    "Hired"
+    { value: 'application received', label: 'Application Received' },
+    { value: 'under review', label: 'Under Review' },
+    { value: 'phone screening', label: 'Phone Screening' },
+    { value: 'technical interview', label: 'Technical Interview' },
+    { value: 'final interview', label: 'Final Interview' },
+    { value: 'reference check', label: 'Reference Check' },
+    { value: 'offer extended', label: 'Offer Extended' },
+    { value: 'offer accepted', label: 'Offer Accepted' },
+    { value: 'offer declined', label: 'Offer Declined' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'withdrawn', label: 'Withdrawn' },
+    { value: 'hired', label: 'Hired' }
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -209,7 +209,7 @@ const AddCandidateForm: React.FC = () => {
         currentCompany: candidate.currentCompany,
         jobTitle: candidate.jobTitle,
         shortlisted: candidate.shortlisted,
-        status: candidate.status || 'Application Received',
+        status: candidate.status || 'application received',
         notes: candidate.notes,
         expectedSalary: candidate.expectedSalary,
         resume: candidate.resume ? 'dummy-resume-url.pdf' : '' // Dummy resume URL
@@ -374,8 +374,8 @@ const AddCandidateForm: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               {sourceOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -455,8 +455,8 @@ const AddCandidateForm: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               {statusOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

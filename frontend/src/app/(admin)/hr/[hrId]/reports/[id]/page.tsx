@@ -82,39 +82,163 @@ export default function EmployeeReportDetails() {
   const [report, setReport] = useState<EmployeeReport | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
-  // Attendance modal state and logic (moved inside component)
+  // Attendance modal state and logic
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false)
   const [attendanceStart, setAttendanceStart] = useState<string>(() => format(new Date(), 'yyyy-MM-01'))
   const [attendanceEnd, setAttendanceEnd] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'))
-  const [attendanceData, setAttendanceData] = useState<Array<{date: string, status: string}>>([])
+  const [attendanceData, setAttendanceData] = useState<Array<{
+    date: string, 
+    status: string, 
+    punchIn: string | null,
+    punchOut: string | null,
+    totalHours: number,
+    breakTime: number
+  }>>([])
 
-  // Generate mock attendance data for the selected range
-  useEffect(() => {
-    if (!attendanceModalOpen) return
+  const { id } = useParams<{id: string, hrId: string}>()
+
+  // Generate mock attendance data as fallback
+  const generateMockAttendanceData = React.useCallback(() => {
     const start = new Date(attendanceStart)
     const end = new Date(attendanceEnd)
     const days = []
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      days.push({
-        date: format(new Date(d), 'yyyy-MM-dd'),
-        status: Math.random() > 0.1 ? 'Present' : 'Absent'
-      })
+    
+    const currentDate = new Date(start)
+    while (currentDate <= end) {
+      const dayOfWeek = currentDate.getDay()
+      
+      // Only include working days (Monday to Saturday: 1-6)
+      if (dayOfWeek >= 1 && dayOfWeek <= 6) {
+        const isPresent = Math.random() > 0.1
+        days.push({
+          date: format(new Date(currentDate), 'yyyy-MM-dd'),
+          status: isPresent ? 'Present' : 'Absent',
+          punchIn: isPresent ? '09:00' : null,
+          punchOut: isPresent ? '18:00' : null,
+          totalHours: isPresent ? 8 + Math.random() * 2 : 0,
+          breakTime: isPresent ? 30 + Math.random() * 30 : 0
+        })
+      }
+      
+      currentDate.setDate(currentDate.getDate() + 1)
     }
+    
+    // Sort by date (most recent first)
+    days.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     setAttendanceData(days)
-  }, [attendanceStart, attendanceEnd, attendanceModalOpen])
+  }, [attendanceStart, attendanceEnd])
+
+  // Fetch real attendance data from backend
+  const fetchAttendanceData = React.useCallback(async (employeeId: string, startDate?: string, endDate?: string) => {
+    try {
+      let url = `/attendance/hr/employee/${employeeId}`
+      if (startDate && endDate) {
+        url += `?startDate=${startDate}&endDate=${endDate}`
+      }
+      
+      const response = await axios.get(url)
+      const data = response.data
+      
+      // Get the date range
+      const start = new Date(startDate || attendanceStart)
+      const end = new Date(endDate || attendanceEnd)
+      
+      // Create a map of existing attendance records
+      const existingRecords = new Map()
+      if (data.attendanceRecords) {
+        data.attendanceRecords.forEach((record: {
+          date: string;
+          punchIn: string | null;
+          punchOut: string | null;
+          totalHours: number;
+          status: string;
+          breakTime: number;
+        }) => {
+          existingRecords.set(record.date, {
+            date: record.date,
+            status: record.status === 'present' ? 'Present' : 
+                    record.status === 'late' ? 'Late' :
+                    record.status === 'absent' ? 'Absent' : 'Holiday',
+            punchIn: record.punchIn,
+            punchOut: record.punchOut,
+            totalHours: record.totalHours || 0,
+            breakTime: record.breakTime || 0
+          })
+        })
+      }
+      
+      // Generate complete attendance data for all working days in range
+      const completeAttendanceData = []
+      const currentDate = new Date(start)
+      
+      while (currentDate <= end) {
+        const dateStr = format(currentDate, 'yyyy-MM-dd')
+        const dayOfWeek = currentDate.getDay()
+        
+        // Only include working days (Monday to Saturday: 1-6)
+        if (dayOfWeek >= 1 && dayOfWeek <= 6) {
+          if (existingRecords.has(dateStr)) {
+            // Use existing record
+            completeAttendanceData.push(existingRecords.get(dateStr))
+          } else {
+            // Mark as absent for missing working days
+            completeAttendanceData.push({
+              date: dateStr,
+              status: 'Absent',
+              punchIn: null,
+              punchOut: null,
+              totalHours: 0,
+              breakTime: 0
+            })
+          }
+        }
+        
+        currentDate.setDate(currentDate.getDate() + 1)
+      }
+      
+      // Sort by date (most recent first)
+      completeAttendanceData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      
+      setAttendanceData(completeAttendanceData)
+    } catch (error) {
+      console.error('Error fetching attendance data:', error)
+      // Fallback to mock data if API fails
+      generateMockAttendanceData()
+    }
+  }, [generateMockAttendanceData, attendanceStart, attendanceEnd])
+
+  // Fetch attendance data when modal opens or date range changes
+  useEffect(() => {
+    if (!attendanceModalOpen || !id) return
+    fetchAttendanceData(id, attendanceStart, attendanceEnd)
+  }, [attendanceStart, attendanceEnd, attendanceModalOpen, id, fetchAttendanceData])
 
   // Export attendance as CSV
   const exportAttendanceCSV = () => {
     const csvRows = [
-      ['Date', 'Status'],
-      ...attendanceData.map(row => [row.date, row.status])
+      ['Date', 'Day', 'Status', 'Punch In', 'Punch Out', 'Total Hours', 'Break Time (mins)', 'Notes'],
+      ...attendanceData.map(row => {
+        const date = new Date(row.date)
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' })
+        const notes = row.status === 'Absent' && !row.punchIn ? 'No record found - marked absent' : ''
+        return [
+          row.date, 
+          dayName,
+          row.status, 
+          row.punchIn || 'N/A',
+          row.punchOut || 'N/A',
+          row.totalHours.toString(),
+          row.breakTime.toString(),
+          notes
+        ]
+      })
     ]
     const csvContent = csvRows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${report?.name || 'employee'}_attendance.csv`
+    a.download = `${report?.name || 'employee'}_attendance_complete.csv`
     a.click()
     window.URL.revokeObjectURL(url)
   }
@@ -123,38 +247,56 @@ export default function EmployeeReportDetails() {
   const exportAttendancePDF = async () => {
     const { jsPDF } = await import('jspdf')
     const doc = new jsPDF()
-    doc.text(`${report?.name || 'Employee'} Attendance Report`, 10, 10)
+    doc.text(`${report?.name || 'Employee'} - Complete Attendance Report`, 10, 10)
     doc.text(`From: ${attendanceStart} To: ${attendanceEnd}`, 10, 18)
-    let y = 28
+    doc.text(`Working Days Only (Mon-Sat) | Missing records marked as Absent`, 10, 26)
+    
+    let y = 36
     doc.text('Date', 10, y)
-    doc.text('Status', 60, y)
-    y += 6
+    doc.text('Day', 40, y)
+    doc.text('Status', 70, y)
+    doc.text('Hours', 110, y)
+    doc.text('Notes', 140, y)
+    y += 8
+    
     attendanceData.forEach(row => {
+      const date = new Date(row.date)
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
+      const notes = row.status === 'Absent' && !row.punchIn ? 'No record' : ''
+      
       doc.text(row.date, 10, y)
-      doc.text(row.status, 60, y)
+      doc.text(dayName, 40, y)
+      doc.text(row.status, 70, y)
+      doc.text(row.totalHours.toString(), 110, y)
+      doc.text(notes, 140, y)
       y += 6
-      if (y > 280) { doc.addPage(); y = 10 }
+      if (y > 280) { 
+        doc.addPage()
+        y = 20
+        // Add headers on new page
+        doc.text('Date', 10, y-6)
+        doc.text('Day', 40, y-6)
+        doc.text('Status', 70, y-6)
+        doc.text('Hours', 110, y-6)
+        doc.text('Notes', 140, y-6)
+      }
     })
-    doc.save(`${report?.name || 'employee'}_attendance.pdf`)
+    doc.save(`${report?.name || 'employee'}_attendance_complete.pdf`)
   }
 
-  const weeklyWorkData = [
-    { day: 'Sat', hours: 6 },
-    { day: 'Sun', hours: 10 },
-    { day: 'Mon', hours: 4 },
-    { day: 'Tue', hours: 11 },
-    { day: 'Wed', hours: 7 },
-    { day: 'Thu', hours: 3 },
-    { day: 'Fri', hours: 9 }
-  ]
-
-  // const unwrappedParams = React.use(params)
+  const [weeklyWorkData, setWeeklyWorkData] = useState([
+    { day: 'Sat', hours: 0 },
+    { day: 'Sun', hours: 0 },
+    { day: 'Mon', hours: 0 },
+    { day: 'Tue', hours: 0 },
+    { day: 'Wed', hours: 0 },
+    { day: 'Thu', hours: 0 },
+    { day: 'Fri', hours: 0 }
+  ])
 
   const printReport = () => {
     window.print()
   }
-
-  const { id  } = useParams<{id: string, hrId: string}>()
 
   
   useEffect(() => {
@@ -163,9 +305,127 @@ export default function EmployeeReportDetails() {
       const response = await axios.get(`reports/employee/${id}`)
       const data = await response.data.data
       setReport(data)
+      
+      // After setting the report, fetch attendance stats
+      await fetchAttendanceStats()
     }
-    fetchReport()
 
+    // Fetch actual attendance percentage for the employee
+    const fetchAttendanceStats = async () => {
+      try {
+        const response = await axios.get(`/attendance/hr/employee/${id}`)
+        const attendanceData = response.data.attendanceRecords
+        
+        // Get current month start and end dates
+        const currentDate = new Date()
+        const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+        const currentMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+        
+        // Create a map of existing attendance records for current month
+        const existingRecordsMap = new Map()
+        let presentDays = 0
+        let lateDays = 0
+        
+        if (attendanceData && attendanceData.length > 0) {
+          attendanceData.forEach((record: {status: string, date: string, totalHours: number}) => {
+            const recordDate = new Date(record.date)
+            // Only count records from current month
+            if (recordDate >= currentMonthStart && recordDate <= currentMonthEnd) {
+              existingRecordsMap.set(record.date, record)
+              if (record.status === 'present') presentDays++
+              if (record.status === 'late') lateDays++
+            }
+          })
+          
+          // Calculate weekly work hours from last 7 working days
+          const last7WorkingDays = []
+          const tempDateForWeekly = new Date(currentDate)
+          
+          // Get last 7 working days
+          while (last7WorkingDays.length < 7) {
+            const dayOfWeek = tempDateForWeekly.getDay()
+            if (dayOfWeek >= 1 && dayOfWeek <= 6) { // Working days Monday to Saturday
+              const dateStr = format(tempDateForWeekly, 'yyyy-MM-dd')
+              const existingRecord = existingRecordsMap.get(dateStr)
+              last7WorkingDays.push({
+                date: dateStr,
+                totalHours: existingRecord?.totalHours || 0,
+                dayOfWeek: dayOfWeek
+              })
+            }
+            tempDateForWeekly.setDate(tempDateForWeekly.getDate() - 1)
+          }
+          
+          // Create weekly hours chart data (including weekends for chart completeness)
+          const weeklyHours = [
+            { day: 'Sat', hours: 0 },
+            { day: 'Sun', hours: 0 },
+            { day: 'Mon', hours: 0 },
+            { day: 'Tue', hours: 0 },
+            { day: 'Wed', hours: 0 },
+            { day: 'Thu', hours: 0 },
+            { day: 'Fri', hours: 0 }
+          ]
+          
+          // Fill in the working day hours
+          last7WorkingDays.reverse().forEach((record) => {
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+            const dayName = dayNames[record.dayOfWeek]
+            const dayIndex = weeklyHours.findIndex(d => d.day === dayName)
+            if (dayIndex !== -1) {
+              weeklyHours[dayIndex].hours = record.totalHours
+            }
+          })
+          
+          setWeeklyWorkData(weeklyHours)
+        }
+        
+        // Calculate current month attendance
+        const actualAttendedDays = presentDays + lateDays
+        
+        // Count total working days in current month (from 1st to today only)
+        let totalWorkingDaysCurrentMonth = 0
+        const checkDate = new Date(currentMonthStart)
+        
+        while (checkDate <= currentDate) { // Only count up to today, not future days
+          const dayOfWeek = checkDate.getDay()
+          if (dayOfWeek >= 1 && dayOfWeek <= 6) { // Monday to Saturday (6-day working week)
+            totalWorkingDaysCurrentMonth++
+          }
+          checkDate.setDate(checkDate.getDate() + 1)
+        }
+        
+        // Calculate attendance percentage for current month only
+        const attendancePercentage = totalWorkingDaysCurrentMonth > 0 
+          ? Math.round((actualAttendedDays / totalWorkingDaysCurrentMonth) * 100) 
+          : 0
+        
+        console.log('Current Month Attendance Calculation:', {
+          presentDays,
+          lateDays,
+          actualAttendedDays,
+          totalWorkingDaysCurrentMonth,
+          attendancePercentage,
+          currentMonthStart: currentMonthStart.toDateString(),
+          currentDate: currentDate.toDateString(),
+          totalRecordsInDB: attendanceData?.length || 0,
+          calculationMethod: 'Current month working days (1st to today only) - 6 day work week'
+        })
+        
+        // Update the report with real attendance data
+        setReport(prev => prev ? {
+          ...prev,
+          performance: {
+            ...prev.performance,
+            attendance: Math.min(100, Math.max(0, attendancePercentage)) // Ensure it's between 0-100
+          }
+        } : null)
+      } catch (error) {
+        console.error('Error fetching attendance stats:', error)
+      }
+    }
+
+    fetchReport()
     setLoading(false)
   }, [id])
 
@@ -300,7 +560,8 @@ export default function EmployeeReportDetails() {
             <MetricCard 
               icon={<BadgeCheck size={20} className="text-green-500" />} 
               title="Attendance" 
-              value={`${report.performance.attendance}%`} 
+              value={`${report.performance.attendance}%`}
+              sub="Current month working days"
               // Open modal on click
               onClick={() => setAttendanceModalOpen(true)}
               className="cursor-pointer hover:shadow-lg transition-shadow"

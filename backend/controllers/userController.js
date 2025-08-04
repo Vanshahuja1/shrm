@@ -451,6 +451,8 @@ const updateEmp = async (req, res) => {
     }
 
     console.log("User found:", user.name);
+    console.log("Documents before update:", user.documents);
+    console.log("BankDetails before update:", user.bankDetails);
 
     const allowedFields = [
       "name",
@@ -470,7 +472,12 @@ const updateEmp = async (req, res) => {
       "email",
       "upperManager",
       "dateOfBirth", // Added this field
-      "emergencyContact" // Added this field
+      "emergencyContact", // Added this field
+      "designation", // Added for job title
+      "isActive", // Added for employment status
+      "photo", // Added for profile picture
+      "documents", // Added for document management
+      "bankDetails" // Added for banking information
     ];
 
     for (const key of allowedFields) {
@@ -478,7 +485,15 @@ const updateEmp = async (req, res) => {
         // Handle address field mapping
         if (key === "currentAddress" && req.body["address"] !== undefined) {
           user[key] = req.body["address"];
-        } else {
+        } 
+        // Handle nested objects like bankDetails and documents
+        else if (key === "bankDetails" || key === "documents") {
+          if (typeof req.body[key] === 'object' && req.body[key] !== null) {
+            // Merge with existing data to avoid overwriting entire object
+            user[key] = { ...user[key], ...req.body[key] };
+          }
+        } 
+        else {
           user[key] = req.body[key];
         }
       }
@@ -504,6 +519,9 @@ const updateEmp = async (req, res) => {
     }
 
     await user.save();
+
+    console.log("Documents after update:", user.documents);
+    console.log("BankDetails after update:", user.bankDetails);
 
     return res
       .status(200)
