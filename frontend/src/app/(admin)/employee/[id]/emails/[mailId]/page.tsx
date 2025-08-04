@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Archive } from "lucide-react";
 import axios from "@/lib/axiosInstance";
 import { Email } from "../types";
 
