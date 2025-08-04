@@ -124,7 +124,7 @@ export default function EmailsPage() {
             className={`p-4 rounded-lg border transition hover:shadow-sm cursor-pointer ${
               email.isRead ? "bg-gray-50" : "bg-white"
             } ${
-              email.senderId === id ? "border-green-200" : "border-blue-200"
+              email.senderId === id ? "border-green-500" : "border-blue-500"
             }`}
           >
             <div className="flex justify-between items-start">
@@ -132,9 +132,9 @@ export default function EmailsPage() {
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-gray-900">{email.subject}</p>
                   <span className={`px-2 py-0.5 text-xs rounded-full ${
-                    email.sender === id 
-                    ? "bg-green-100 text-green-700"
-                    : "bg-blue-100 text-blue-700"
+                    email.senderId === id 
+                    ? "bg-green-200 text-green-700"
+                    : "bg-blue-200 text-blue-700"
                   }`}>
                     {email.senderId === id ? "Sent" : "Received"}
                   </span>
