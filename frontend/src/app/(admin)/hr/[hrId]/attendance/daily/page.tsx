@@ -99,7 +99,7 @@ export default function DailyAttendance() {
       console.log('Fetched attendance data:', data);
     }
     fetchAttendance()
-  }, [hrId])
+  }, [hrId, data])
 
   // Calculate summary statistics
   const summary = data ? {
@@ -168,7 +168,6 @@ export default function DailyAttendance() {
       <div className="space-y-4">
         {data?.map((record, index) => {
           const status = record.attendance?.status || 'absent'
-          const isPresent = record.attendance !== null && status === 'present'
           
           return (
             <motion.div

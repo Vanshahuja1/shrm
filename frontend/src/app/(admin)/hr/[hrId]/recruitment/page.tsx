@@ -19,15 +19,13 @@ import {
   UserCheck,
   UserPlus,
   UserX,
-  Clock,
   IndianRupee,
   LucideIcon,
   // Plus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 import { useParams, useRouter } from "next/navigation";
-import AddPositionModal from "./AddPositionModal";
 
 // Type definitions
 interface InterviewScheduled {
@@ -106,14 +104,14 @@ interface StatCardProps {
   className?: string;
 }
 
-const pieColors: string[] = [
-  "#4FC3F7",
-  "#81C784",
-  "#FFB74D",
-  "#F06292",
-  "#9575CD",
-  "#4DB6AC",
-];
+// const pieColors: string[] = [
+//   "#4FC3F7",
+//   "#81C784",
+//   "#FFB74D",
+//   "#F06292",
+//   "#9575CD",
+//   "#4DB6AC",
+// ];
 
 const StatCard: React.FC<StatCardProps> = ({
   title,
@@ -155,7 +153,7 @@ export default function HRDashboard(): React.JSX.Element | null {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState<boolean>(false);
-  const [isAddPositionModalOpen, setIsAddPositionModalOpen] = useState<boolean>(false);
+  // const [isAddPositionModalOpen, setIsAddPositionModalOpen] = useState<boolean>(false);
 
   // Fetch candidates data
   useEffect(() => {
@@ -176,10 +174,10 @@ export default function HRDashboard(): React.JSX.Element | null {
     }
   };
 
-  const handlePositionAdded = (): void => {
-    // Refresh candidates data after adding a position
-    fetchCandidates();
-  };
+  // const handlePositionAdded = (): void => {
+  //   // Refresh candidates data after adding a position
+  //   fetchCandidates();
+  // };
 
   useEffect(() => setIsClient(true), []);
 
@@ -323,7 +321,7 @@ export default function HRDashboard(): React.JSX.Element | null {
   }
 
   const stats = calculateStats();
-  const departmentData = getDepartmentData();
+  // const departmentData = getDepartmentData();
   const sourceData = getSourceData();
   const departmentBarData = getDepartmentBarData();
   const recruitmentStagesData = getRecruitmentStagesData();

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from '@/lib/axiosInstance';
+import Axios from 'axios';
 import {
   Select,
   SelectContent,
@@ -69,7 +70,7 @@ const AddCandidateForm: React.FC = () => {
         const departmentsData = response.data.data || response.data;
         
         setDepartments(
-          departmentsData.map((dept: any) => ({
+          departmentsData.map((dept: { _id: string; name: string }) => ({
             _id: dept._id,
             name: dept.name
           }))
@@ -245,9 +246,14 @@ const AddCandidateForm: React.FC = () => {
         resume: null,
         expectedSalary: ''
       });
-    } catch (error: any) {
-      console.error('Error details:', error);
-      setMessage(`❌ Error adding candidate: ${error.response?.data?.message || error.message}`);
+    } catch (error: unknown) {
+      if (Axios.isAxiosError(error)) {
+        console.error('Error details:', error);
+        setMessage(`\u274c Error adding candidate: ${error.response?.data?.message || error.message}`);
+      } else {
+        console.error('Unexpected error:', error);
+        setMessage('\u274c An unexpected error occurred.');
+      }
     } finally {
       setLoading(false);
     }
