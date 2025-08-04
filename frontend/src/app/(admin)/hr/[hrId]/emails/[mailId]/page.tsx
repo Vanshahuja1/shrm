@@ -67,11 +67,17 @@ export default function EmailDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm sm:text-base">
           <div className="space-y-1">
             <span className="block text-gray-500 font-medium">From:</span>
-            <p className="text-gray-800 font-semibold">{senderName}</p>
+            <div className="space-y-0.5">
+              <p className="text-gray-800 font-semibold">{senderName}</p>
+              <p className="text-gray-600 text-sm">{email.sender}</p>
+            </div>
           </div>
           <div className="space-y-1">
             <span className="block text-gray-500 font-medium">To:</span>
-            <p className="text-gray-800 font-semibold">{recipientName}</p>
+            <div className="space-y-0.5">
+              <p className="text-gray-800 font-semibold">{recipientName}</p>
+              <p className="text-gray-600 text-sm">{email.recipient}</p>
+            </div>
           </div>
           <div className="space-y-1">
             <span className="block text-gray-500 font-medium">Date:</span>

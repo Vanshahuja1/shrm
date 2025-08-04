@@ -21,93 +21,75 @@ I hope this email finds you well.
 [Your message here]
 
 Best regards,
-HR Department`
+[Your Name]`
     },
     increment: {
-        subject: "Salary Increment Notification",
+        subject: "Salary Increment Notice",
         message: `Dear [Employee Name],
 
-We are pleased to inform you that your salary has been reviewed and an increment has been approved.
+I am pleased to inform you about your salary increment.
 
-Details:
-- Effective Date: [Date]
-- Previous Salary: [Previous Amount]
-- New Salary: [New Amount]
-- Increment Amount: [Amount]
-- Increment Percentage: [Percentage]%
+Effective Date: [Date]
+Previous Salary: [Previous Amount]
+New Salary: [New Amount]
+Increment Amount: [Increment Amount]
 
-This increment reflects our recognition of your valuable contributions and consistent performance.
+This increment is in recognition of your valuable contributions and consistent performance.
 
-Please note that all other terms and conditions of your employment remain unchanged.
-
-If you have any questions, please feel free to contact the HR department.
+Congratulations!
 
 Best regards,
-HR Department`
+[Your Name]`
     },
     decrement: {
-        subject: "Salary Adjustment Notice",
+        subject: "Salary Revision Notice",
         message: `Dear [Employee Name],
 
-This letter serves as formal notification regarding an adjustment to your salary structure.
+This is to inform you about a revision in your salary structure.
 
-Details:
-- Effective Date: [Date]
-- Current Salary: [Current Amount]
-- Adjusted Salary: [New Amount]
-- Adjustment Amount: [Amount]
+Effective Date: [Date]
+Current Salary: [Current Amount]
+Revised Salary: [New Amount]
+Adjustment Amount: [Adjustment Amount]
 
-Reason for Adjustment:
-[Specify reason]
+Reason for adjustment: [Reason]
 
-If you would like to discuss this matter further, please schedule an appointment with HR.
+If you have any questions, please feel free to discuss with HR.
 
 Best regards,
-HR Department`
+[Your Name]`
     },
     penalty: {
-        subject: "Notice of Disciplinary Action",
+        subject: "Notice of Penalty",
         message: `Dear [Employee Name],
 
-This notice is to formally document a disciplinary action.
+This notice is regarding a penalty being imposed due to [reason].
 
-Incident Details:
-- Date of Incident: [Date]
-- Nature of Violation: [Specify violation]
-- Policy Reference: [Policy number/name]
+Details:
+- Incident Date: [Date]
+- Nature of Violation: [Violation]
+- Penalty Amount/Action: [Amount/Action]
 
-Penalty Details:
-- Type of Action: [Warning/Monetary Penalty/Suspension]
-- Penalty Amount (if applicable): [Amount]
-- Duration (if applicable): [Duration]
-
-Please schedule a meeting with HR within the next 48 hours to discuss this matter.
-
-You have the right to appeal this decision within [X] days of receiving this notice.
+Please schedule a meeting with HR to discuss this matter further.
 
 Regards,
-HR Department`
+[Your Name]`
     },
     member_crud: {
-        subject: "Staff Update Notification",
+        subject: "Team Member Update",
         message: `Dear Team,
 
-This is to inform you of the following organizational update:
+This is to inform you about the following update in our team:
 
-Employee Details:
-- Name: [Employee Name]
-- Department: [Department]
-- Position: [Position]
-- Type of Change: [New Joining/Promotion/Transfer/Exit]
-- Effective Date: [Date]
+Type of Update: [Addition/Removal/Change]
+Employee Name: [Name]
+Effective Date: [Date]
+Department: [Department]
 
-Additional Information:
-[Specific details about the change]
-
-Please update your records accordingly.
+[Additional details if any]
 
 Best regards,
-HR Department`
+[Your Name]`
     }
 }
 
@@ -147,7 +129,7 @@ export default function ComposeEmailPage() {
         recipientEmail: "",
     })
 
-    const { hrId } = useParams()
+    const { id } = useParams()
     const [loading, setLoading] = useState(false)
 
     const [members, setMembers] = useState<{ id: string; email: string, name: string }[]>([])
@@ -168,7 +150,7 @@ export default function ComposeEmailPage() {
     useEffect(() => {
         const fetchEmployee = async () => {
             try {
-                const response = await axios.get(`/IT/org-members/${hrId}`)
+                const response = await axios.get(`/IT/org-members/${id}`)
                 setFormData(prev => ({
                     ...prev,
                     sender: response.data.contactInfo.email || "",
@@ -258,13 +240,13 @@ export default function ComposeEmailPage() {
             type: formData.type,
             to: recipient,
             from: formData.sender,
-            senderId: hrId, // Assuming admin is sending the email
+            senderId: id, // Assuming admin is sending the email
             recipientId: recipientId,
             subject: formData.subject,
             text: formData.message,
         })
             .then(() => {
-                router.push(`/hr/${hrId}/emails`)
+                router.push(`/manager/${id}/emails`)
             })
             .catch((error) => {
                 console.error("Error sending email:", error)
@@ -431,7 +413,7 @@ export default function ComposeEmailPage() {
                         </button>
                         <button
                             type="button"
-                            onClick={() => router.push(`/hr/${hrId}/emails`)}
+                            onClick={() => router.push(`/manager/${id}/emails`)}
                             className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
                             disabled={loading} // Optionally disable cancel while loading
                         >
