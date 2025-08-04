@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import toast from 'react-hot-toast';
 
+// Updated type to match the actual Applicant type
 type EditApplicantModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -30,19 +31,19 @@ type EditApplicantModalProps = {
       name: string;
     };
     email: string;
-    appliedDate: string;
-    screeningScore: number;
-    source: string;
-    portfolio: string;
-    location: string;
-    currentCompany: string;
-    jobTitle: string;
-    shortlisted: boolean;
-    status: string;
-    notes: string;
-    resume: string;
-    expectedSalary: string;
-  } ;
+    appliedDate?: string | Date; // Made optional and allow Date
+    screeningScore?: number; // Made optional
+    source?: string; // Made optional
+    portfolio?: string; // Made optional
+    location?: string; // Made optional
+    currentCompany?: string; // Made optional
+    jobTitle?: string; // Made optional
+    shortlisted?: boolean; // Made optional
+    status?: string; // Made optional
+    notes?: string; // Made optional
+    resume?: string; // Made optional
+    expectedSalary?: string; // Made optional
+  };
   onUpdate: () => void;
 };
 
@@ -99,11 +100,28 @@ export default function EditApplicantModal({ isOpen, onClose, applicant, onUpdat
 
   useEffect(() => {
     if (applicant) {
+      // Handle the appliedDate conversion properly
+      let appliedDateString = '';
+      if (applicant.appliedDate) {
+        if (typeof applicant.appliedDate === 'string') {
+          // If it's already a string, try to format it for date input
+          const date = new Date(applicant.appliedDate);
+          if (!isNaN(date.getTime())) {
+            appliedDateString = date.toISOString().split('T')[0];
+          } else {
+            appliedDateString = applicant.appliedDate;
+          }
+        } else {
+          // If it's a Date object
+          appliedDateString = applicant.appliedDate.toISOString().split('T')[0];
+        }
+      }
+
       setFormData({
         name: applicant.name || '',
         department: applicant.department || { _id: '', name: '' },
         email: applicant.email || '',
-        appliedDate: applicant.appliedDate || '',
+        appliedDate: appliedDateString,
         screeningScore: applicant.screeningScore || 0,
         source: applicant.source || '',
         portfolio: applicant.portfolio || '',
@@ -113,7 +131,7 @@ export default function EditApplicantModal({ isOpen, onClose, applicant, onUpdat
         shortlisted: applicant.shortlisted || false,
         status: applicant.status || '',
         notes: applicant.notes || '',
-        resume: applicant.resume,
+        resume: applicant.resume || '',
         expectedSalary: applicant.expectedSalary || ''
       });
     }
@@ -124,7 +142,7 @@ export default function EditApplicantModal({ isOpen, onClose, applicant, onUpdat
       try {
         const response = await axios.get('/departments/org/6889a9394f263f6b1e23a7e2');
         const departmentsData = response.data.data || response.data;
-        setDepartments(departmentsData.map((dept: any) => ({
+        setDepartments(departmentsData.map((dept: { _id: string; name: string }) => ({
           _id: dept._id,
           name: dept.name
         })));
