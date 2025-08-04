@@ -7,24 +7,6 @@ import Link from 'next/link';
 import axios from '@/lib/axiosInstance';
 import { format } from 'date-fns';
 import { Candidate } from '../applicants/page';
-const fallbackHired = [
-  {
-    id: 'cameron-riley',
-    name: 'Cameron Riley',
-    email: 'cameron@acr.com',
-    jobTitle: 'Process Associate',
-    appliedDate: '2024-06-10',
-    status: 'Hired',
-  },
-  {
-    id: 'sara-mills',
-    name: 'Sara Mills',
-    email: 'sara@xyz.com',
-    jobTitle: 'UI Designer',
-    appliedDate: '2024-06-15',
-    status: 'Hired',
-  },
-];
 
 export default function HiredCandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>();

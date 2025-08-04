@@ -161,7 +161,7 @@ export default function ComposeEmailPage() {
             }
         }
         fetchEmployee()
-    }, [])
+    }, [id])
 
 
     const validateForm = () => {

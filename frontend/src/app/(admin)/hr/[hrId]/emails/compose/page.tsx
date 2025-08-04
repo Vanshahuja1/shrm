@@ -163,7 +163,7 @@ export default function ComposeEmailPage() {
 
     useEffect(() => {
         fetchMembers()
-    }, [])
+    }, [hrId])
 
     useEffect(() => {
         const fetchEmployee = async () => {
@@ -179,7 +179,7 @@ export default function ComposeEmailPage() {
             }
         }
         fetchEmployee()
-    }, [])
+    }, [hrId])
 
 
     const validateForm = () => {

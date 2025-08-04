@@ -7,7 +7,6 @@ import {
   Target,
   Wallet,
   Briefcase,
-  Bell,
   FileText,
   Users,
   BarChart3,

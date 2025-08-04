@@ -1,9 +1,9 @@
 'use client';
 
 import { JSX, useState } from 'react';
-import LeavePolicy from './leave/page';
-import AttendancePolicy from './attendance/page';
-import DisciplinePolicy from './discipline/page';
+// import LeavePolicy from './leave/page';
+// import AttendancePolicy from './attendance/page';
+// import DisciplinePolicy from './discipline/page';
 import WarningPolicyPage from './warning/page';
 
 const tabs = ['Warning'] as const;
