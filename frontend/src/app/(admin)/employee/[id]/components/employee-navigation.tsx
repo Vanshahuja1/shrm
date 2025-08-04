@@ -2,7 +2,7 @@
 
 import { useParams, usePathname } from "next/navigation"
 import Link from "next/link"
-import { Target, Calendar, User, BarChart3, Zap, Database, Settings } from "lucide-react"
+import { Target, Calendar, User, BarChart3, Zap, Database, Settings ,MailIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import axios from "@/lib/axiosInstance"
 interface EmployeeNavigationProps {
@@ -44,6 +44,7 @@ useEffect(() => {
     { id: "performance", label: "Performance Metrics", icon: BarChart3, href: `/employee/${employeeId}/performance` },
     { id: "workhours", label: "Work Hours Display", icon: Zap, href: `/employee/${employeeId}/workhours` },
     { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${employeeId}/datasync` },
+    {id: "email" , label : "Email System", icon: MailIcon, href: `/employee/${employeeId}/emails`},
     { id: "settings", label: "Settings", icon: Settings, href: `/employee/${employeeId}/settings` },
   ]
 

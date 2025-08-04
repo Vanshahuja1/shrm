@@ -398,8 +398,14 @@ const getById = async (req, res) => {
         role: "intern",
         $or: [{ upperManager: userObj.id }, { upperManager: userObj.name }],
       }).select("id name");
-      userObj.employees = employees.map((e) => ({ id: String(e.id), name: e.name }));
-      userObj.interns = interns.map((i) => ({ id: String(i.id), name: i.name }));
+      userObj.employees = employees.map((e) => ({
+        id: String(e.id),
+        name: e.name,
+      }));
+      userObj.interns = interns.map((i) => ({
+        id: String(i.id),
+        name: i.name,
+      }));
     }
 
     res.json({ success: true, data: userObj });
@@ -412,13 +418,13 @@ const getById = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const { organizationId, departmentId, role } = req.query;
-    
+
     // Build filter object
     const filter = {};
     if (organizationId) filter.organizationId = organizationId;
     if (departmentId) filter.departmentId = departmentId;
     if (role) filter.role = role.toLowerCase();
-    
+
     const users = await User.find(filter).select("-password");
     if (!users || users.length === 0) {
       return res
@@ -436,7 +442,9 @@ const updateEmp = async (req, res) => {
   try {
     const user = await User.findOne({ id: req.params.id });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     const allowedFields = [
@@ -455,7 +463,7 @@ const updateEmp = async (req, res) => {
       "panCard",
       "phone",
       "email",
-      "upperManager"
+      "upperManager",
     ];
 
     for (const key of allowedFields) {
@@ -465,33 +473,33 @@ const updateEmp = async (req, res) => {
     }
 
     if (Array.isArray(req.body.employees)) {
-      user.employees = req.body.employees.map(emp => ({
+      user.employees = req.body.employees.map((emp) => ({
         id: String(emp.id),
-        upperManager: emp.upperManager || user.name || ""
+        upperManager: emp.upperManager || user.name || "",
       }));
     }
 
     if (Array.isArray(req.body.interns)) {
-      user.interns = req.body.interns.map(int => ({
+      user.interns = req.body.interns.map((int) => ({
         id: String(int.id),
-        upperManager: int.upperManager || user.name || ""
+        upperManager: int.upperManager || user.name || "",
       }));
     }
 
     await user.save();
 
-    return res.status(200).json({ success: true, message: "Member updated successfully" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Member updated successfully" });
   } catch (error) {
     console.error("Error updating member:", error);
     return res.status(500).json({
       success: false,
       message: "Error updating member",
-      error: error.message
+      error: error.message,
     });
   }
 };
-
-
 
 const deleteEmp = async (req, res) => {
   try {
@@ -670,6 +678,21 @@ const registerEmployee = async (req, res) => {
   }
 };
 
+const getNameById = async (req, res) => {
+  try {
+    const user = await User.findOne({ id: req.params.empId }).select("name");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    res.json({ success: true, name: user.name });
+  } catch (error) {
+    console.error("Get name by ID error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -679,4 +702,5 @@ module.exports = {
   addEmp,
   deleteEmp,
   updateEmp,
+  getNameById,
 };

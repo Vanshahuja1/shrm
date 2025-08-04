@@ -6,17 +6,18 @@ const {
   getById,
   addEmp,
   updateEmp,
-  deleteEmp
+  deleteEmp,
+  getNameById,
 } = require("../controllers/userController");
 const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
-
 router.get("/", getAllUsers);
 router.post("/addEmp", addEmp);
 router.get("/:id", getById);
 router.put("/:id", updateEmp);
 router.delete("/:id", deleteEmp);
+router.get("/name/:empId" , getNameById);
 router.use(authenticateToken);
 router.get("/profile", getProfile);
 router.patch("/profile", updateProfile);

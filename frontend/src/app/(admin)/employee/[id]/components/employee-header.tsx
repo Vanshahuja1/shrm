@@ -54,12 +54,7 @@ export function EmployeeHeader({ employeeId }: EmployeeHeaderProps) {
             <p className="text-blue-600 text-lg">Welcome back, {employeeName || "Loading..."}</p>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Bell className="w-6 h-6 text-gray-600" />
-              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                3
-              </span>
-            </div>
+           
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
               <User className="w-6 h-6 text-white" />
             </div>
