@@ -37,7 +37,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use("/api/auth", authRoutes)
-app.use("/api/user", userRoutes)
+app.use("/api/user", userRoutes) // Reverted back to "/api/user"
 app.use("/api/admin", adminRoutes)
 app.use("/api/projects", projectRoutes)
 app.use("/api/tasks", taskRoutes)

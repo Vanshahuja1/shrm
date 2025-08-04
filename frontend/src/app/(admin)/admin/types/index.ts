@@ -1,8 +1,11 @@
 export interface OrganizationMember {
   id: number | string
   name: string
-  role: "Manager" | "Employee" | "Intern" | "Head"
+  role: "Manager" | "Employee" | "Intern" | "Head" | "Admin"
   department: string
+  organization?: string // Organization name from backend
+  organizationId?: string // Organization ID
+  organizationName?: string // Alternative organization name
   salary: number
   projects: string[]
   experience:  number
@@ -32,9 +35,9 @@ export interface OrganizationMember {
   interns?: { id: string| number; upperManager: string; name?: string }[];
 }
 export interface UpdateMemberPayload {
-  id: string | number;
+  id?: string | number;
   name: string;
-  role: "Manager" | "Employee" | "Intern" | "Head";
+  role: "Manager" | "Employee" | "Intern" | "Head" | "Admin";
   department: string;
   salary: number;
   projects: string[];
@@ -60,8 +63,8 @@ export interface UpdateMemberPayload {
   };
   upperManager?: string;
   upperManagerName?: string;
-  employees?: { id: string| number; upperManager: string }[];
-  interns?: { id: string| number; upperManager: string }[];
+  employees?: { id: string | number; name?: string }[];
+  interns?: { id: string | number; name?: string }[];
 }
 
 export interface Department {

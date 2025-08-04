@@ -33,6 +33,7 @@ router.post("/:id/overtime", overtimeController.submitOvertimeRequest)
 
 // Work Hours
 router.get("/:id/work-hours", workHoursController.getWorkHours)
+router.post("/:id/work-hours/test", workHoursController.createTestWorkHours)
 
 // Data Sync
 router.get("/:id/data-sync", dataSyncController.getDataSyncStatus)

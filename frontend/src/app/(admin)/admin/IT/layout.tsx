@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useParams } from "next/navigation"
 import Sidebar from "./Sidebar"
 import TopHeader from "./TopHeader"
-import axiosInstance from "@/lib/axiosInstance"
 
 interface AdminData {
   name: string
@@ -20,34 +18,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [adminData, setAdminData] = useState<AdminData | null>(null)
   const [organizationData, setOrganizationData] = useState<OrganizationData | null>(null)
-  const { id: adminId } = useParams()
 
   useEffect(() => {
-    const fetchAdminData = async () => {
-      try {
-        // Fetch admin data
-        const adminResponse = await axiosInstance.get(`/user/${adminId}`)
-        if (adminResponse.data.success) {
-          const admin = adminResponse.data.data
-          setAdminData(admin)
-          
-          // Fetch organization data using the admin's organizationId
-          if (admin.organizationId) {
-            const orgResponse = await axiosInstance.get(`/organizations/${admin.organizationId}`)
-            if (orgResponse.data.success) {
-              setOrganizationData(orgResponse.data.data)
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching admin/organization data:", error)
-      }
-    }
-
-    if (adminId) {
-      fetchAdminData()
-    }
-  }, [adminId])
+    // Set hardcoded admin data
+    setAdminData({
+      name: "Narendra Singh",
+      organizationId: "6889a9394f263f6b1e23a7e2"
+    })
+    // Set default organization data
+    setOrganizationData({
+      name: "IT"
+    })
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

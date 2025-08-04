@@ -434,10 +434,16 @@ const getAllUsers = async (req, res) => {
 
 const updateEmp = async (req, res) => {
   try {
+    console.log("Update request for ID:", req.params.id);
+    console.log("Update payload:", req.body);
+    
     const user = await User.findOne({ id: req.params.id });
     if (!user) {
+      console.log("User not found with ID:", req.params.id);
       return res.status(404).json({ success: false, message: "User not found" });
     }
+
+    console.log("User found:", user.name);
 
     const allowedFields = [
       "name",
@@ -450,18 +456,30 @@ const updateEmp = async (req, res) => {
       "taskCountPerDay",
       "attendanceCount30Days",
       "performance",
-      "address",
+      "currentAddress", // Changed from "address" to match the model
       "adharCard",
       "panCard",
       "phone",
       "email",
-      "upperManager"
+      "upperManager",
+      "dateOfBirth", // Added this field
+      "emergencyContact" // Added this field
     ];
 
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) {
-        user[key] = req.body[key];
+        // Handle address field mapping
+        if (key === "currentAddress" && req.body["address"] !== undefined) {
+          user[key] = req.body["address"];
+        } else {
+          user[key] = req.body[key];
+        }
       }
+    }
+
+    // Also handle "address" field mapping to "currentAddress"
+    if (req.body["address"] !== undefined) {
+      user["currentAddress"] = req.body["address"];
     }
 
     if (Array.isArray(req.body.employees)) {

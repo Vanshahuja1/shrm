@@ -35,7 +35,7 @@ export default function TopHeader({ setIsSidebarOpen, adminName }: TopHeaderProp
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{getPageTitle(pathname)}</h1>
-            <p className="text-sm text-gray-500">Welcome back{adminName ? `, ${adminName}` : ""}</p>
+            <p className="text-sm text-gray-500">Welcome back{adminName ? `, ${adminName}` : ", Admin User"}</p>
           </div>
         </div>
       </div>

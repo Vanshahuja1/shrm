@@ -1,9 +1,11 @@
 export interface OrganizationMember {
   id: number | string;
   name: string;
-  role: "Manager" | "Employee" | "Intern" | "Head";
+  role: "Manager" | "Employee" | "Intern" | "Head" | "Admin";
   department: string;
-  organizationId?: string;
+  organization?: string; // Organization name field from backend
+  organizationId?: string; // Organization ID field  
+  organizationName?: string; // Alternative organization name field
   salary: number;
   projects: string[];
   experience: string | number;

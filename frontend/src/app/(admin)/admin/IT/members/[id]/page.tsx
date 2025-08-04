@@ -171,7 +171,7 @@ export default function MemberDetailPage() {
               <MapPin className="text-gray-500" size={20} />
               {member.contactInfo.address}
             </div>
-            {member.upperManager && (
+            {member.upperManager && !["manager", "admin"].includes(member.role.toLowerCase()) && (
               <div className="flex items-center gap-3">
                 <UserIcon className="text-gray-500" size={20} />
                 Reports to: {member.upperManagerName}

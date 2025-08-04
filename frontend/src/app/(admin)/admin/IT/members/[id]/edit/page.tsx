@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import { useParams, useRouter } from "next/navigation";
 import axios from "@/lib/axiosInstance";
@@ -127,22 +127,23 @@ export default function EditMemberPage() {
   }, [selectedOrgId]);
 
   // Helper functions (single set only)
-  const handleChange = <K extends keyof OrganizationMember>(
+  const handleChange = useCallback(<K extends keyof OrganizationMember>(
     key: K,
     value: OrganizationMember[K]
   ) => {
-    if (!member) return;
-    setMember({ ...member, [key]: value });
-  };
+    setMember(prev => prev ? { ...prev, [key]: value } : null);
+  }, []); // Empty dependency array since we're using the prev pattern
 
- const handleContactChange = useCallback(
+  const handleContactChange = useCallback(
     (key: keyof OrganizationMember["contactInfo"], value: string) => {
       setMember((prev) =>
         prev
           ? {
               ...prev,
               contactInfo: {
-                ...prev.contactInfo,
+                email: prev.contactInfo?.email || "",
+                phone: prev.contactInfo?.phone || "",
+                address: prev.contactInfo?.address || "",
                 [key]: value,
               },
             }
@@ -160,7 +161,8 @@ export default function EditMemberPage() {
           ? {
               ...prev,
               documents: {
-                ...prev.documents,
+                pan: prev.documents?.pan || "",
+                aadhar: prev.documents?.aadhar || "",
                 [key]: value,
               },
             }
@@ -170,29 +172,57 @@ export default function EditMemberPage() {
     []
   );
 
-  const handlePerformanceChange = (
+  const handlePerformanceChange = useCallback((
     key: keyof OrganizationMember["performanceMetrics"],
     value: number
   ) => {
-    if (!member) return;
-    setMember({
-      ...member,
-      performanceMetrics: { ...member.performanceMetrics, [key]: value },
+    setMember(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        performanceMetrics: { 
+          tasksPerDay: prev.performanceMetrics?.tasksPerDay || 0,
+          attendanceScore: prev.performanceMetrics?.attendanceScore || 0,
+          managerReviewRating: prev.performanceMetrics?.managerReviewRating || 0,
+          combinedPercentage: prev.performanceMetrics?.combinedPercentage || 0,
+          [key]: value 
+        },
+      };
     });
-  };
+  }, []);
 
-  const handleProjectsChange = (val: string) => {
+  const handleProjectsChange = useCallback((val: string) => {
     setProjectsText(val);
-  };
+  }, []);
 
-  const handleProjectsBlur = () => {
+  // Create memoized callback for organization selection
+  const handleOrganizationChange = useCallback((val: string) => {
+    setSelectedOrgId(val);
+    // Clear department when org changes
+    handleChange("department", "");
+  }, [handleChange]);
+
+  // Create memoized callback for manager selection
+  const handleManagerChange = useCallback((val: string) => {
+    setMember((prev) => {
+      if (!prev) return prev;
+      const selected = allManagers.find((m) => String(m.id) === val);
+      return {
+        ...prev,
+        upperManager: val,
+        upperManagerName: selected?.name || "",
+      };
+    });
+  }, [allManagers]);
+
+  const handleProjectsBlur = useCallback(() => {
     // Process projects when user finishes editing (on blur)
     const projectsList = projectsText
       .split(",")
       .map((p) => p.trim())
       .filter((p) => p);
-    handleChange("projects", projectsList);
-  };
+    setMember(prev => prev ? { ...prev, projects: projectsList } : null);
+  }, [projectsText]);
 
   const handleSubmit = async () => {
     if (!member) return;
@@ -201,204 +231,212 @@ export default function EditMemberPage() {
       .map((p) => p.trim())
       .filter((p) => p);
 
+    // Map frontend fields to backend expected fields with proper typing
     const memberToSubmit: UpdateMemberPayload = {
-      id: member.id,
       name: member.name,
       role: member.role,
-      department: member.department,
+      department: member.department, // Maps to departmentName in backend
       upperManager: member.upperManager,
       upperManagerName: member.upperManagerName || "",
-      salary: member.salary,
+      salary: Number(member.salary) || 0,
       projects: projectsList,
-      experience:
-        member.experience,
+      experience: Number(member.experience) || 0,
+      joiningDate: member.joiningDate,
       contactInfo: {
         email: member.contactInfo?.email || "",
         phone: member.contactInfo?.phone || "",
-        address: member.contactInfo?.address || "",
+        address: member.contactInfo?.address || "", // Maps to currentAddress in backend
       },
       documents: {
-        pan: member.documents?.pan || "",
-        aadhar: member.documents?.aadhar || "",
+        pan: member.documents?.pan || "", // Maps to panCard in backend
+        aadhar: member.documents?.aadhar || "", // Maps to adharCard in backend
       },
-      joiningDate: member.joiningDate,
       performanceMetrics: {
-        tasksPerDay: member.performanceMetrics?.tasksPerDay || 0,
-        attendanceScore: member.performanceMetrics?.attendanceScore || 0,
-        managerReviewRating:
-          member.performanceMetrics?.managerReviewRating || 0,
-        combinedPercentage: member.performanceMetrics?.combinedPercentage || 0,
+        tasksPerDay: Number(member.performanceMetrics?.tasksPerDay) || 0, // Maps to taskCountPerDay
+        attendanceScore: Number(member.performanceMetrics?.attendanceScore) || 0, // Maps to attendanceCount30Days
+        managerReviewRating: Number(member.performanceMetrics?.managerReviewRating) || 0,
+        combinedPercentage: Number(member.performanceMetrics?.combinedPercentage) || 0, // Maps to performance
       },
       attendance: {
-        todayPresent: member.attendance?.todayPresent ?? true,
+        todayPresent: member.attendance?.todayPresent ?? true, // Maps to isActive
       },
     };
 
+    // Add manager-specific fields
     if (member.role.toLowerCase() === "manager") {
-      memberToSubmit.employees = (member.employees || []).map((e) => ({
+      memberToSubmit.employees = (member.employees || []).map((e: Subordinate) => ({
         id: String(e.id),
-        upperManager: String(member.upperManager || ""),
+        name: e.name
       }));
-      memberToSubmit.interns = (member.interns || []).map((i) => ({
+      memberToSubmit.interns = (member.interns || []).map((i: Subordinate) => ({
         id: String(i.id),
-        upperManager: String(member.upperManager || ""),
+        name: i.name
       }));
     }
 
     setSaving(true);
     setError(null);
     setSuccess(null);
+    
+    console.log("Submitting member data:", memberToSubmit); // Debug log
+    
     try {
-      await axios.put(`/IT/org-members/${id}`, memberToSubmit);
+      const response = await axios.put(`/IT/org-members/${id}`, memberToSubmit);
+      console.log("Update response:", response.data); // Debug log
       setSuccess("Member updated successfully!");
       setTimeout(() => {
         router.push(`/admin/IT/members/${id}`);
       }, 1500);
     } catch (error: unknown) {
       console.error("Error updating member:", error);
-      setError(
-        (error as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message || "Failed to update member"
-      );
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to update member";
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
   };
 
-  // Helper field components (must be above usage)
-function Field({
-  label,
-  value,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string | number;
-  onChange: (val: string | number) => void;
-  type?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) =>
-          onChange(type === "number" ? Number(e.target.value) : e.target.value)
-        }
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  );
-}
+  // Memoized field components to prevent re-renders
+  const MemoizedField = useMemo(() => {
+    return function Field({
+      label,
+      value,
+      onChange,
+      type = "text",
+    }: {
+      label: string;
+      value: string | number;
+      onChange: (val: string | number) => void;
+      type?: string;
+    }) {
+      return (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {label}
+          </label>
+          <input
+            type={type}
+            value={value}
+            onChange={(e) =>
+              onChange(type === "number" ? Number(e.target.value) : e.target.value)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      );
+    };
+  }, []);
 
-  function SelectField({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: { label: string; value: string }[];
-  onChange: (val: string) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
+  const MemoizedSelectField = useMemo(() => {
+    return function SelectField({
+      label,
+      value,
+      options,
+      onChange,
+    }: {
+      label: string;
+      value: string;
+      options: { label: string; value: string }[];
+      onChange: (val: string) => void;
+    }) {
+      return (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {label}
+          </label>
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          >
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    };
+  }, []);
 
+  const MemoizedFieldWithSuffix = useMemo(() => {
+    return function FieldWithSuffix({
+      label,
+      value,
+      suffix,
+      onChange,
+      type = "text",
+    }: {
+      label: string;
+      value: string | number;
+      suffix: string;
+      type?: string;
+      onChange: (val: string | number) => void;
+    }) {
+      return (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {label}
+          </label>
+          <div className="relative">
+            <input
+              type={type}
+              value={value}
+              onChange={(e) =>
+                onChange(
+                  type === "number" ? Number(e.target.value) : e.target.value
+                )
+              }
+              className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
+              {suffix}
+            </span>
+          </div>
+        </div>
+      );
+    };
+  }, []);
 
- function FieldWithSuffix({
-  label,
-  value,
-  suffix,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string | number;
-  suffix: string;
-  type?: string;
-  onChange: (val: string | number) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          type={type}
-          value={value}
-          onChange={(e) =>
-            onChange(
-              type === "number" ? Number(e.target.value) : e.target.value
-            )
-          }
-          className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
-        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
-          {suffix}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-  function FieldWithPrefix({
-  label,
-  value,
-  prefix,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string | number;
-  prefix: string;
-  type?: string;
-  onChange: (val: string | number) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
-          {prefix}
-        </span>
-        <input
-          type={type}
-          value={value}
-          onChange={(e) =>
-            onChange(
-              type === "number" ? Number(e.target.value) : e.target.value
-            )
-          }
-          className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-    </div>
-  );
-}
+  const MemoizedFieldWithPrefix = useMemo(() => {
+    return function FieldWithPrefix({
+      label,
+      value,
+      prefix,
+      onChange,
+      type = "text",
+    }: {
+      label: string;
+      value: string | number;
+      prefix: string;
+      type?: string;
+      onChange: (val: string | number) => void;
+    }) {
+      return (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {label}
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">
+              {prefix}
+            </span>
+            <input
+              type={type}
+              value={value}
+              onChange={(e) =>
+                onChange(
+                  type === "number" ? Number(e.target.value) : e.target.value
+                )
+              }
+              className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      );
+    };
+  }, []);
 
   if (loading) return <p className="text-center text-gray-500">Loading...</p>;
   if (!member) return null;
@@ -439,12 +477,12 @@ function Field({
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Field
+          <MemoizedField
             label="Name"
             value={member.name}
             onChange={(val) => handleChange("name", val as string)}
           />
-          <SelectField
+          <MemoizedSelectField
             label="Role"
             value={member.role}
             options={[
@@ -452,12 +490,13 @@ function Field({
               { label: "Employee", value: "Employee" },
               { label: "Intern", value: "Intern" },
               { label: "Head", value: "Head" },
+              { label: "Admin", value: "Admin" },
             ]}
             onChange={(val: string) =>
               handleChange("role", val as OrganizationMember["role"])
             }
           />
-          <SelectField
+          <MemoizedSelectField
             label="Organization"
             value={selectedOrgId}
             options={[
@@ -467,13 +506,9 @@ function Field({
                 value: org._id,
               }))
             ]}
-            onChange={(val: string) => {
-              setSelectedOrgId(val);
-              // Clear department when org changes
-              handleChange("department", "");
-            }}
+            onChange={handleOrganizationChange}
           />
-          <SelectField
+          <MemoizedSelectField
             label="Department"
             value={member.department}
             options={[
@@ -488,7 +523,7 @@ function Field({
             }
           />
           {["employee", "intern"].includes(member.role.toLowerCase()) && (
-            <SelectField
+            <MemoizedSelectField
               label="Manager"
               value={member.upperManager || ""}
               options={[
@@ -498,20 +533,10 @@ function Field({
                   value: String(m.id),
                 }))
               ]}
-              onChange={(val: string) =>
-                setMember((prev) => {
-                  if (!prev) return prev;
-                  const selected = allManagers.find((m) => String(m.id) === val);
-                  return {
-                    ...prev,
-                    upperManager: val,
-                    upperManagerName: selected?.name || "",
-                  };
-                })
-              }
+              onChange={handleManagerChange}
             />
           )}
-          <FieldWithPrefix
+          <MemoizedFieldWithPrefix
             label="Salary"
             value={member.salary}
             type="number"
@@ -520,13 +545,13 @@ function Field({
               handleChange("salary", Number(val))
             }
           />
-          <Field
+          <MemoizedField
             label="Joining Date"
             value={member.joiningDate}
             type="date"
             onChange={(val) => handleChange("joiningDate", val as string)}
           />
-          <FieldWithSuffix
+          <MemoizedFieldWithSuffix
             label="Experience"
             value={
               typeof member.experience === "string"
@@ -539,38 +564,18 @@ function Field({
               handleChange("experience", Number(val))
             }
           />
-          <Field
+          <MemoizedField
             label="Email"
             value={member.contactInfo?.email || ""}
             onChange={(val) =>
-              setMember((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      contactInfo: {
-                        ...prev.contactInfo,
-                        email: val as string,
-                      },
-                    }
-                  : prev
-              )
+              handleContactChange("email", val as string)
             }
           />
-          <Field
+          <MemoizedField
             label="Phone"
             value={member.contactInfo?.phone || ""}
             onChange={(val) =>
-              setMember((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      contactInfo: {
-                        ...prev.contactInfo,
-                        phone: val as string,
-                      },
-                    }
-                  : prev
-              )
+              handleContactChange("phone", val as string)
             }
           />
         </div>
@@ -578,19 +583,19 @@ function Field({
         <textarea
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           placeholder="Address"
-          value={member.contactInfo.address}
+          value={member.contactInfo?.address || ""}
           onChange={(e) => handleContactChange("address", e.target.value)}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Field
+          <MemoizedField
             label="PAN Number"
-            value={member.documents.pan}
+            value={member.documents?.pan || ""}
             onChange={(val) => handleDocumentChange("pan", val as string)}
           />
-          <Field
+          <MemoizedField
             label="Aadhar Number"
-            value={member.documents.aadhar}
+            value={member.documents?.aadhar || ""}
             onChange={(val) => handleDocumentChange("aadhar", val as string)}
           />
         </div>
@@ -601,35 +606,35 @@ function Field({
             Performance Metrics
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Field
+            <MemoizedField
               label="Tasks Per Day"
-              value={member.performanceMetrics.tasksPerDay}
+              value={member.performanceMetrics?.tasksPerDay || 0}
               type="number"
               onChange={(val: string | number) =>
                 handlePerformanceChange("tasksPerDay", Number(val))
               }
             />
-            <FieldWithSuffix
+            <MemoizedFieldWithSuffix
               label="Attendance Score"
-              value={member.performanceMetrics.attendanceScore}
+              value={member.performanceMetrics?.attendanceScore || 0}
               type="number"
               suffix="%"
               onChange={(val: string | number) =>
                 handlePerformanceChange("attendanceScore", Number(val))
               }
             />
-            <FieldWithSuffix
+            <MemoizedFieldWithSuffix
               label="Manager Review Rating"
-              value={member.performanceMetrics.managerReviewRating}
+              value={member.performanceMetrics?.managerReviewRating || 0}
               type="number"
               suffix="/5"
               onChange={(val: string | number) =>
                 handlePerformanceChange("managerReviewRating", Number(val))
               }
             />
-            <FieldWithSuffix
+            <MemoizedFieldWithSuffix
               label="Combined Performance"
-              value={member.performanceMetrics.combinedPercentage}
+              value={member.performanceMetrics?.combinedPercentage || 0}
               type="number"
               suffix="%"
               onChange={(val: string | number) =>

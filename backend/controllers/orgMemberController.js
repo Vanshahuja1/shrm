@@ -318,7 +318,7 @@ exports.updateMember = async (req, res) => {
   try {
     const memberId = req.params.id;
     console.log("Updating member with ID:", memberId);
-    console.log("Request Body:", req.body);
+    console.log("Request Body:", JSON.stringify(req.body, null, 2));
 
     const updateData = {};
 
@@ -326,10 +326,12 @@ exports.updateMember = async (req, res) => {
     if (req.body.name) updateData.name = req.body.name;
     if (req.body.role) updateData.role = req.body.role;
     if (req.body.department) updateData.departmentName = req.body.department;
-    if (req.body.salary) updateData.salary = req.body.salary;
+    if (req.body.salary !== undefined) updateData.salary = Number(req.body.salary);
     if (req.body.projects) updateData.projects = req.body.projects;
-    if (req.body.experience) updateData.experience = req.body.experience;
-    if (req.body.joiningDate) updateData.joiningDate = req.body.joiningDate;
+    if (req.body.experience !== undefined) updateData.experience = Number(req.body.experience);
+    if (req.body.joiningDate) updateData.joiningDate = new Date(req.body.joiningDate);
+
+    console.log("Basic update data:", updateData);
 
     // Contact info
     if (req.body.contactInfo?.email)
@@ -337,7 +339,7 @@ exports.updateMember = async (req, res) => {
     if (req.body.contactInfo?.phone)
       updateData.phone = req.body.contactInfo.phone;
     if (req.body.contactInfo?.address)
-      updateData.address = req.body.contactInfo.address;
+      updateData.currentAddress = req.body.contactInfo.address; // Map to currentAddress field
 
     // Documents
     if (req.body.documents?.pan) updateData.panCard = req.body.documents.pan;
@@ -345,13 +347,18 @@ exports.updateMember = async (req, res) => {
       updateData.adharCard = req.body.documents.aadhar;
 
     // Performance metrics
-    if (req.body.performanceMetrics?.tasksPerDay)
-      updateData.taskCountPerDay = req.body.performanceMetrics.tasksPerDay;
-    if (req.body.performanceMetrics?.attendanceScore)
-      updateData.attendanceCount30Days =
-        req.body.performanceMetrics.attendanceScore;
-    if (req.body.performanceMetrics?.combinedPercentage)
-      updateData.performance = req.body.performanceMetrics.combinedPercentage;
+    if (req.body.performanceMetrics?.tasksPerDay !== undefined)
+      updateData.taskCountPerDay = Number(req.body.performanceMetrics.tasksPerDay);
+    if (req.body.performanceMetrics?.attendanceScore !== undefined)
+      updateData.attendanceCount30Days = Number(req.body.performanceMetrics.attendanceScore);
+    if (req.body.performanceMetrics?.combinedPercentage !== undefined)
+      updateData.performance = Number(req.body.performanceMetrics.combinedPercentage);
+
+    console.log("Performance metrics update data:", {
+      taskCountPerDay: updateData.taskCountPerDay,
+      attendanceCount30Days: updateData.attendanceCount30Days,
+      performance: updateData.performance
+    });
 
     // Attendance toggle
     if (typeof req.body.attendance?.todayPresent !== "undefined")
@@ -361,6 +368,8 @@ exports.updateMember = async (req, res) => {
     if (req.body.upperManager) updateData.upperManager = req.body.upperManager;
     if (req.body.upperManagerName)
       updateData.upperManagerName = req.body.upperManagerName;
+
+    console.log("Final updateData being applied:", JSON.stringify(updateData, null, 2));
 
     // 🔄 Update the member itself
     const updatedMember = await User.findOneAndUpdate(
@@ -372,6 +381,16 @@ exports.updateMember = async (req, res) => {
     if (!updatedMember) {
       return res.status(404).json({ message: "Member not found" });
     }
+
+    console.log("Member updated successfully:", {
+      id: updatedMember.id,
+      name: updatedMember.name,
+      salary: updatedMember.salary,
+      experience: updatedMember.experience,
+      email: updatedMember.email,
+      phone: updatedMember.phone,
+      currentAddress: updatedMember.currentAddress
+    });
 
     // 🧠 If the member is (or becomes) a manager, update their subordinates
     const isManager =
@@ -420,7 +439,7 @@ exports.updateMember = async (req, res) => {
       }
     }
 
-    res.status(200).json(updatedMember.Info);
+    res.status(200).json(updatedMember.OrgMemberInfo);
   } catch (error) {
     console.error("Error updating member:", error);
     res.status(500).json({

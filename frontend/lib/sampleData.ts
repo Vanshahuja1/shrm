@@ -5,7 +5,7 @@ export type DepartmentMember = {
   name: string
   position: string
   salary: number
-  experience: string
+  experience: number
   joinDate: string
   email: string
   phone: string
@@ -25,7 +25,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT Development",
     salary: 120000,
     projects: ["E-commerce Platform Redesign", "Mobile Banking App", "Cloud Migration"],
-    experience: "10 years",
+    experience: 10,
     contactInfo: {
       email: "sarah.johnson@oneaimit.com",
       phone: "+1-555-0100",
@@ -54,7 +54,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT Development",
     salary: 85000,
     projects: ["E-commerce Platform Redesign", "Mobile Banking App"],
-    experience: "5 years",
+    experience: 5,
     contactInfo: {
       email: "john.doe@oneaimit.com",
       phone: "+1-555-0101",
@@ -84,7 +84,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT Development",
     salary: 65000,
     projects: ["E-commerce Platform Redesign"],
-    experience: "3 years",
+    experience: 3,
     contactInfo: {
       email: "jane.smith@oneaimit.com",
       phone: "+1-555-0102",
@@ -114,7 +114,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT Development",
     salary: 72000,
     projects: ["Mobile Banking App", "Inventory Management System"],
-    experience: "4 years",
+    experience: 4,
     contactInfo: {
       email: "alex.chen@oneaimit.com",
       phone: "+1-555-0103",
@@ -144,7 +144,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT Development",
     salary: 68000,
     projects: ["E-commerce Platform Redesign", "Healthcare Portal"],
-    experience: "3 years",
+    experience: 3,
     contactInfo: {
       email: "mike.johnson@oneaimit.com",
       phone: "+1-555-0104",
@@ -174,7 +174,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT Development",
     salary: 35000,
     projects: ["Learning Management System"],
-    experience: "6 months",
+    experience: 0.5,
     contactInfo: {
       email: "lisa.wang@oneaimit.com",
       phone: "+1-555-0105",
@@ -206,7 +206,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "HR",
     salary: 95000,
     projects: ["HR Management System", "Employee Wellness Program"],
-    experience: "8 years",
+    experience: 8,
     contactInfo: {
       email: "david.brown@oneaimit.com",
       phone: "+1-555-0200",
@@ -235,7 +235,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "HR",
     salary: 70000,
     projects: ["HR Management System"],
-    experience: "6 years",
+    experience: 6,
     contactInfo: {
       email: "sarah.wilson@oneaimit.com",
       phone: "+1-555-0201",
@@ -265,7 +265,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "HR",
     salary: 58000,
     projects: ["Employee Wellness Program", "Recruitment Portal"],
-    experience: "3 years",
+    experience: 3,
     contactInfo: {
       email: "michael.rodriguez@oneaimit.com",
       phone: "+1-555-0202",
@@ -295,7 +295,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "HR",
     salary: 62000,
     projects: ["Performance Management System"],
-    experience: "4 years",
+    experience: 4,
     contactInfo: {
       email: "jennifer.lee@oneaimit.com",
       phone: "+1-555-0203",
@@ -327,7 +327,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "Business Development",
     salary: 110000,
     projects: ["Market Analysis Dashboard", "Client Acquisition Platform", "Sales Analytics"],
-    experience: "9 years",
+    experience: 9,
     contactInfo: {
       email: "maria.garcia@oneaimit.com",
       phone: "+1-555-0300",
@@ -356,7 +356,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "Business Development",
     salary: 78000,
     projects: ["Client Acquisition Platform", "Partnership Portal"],
-    experience: "5 years",
+    experience: 5,
     contactInfo: {
       email: "robert.thompson@oneaimit.com",
       phone: "+1-555-0301",
@@ -386,7 +386,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "Business Development",
     salary: 68000,
     projects: ["Market Analysis Dashboard"],
-    experience: "4 years",
+    experience: 4,
     contactInfo: {
       email: "emma.davis@oneaimit.com",
       phone: "+1-555-0302",
@@ -416,7 +416,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "Business Development",
     salary: 71000,
     projects: ["Sales Analytics", "CRM Integration"],
-    experience: "3 years",
+    experience: 3,
     contactInfo: {
       email: "kevin.park@oneaimit.com",
       phone: "+1-555-0303",
@@ -448,7 +448,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT/CS",
     salary: 115000,
     projects: ["Infrastructure Modernization", "Security Audit", "Network Optimization"],
-    experience: "12 years",
+    experience: 12,
     contactInfo: {
       email: "robert.chen@oneaimit.com",
       phone: "+1-555-0400",
@@ -477,7 +477,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT/CS",
     salary: 82000,
     projects: ["Security Audit", "Backup Systems"],
-    experience: "6 years",
+    experience: 6,
     contactInfo: {
       email: "amanda.foster@oneaimit.com",
       phone: "+1-555-0401",
@@ -507,7 +507,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT/CS",
     salary: 74000,
     projects: ["Network Optimization", "Server Maintenance"],
-    experience: "4 years",
+    experience: 4,
     contactInfo: {
       email: "daniel.kim@oneaimit.com",
       phone: "+1-555-0402",
@@ -537,7 +537,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "IT/CS",
     salary: 69000,
     projects: ["Infrastructure Modernization", "Cloud Security"],
-    experience: "3 years",
+    experience: 3,
     contactInfo: {
       email: "rachel.green@oneaimit.com",
       phone: "+1-555-0403",
@@ -569,7 +569,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "Management",
     salary: 150000,
     projects: ["Strategic Planning 2024", "Digital Transformation", "Organizational Restructure"],
-    experience: "15 years",
+    experience: 15,
     contactInfo: {
       email: "william.anderson@oneaimit.com",
       phone: "+1-555-0500",
@@ -598,7 +598,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "Management",
     salary: 95000,
     projects: ["Digital Transformation", "Process Optimization"],
-    experience: "8 years",
+    experience: 8,
     contactInfo: {
       email: "patricia.miller@oneaimit.com",
       phone: "+1-555-0501",
@@ -628,7 +628,7 @@ export const sampleMembers: OrganizationMember[] = [
     department: "Management",
     salary: 88000,
     projects: ["Organizational Restructure", "Performance Analytics"],
-    experience: "7 years",
+    experience: 7,
     contactInfo: {
       email: "james.wilson@oneaimit.com",
       phone: "+1-555-0502",

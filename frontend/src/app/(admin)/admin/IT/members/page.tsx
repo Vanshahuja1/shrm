@@ -17,6 +17,7 @@ export default function MembersPage() {
     const loadMembers = async () => {
       try {
         const membersData = await fetchMembers()
+        console.log("Members data structure:", membersData[0]) // Log first member to see structure
         setMembers(membersData)
       } catch (error) {
         console.error("Error fetching members:", error)
@@ -30,6 +31,8 @@ export default function MembersPage() {
   const [members, setMembers] = useState<OrganizationMember[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDepartment, setSelectedDepartment] = useState("all")
+  const [selectedRole, setSelectedRole] = useState("all")
+  const [selectedOrganization, setSelectedOrganization] = useState("all")
   const router = useRouter()
 
   // Get unique departments for the filter dropdown
@@ -38,7 +41,23 @@ export default function MembersPage() {
     return uniqueDepartments.sort()
   }, [members])
 
-  // Filter members based on search term and department
+  // Get unique roles for the filter dropdown
+  const roles = useMemo(() => {
+    const uniqueRoles = Array.from(new Set(members.map(member => member.role)))
+    return uniqueRoles.sort()
+  }, [members])
+
+  // Get unique organizations for the filter dropdown
+  const organizations = useMemo(() => {
+    const uniqueOrganizations = Array.from(new Set(
+      members
+        .map(member => member.organization || member.organizationId || member.organizationName)
+        .filter(Boolean) // Remove null/undefined values
+    ))
+    return uniqueOrganizations.sort()
+  }, [members])
+
+  // Filter members based on search term, department, role, and organization
   const filteredMembers = useMemo(() => {
     return members.filter(member => {
       const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,10 +65,15 @@ export default function MembersPage() {
                           member.contactInfo.email.toLowerCase().includes(searchTerm.toLowerCase())
       
       const matchesDepartment = selectedDepartment === "all" || member.department === selectedDepartment
+      const matchesRole = selectedRole === "all" || member.role.toLowerCase() === selectedRole.toLowerCase()
+      const matchesOrganization = selectedOrganization === "all" || 
+        member.organization === selectedOrganization || 
+        member.organizationId === selectedOrganization || 
+        member.organizationName === selectedOrganization
       
-      return matchesSearch && matchesDepartment
+      return matchesSearch && matchesDepartment && matchesRole && matchesOrganization
     })
-  }, [members, searchTerm, selectedDepartment])
+  }, [members, searchTerm, selectedDepartment, selectedRole, selectedOrganization])
 
   return (
     <div className="space-y-8">
@@ -74,9 +98,9 @@ export default function MembersPage() {
 
       {/* Search and Filter Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+        <div className="flex flex-col gap-4">
           {/* Search Input */}
-          <div className="relative flex-1">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
@@ -87,32 +111,69 @@ export default function MembersPage() {
             />
           </div>
 
-          {/* Department Filter */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <select
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white min-w-[200px]"
-            >
-              <option value="all">All Departments</option>
-              {departments.map((department) => (
-                <option key={department} value={department}>
-                  {department}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Filter Row */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            {/* Department Filter */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <select
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+              >
+                <option value="all">All Departments</option>
+                {departments.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Results Count */}
-          <div className="text-sm text-gray-600 whitespace-nowrap">
-            {filteredMembers.length} of {members.length} members
+            {/* Role Filter */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+              >
+                <option value="all">All Roles</option>
+                {roles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Organization Filter */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <select
+                value={selectedOrganization}
+                onChange={(e) => setSelectedOrganization(e.target.value)}
+                className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+              >
+                <option value="all">All Organizations</option>
+                {organizations.map((organization) => (
+                  <option key={organization} value={organization}>
+                    {organization}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Results Count */}
+            <div className="text-sm text-gray-600 whitespace-nowrap">
+              {filteredMembers.length} of {members.length} members
+            </div>
           </div>
         </div>
 
         {/* Clear Filters */}
-        {(searchTerm || selectedDepartment !== "all") && (
-          <div className="mt-4 flex gap-2">
+        {(searchTerm || selectedDepartment !== "all" || selectedRole !== "all" || selectedOrganization !== "all") && (
+          <div className="mt-4 flex flex-wrap gap-2">
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
@@ -126,9 +187,36 @@ export default function MembersPage() {
                 onClick={() => setSelectedDepartment("all")}
                 className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200"
               >
-                Clear filter: {selectedDepartment}
+                Clear department: {selectedDepartment}
               </button>
             )}
+            {selectedRole !== "all" && (
+              <button
+                onClick={() => setSelectedRole("all")}
+                className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full hover:bg-green-200"
+              >
+                Clear role: {selectedRole}
+              </button>
+            )}
+            {selectedOrganization !== "all" && (
+              <button
+                onClick={() => setSelectedOrganization("all")}
+                className="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full hover:bg-purple-200"
+              >
+                Clear organization: {selectedOrganization}
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setSearchTerm("")
+                setSelectedDepartment("all")
+                setSelectedRole("all")
+                setSelectedOrganization("all")
+              }}
+              className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200"
+            >
+              Clear all filters
+            </button>
           </div>
         )}
       </div>
@@ -139,11 +227,11 @@ export default function MembersPage() {
             <Users className="mx-auto text-gray-400 mb-4" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No members found</h3>
             <p className="text-gray-600">
-              {searchTerm || selectedDepartment !== "all" 
+              {searchTerm || selectedDepartment !== "all" || selectedRole !== "all" || selectedOrganization !== "all"
                 ? "Try adjusting your search or filter criteria" 
                 : "Get started by adding your first member"}
             </p>
-            {(!searchTerm && selectedDepartment === "all") && (
+            {(!searchTerm && selectedDepartment === "all" && selectedRole === "all" && selectedOrganization === "all") && (
               <button
                 onClick={() => router.push("/register")}
                 className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"

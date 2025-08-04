@@ -1,4 +1,4 @@
-import { User, Calendar, CreditCard, DollarSign, TrendingUp, FileText, Shield } from "lucide-react"
+import { User, Calendar, CreditCard, DollarSign, FileText, Shield } from "lucide-react"
 import type { EmployeeInfo, AttendanceRecord } from "../../types/employees";
 
 interface PersonalDashboardProps {
@@ -14,8 +14,6 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Personal Dashboard</h2>
-
       {/* Basic Details */}
       <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -191,7 +189,7 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
       </div>
 
       {/* Appraisal Requests */}
-      <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6">
+      {/* <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
           <TrendingUp className="w-6 h-6 text-blue-500 mr-2" />
           Appraisal Requests
@@ -208,7 +206,7 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
           <TrendingUp className="w-5 h-5 inline mr-2" />
           Request Appraisal Review
         </button>
-      </div>
+      </div> */}
 
       {/* Identity Documents */}
       <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6">

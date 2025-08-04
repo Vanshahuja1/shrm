@@ -2,21 +2,14 @@
 
 import { useParams, usePathname } from "next/navigation"
 import Link from "next/link"
-import { Target, Calendar, User, BarChart3, Zap, Database, Settings } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
+import { Target, Calendar, User, BarChart3, Zap} from "lucide-react"
+import { useEffect, useState } from "react"
 import axios from "@/lib/axiosInstance"
 interface EmployeeNavigationProps {
-  employeeId: string
+  employeeId?: string
 }
 
-interface Task {
-  status: string
-  id?: string
-  title?: string
-  description?: string
-}
-
-export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
+export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
   const pathname = usePathname()
 
   const [stats, setStats] = useState<{ isWorking: boolean, workingHrs: number }>({
@@ -26,25 +19,31 @@ export function EmployeeNavigation({ employeeId }: EmployeeNavigationProps) {
 
   const { id: empId } = useParams()
 
-useEffect(() => {
-  const fetchStats = async()=>{
-    const res =await axios.get(`attendance/employee/stats/${empId}`)
-    setStats({
-      isWorking: res.data.isPunchedIn,
-      workingHrs: res.data.attendanceRecord?.totalHours || 0
-    })
-  }
-  fetchStats()
-}, [employeeId])
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`attendance/employee/stats/${empId}`)
+        setStats({
+          isWorking: res.data.isPunchedIn,
+          workingHrs: res.data.attendanceRecord?.totalHours || 0
+        })
+      } catch (error) {
+        console.error('Error fetching stats:', error)
+      }
+    }
+    if (empId) {
+      fetchStats()
+    }
+  }, [empId])
 
   const tabs = [
-    { id: "tasks", label: "Task List", icon: Target, href: `/employee/${employeeId}/tasks` },
-    { id: "attendance", label: "Attendance System", icon: Calendar, href: `/employee/${employeeId}/attendance` },
-    { id: "dashboard", label: "Personal Dashboard", icon: User, href: `/employee/${employeeId}/dashboard` },
-    { id: "performance", label: "Performance Metrics", icon: BarChart3, href: `/employee/${employeeId}/performance` },
-    { id: "workhours", label: "Work Hours Display", icon: Zap, href: `/employee/${employeeId}/workhours` },
-    { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${employeeId}/datasync` },
-    { id: "settings", label: "Settings", icon: Settings, href: `/employee/${employeeId}/settings` },
+    { id: "tasks", label: "Task List", icon: Target, href: `/employee/${empId}/tasks` },
+    { id: "attendance", label: "Attendance System", icon: Calendar, href: `/employee/${empId}/attendance` },
+    { id: "dashboard", label: "Personal Dashboard", icon: User, href: `/employee/${empId}/dashboard` },
+    { id: "performance", label: "Performance Metrics", icon: BarChart3, href: `/employee/${empId}/performance` },
+    { id: "workhours", label: "Work Hours Display", icon: Zap, href: `/employee/${empId}/workhours` },
+    // { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${empId}/datasync` },
+    // { id: "settings", label: "Settings", icon: Settings, href: `/employee/${empId}/settings` },
   ]
 
   return (
@@ -79,9 +78,9 @@ useEffect(() => {
           ></div>
           <span className="text-sm text-gray-600">{stats.isWorking ? "Currently Working" : "Not Clocked In"}</span>
         </div>
-        <div
-          className={`w-3 h-3 rounded-full`}
-        > {stats.workingHrs} </div>
+        <div className="mt-2">
+          <span className="text-sm text-gray-600">Working Hours: {stats.workingHrs.toFixed(1)}h</span>
+        </div>
       </div>
     </div>
   )

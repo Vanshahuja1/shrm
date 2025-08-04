@@ -81,6 +81,9 @@ export default function EmployeeResponse() {
             </Badge>
           </div>
           <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+          <p className="text-sm text-gray-600 mb-2">
+            Assigned to: <span className="font-medium text-gray-800">{task.assignedTo.name}</span>
+          </p>
           <p className="text-sm text-gray-600">
             Due: {task.dueDate} at {task.dueTime}
           </p>
@@ -95,9 +98,14 @@ export default function EmployeeResponse() {
                       className="bg-gray-50 rounded-lg p-4 mt-2 border border-gray-200"
                     >
                       <div className="flex justify-between items-center mb-2">
-                        <p className="text-sm font-medium text-gray-800">
-                          {response.response}
-                        </p>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">
+                            {response.response}
+                          </p>
+                          <p className="text-xs text-blue-600 font-medium mt-1">
+                            By: {task.assignedTo.name}
+                          </p>
+                        </div>
                         <Badge variant="outline">{response.status}</Badge>
                       </div>
                       <p className="text-xs text-gray-600 mb-2">

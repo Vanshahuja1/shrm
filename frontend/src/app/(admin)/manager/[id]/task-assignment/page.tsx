@@ -239,21 +239,6 @@ export default function TaskAssignment() {
                   ))}
                 </select>
               </div>
-                             <div>
-                 <label className="block mb-1 text-sm font-medium text-gray-700">
-                   Assigned By (Current Manager)
-                 </label>
-                 <input
-                   type="text"
-                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                   value={formData.assignedBy.name || "Current Manager"}
-                   readOnly
-                   disabled
-                 />
-                 <p className="text-xs text-gray-500 mt-1">
-                   Automatically set to current manager
-                 </p>
-               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Due Date
@@ -336,12 +321,6 @@ export default function TaskAssignment() {
                     <span className="text-gray-600">Assigned to:</span>
                     <span className="ml-2 font-medium text-green-600">
                       {task.assignedTo?.name} ({task.assignedTo?.id})
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Assigned by:</span>
-                    <span className="ml-2 font-medium text-blue-600">
-                      {task.assignedBy?.name} ({task.assignedBy?.id})
                     </span>
                   </div>
                   <div>

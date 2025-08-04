@@ -28,10 +28,16 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen, adminName, or
   const router = useRouter()
   const pathname = usePathname()
   const [org, setOrg] = useState<Organization | null>(null)
+  
   const fetchOrg = async () => {
-    const response = await axios.get(`organizations/6889a9394f263f6b1e23a7e2`)
-    setOrg(response.data.data)
+    try {
+      const response = await axios.get(`organizations/6889a9394f263f6b1e23a7e2`)
+      setOrg(response.data.data)
+    } catch (error) {
+      console.error("Error fetching organization:", error)
+    }
   }
+  
   useEffect(() => {
     fetchOrg()
   }, [])

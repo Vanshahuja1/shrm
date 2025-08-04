@@ -12,13 +12,15 @@ const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
 
+// Public routes (no authentication required)
 router.get("/", getAllUsers);
 router.post("/addEmp", addEmp);
 router.get("/:id", getById);
 router.put("/:id", updateEmp);
 router.delete("/:id", deleteEmp);
-router.use(authenticateToken);
-router.get("/profile", getProfile);
-router.patch("/profile", updateProfile);
+
+// Protected routes (authentication required)
+router.get("/profile", authenticateToken, getProfile);
+router.patch("/profile", authenticateToken, updateProfile);
 
 module.exports = router;
