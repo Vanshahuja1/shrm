@@ -11,6 +11,7 @@ import {
   FileText,
   Users,
   BarChart3,
+  Mail,
 } from "lucide-react";
 import { Building, LogOut, X } from "lucide-react";
 import { useState } from "react";
@@ -37,7 +38,7 @@ export default function Sidebar({
     { id: "attendance", label: "Attendance", icon: Calendar },
     { id: "payroll", label: "Payroll", icon: Wallet },
     { id: "recruitment", label: "Recruitment", icon: Briefcase },
-    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "emails", label: "Email System", icon: Mail },
     { id: "employees", label: "Employees", icon: Users },
     { id: "policies", label: "Policies", icon: FileText },
     { id: "reports", label: "Reports", icon: BarChart3 },

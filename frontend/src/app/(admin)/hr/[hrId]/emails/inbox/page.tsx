@@ -6,6 +6,7 @@ import axios from "@/lib/axiosInstance"
 import { Mail, Clock,  Search } from "lucide-react"
 // import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useRouter } from 'next/navigation'
 
 interface Email {
   _id: string
@@ -22,16 +23,11 @@ interface Email {
 }
 export default function InboxPage() {
   const params = useParams()
-  const [hrId, setHrId] = useState<string>('')
   const [emails, setEmails] = useState<Email[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-
-  useEffect(() => {
-    if (params.hrId) {
-      setHrId(params.hrId as string)
-    }
-  }, [params.hrId])
+  const router = useRouter()
+const {hrId} = useParams()
   
   const filteredEmails = emails.filter(email => 
     email.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,11 +35,14 @@ export default function InboxPage() {
     email.sender.toLowerCase().includes(searchTerm.toLowerCase())
   )
  useEffect(() => {
+
+  console.log("hrId", hrId)
     const fetchSentEmails = async () => {
-      if (!hrId) return
+   
       
       try {
-        const response = await axios.get(`/mail/get/${hrId}`)
+        const response = await axios.get(`/mail?recipientId=${hrId}`)
+        console.log(response.data)
         setEmails(response.data.emails)
       } catch (error) {
         console.error('Error fetching sent emails:', error)
@@ -53,7 +52,7 @@ export default function InboxPage() {
     }
 
     fetchSentEmails()
-  }, [hrId])
+  }, [])
 
 
   if (loading) {
@@ -67,6 +66,7 @@ export default function InboxPage() {
   return (
     <div className="bg-white border border-red-100 rounded-xl p-4 sm:p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
+       
         <h2 className="text-lg font-semibold text-gray-900">📥 Inbox</h2>
         <div className="text-sm text-gray-500">
           {emails.filter(n => n.isRead === false).length} unread
@@ -92,10 +92,10 @@ export default function InboxPage() {
         ) : (
           filteredEmails.map((email) => (
             <div
-              key={email._id}
-              className={`border border-red-100 rounded-lg p-4 transition-colors ${
-                email.isRead === false ? 'bg-red-50' : 'hover:bg-gray-50'
-              }`}
+            key={email._id}
+                            onClick={() => router.push(`/hr/${hrId}/emails/${email._id}`)}
+                            className="border border-red-100 rounded-lg p-4 cursor-pointer hover:bg-red-50 transition-colors"
+                       
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
