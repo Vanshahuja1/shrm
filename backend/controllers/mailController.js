@@ -93,9 +93,17 @@ async function sendEmailToMultipleRecipients(req, res) {
   }
 }
 
+// Handle email queries with optional filters: sender, recipient, type, status, subject
 async function getAllEmails(req, res) {
   try {
-    const emails = await Email.find().sort({ sentAt: -1 });
+    const query = {};
+    if (req.query.senderId) query.senderId = req.query.senderId;
+    if (req.query.recipientId) query.recipientId = req.query.recipientId;
+    if (req.query.type) query.type = req.query.type;
+    if (req.query.status) query.status = req.query.status;
+    if (req.query.subject) query.subject = { $regex: req.query.subject, $options: "i" };
+
+    const emails = await Email.find(query).sort({ sentAt: -1 });
     res.json({ success: true, emails });
   } catch (err) {
     res

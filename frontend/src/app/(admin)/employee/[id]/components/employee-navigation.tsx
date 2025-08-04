@@ -2,7 +2,7 @@
 
 import { useParams, usePathname } from "next/navigation"
 import Link from "next/link"
-import { Target, Calendar, User, BarChart3, Zap} from "lucide-react"
+import { Target, Calendar, User, BarChart3, Zap,MailIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import axios from "@/lib/axiosInstance"
 interface EmployeeNavigationProps {
@@ -17,12 +17,12 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
     workingHrs: 0
   })
 
-  const { id: empId } = useParams()
+  const { id: employeeId } = useParams()
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`attendance/employee/stats/${empId}`)
+        const res = await axios.get(`attendance/employee/stats/${employeeId}`)
         setStats({
           isWorking: res.data.isPunchedIn,
           workingHrs: res.data.attendanceRecord?.totalHours || 0
@@ -31,19 +31,20 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
         console.error('Error fetching stats:', error)
       }
     }
-    if (empId) {
+    if (employeeId) {
       fetchStats()
     }
-  }, [empId])
+  }, [employeeId])
 
   const tabs = [
-    { id: "tasks", label: "Task List", icon: Target, href: `/employee/${empId}/tasks` },
-    { id: "attendance", label: "Attendance System", icon: Calendar, href: `/employee/${empId}/attendance` },
-    { id: "dashboard", label: "Personal Dashboard", icon: User, href: `/employee/${empId}/dashboard` },
-    { id: "performance", label: "Performance Metrics", icon: BarChart3, href: `/employee/${empId}/performance` },
-    { id: "workhours", label: "Work Hours Display", icon: Zap, href: `/employee/${empId}/workhours` },
-    // { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${empId}/datasync` },
-    // { id: "settings", label: "Settings", icon: Settings, href: `/employee/${empId}/settings` },
+    { id: "tasks", label: "Task List", icon: Target, href: `/employee/${employeeId}/tasks` },
+    { id: "attendance", label: "Attendance System", icon: Calendar, href: `/employee/${employeeId}/attendance` },
+    { id: "dashboard", label: "Personal Dashboard", icon: User, href: `/employee/${employeeId}/dashboard` },
+    { id: "performance", label: "Performance Metrics", icon: BarChart3, href: `/employee/${employeeId}/performance` },
+    { id: "workhours", label: "Work Hours Display", icon: Zap, href: `/employee/${employeeId}/workhours` },
+    // { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${employeeId}/datasync` },
+    {id: "email" , label : "Email System", icon: MailIcon, href: `/employee/${employeeId}/emails`},
+    // { id: "settings", label: "Settings", icon: Settings, href: `/employee/${employeeId}/settings` },
   ]
 
   return (

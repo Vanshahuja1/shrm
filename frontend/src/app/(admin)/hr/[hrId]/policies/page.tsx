@@ -6,7 +6,7 @@ import AttendancePolicy from './attendance/page';
 import DisciplinePolicy from './discipline/page';
 import WarningPolicyPage from './warning/page';
 
-const tabs = ['Leave', 'Attendance','Discipline','Warning'] as const;
+const tabs = ['Warning'] as const;
 
 // const tabs = ['Warning'] as const;
 export default function PolicyManagementPage(): JSX.Element {
@@ -29,19 +29,19 @@ export default function PolicyManagementPage(): JSX.Element {
                 : 'bg-red-100 text-red-700 hover:bg-red-50'
             }`}
           >
-            {tab === 'Leave' && '📄 Leave'}
+            {/* {tab === 'Leave' && '📄 Leave'}
             {tab === 'Attendance' && '🕒 Attendance'}
-            {tab === 'Discipline' && '⚠️ Discipline'}
+            {tab === 'Discipline' && '⚠️ Discipline'} */}
             {tab === 'Warning' && '⚠️ Warning'}
           </button>
         ))}
       </div>
 
       <div className="transition-all">
-        {activeTab === 0 && <LeavePolicy />}
+        {/* {activeTab === 0 && <LeavePolicy />}
         {activeTab === 1 && <AttendancePolicy />}
-        {activeTab === 2 && <DisciplinePolicy />}
-        {activeTab === 3 && <WarningPolicyPage />}
+        {activeTab === 2 && <DisciplinePolicy />} */}
+        {activeTab === 0 && <WarningPolicyPage />}
       </div>
     </div>
   );

@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import axios from "@/lib/axiosInstance"
-import { Mail, Clock,  Search } from "lucide-react"
+import { Mail, Clock, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-
+import { useRouter } from 'next/navigation'
 interface Email {
     _id: string
     type: string
@@ -25,7 +25,7 @@ export default function SentboxPage() {
     const [emails, setEmails] = useState<Email[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
-
+    const router = useRouter()
     useEffect(() => {
         if (params.hrId) {
             setHrId(params.hrId as string)
@@ -41,9 +41,9 @@ export default function SentboxPage() {
     useEffect(() => {
         const fetchSentEmails = async () => {
             if (!hrId) return
-            
+
             try {
-                const response = await axios.get(`/mail/sent/${hrId}`)
+                const response = await axios.get(`/mail?senderId=${hrId}`)
                 setEmails(response.data.emails)
             } catch (error) {
                 console.error('Error fetching sent emails:', error)
@@ -92,7 +92,8 @@ export default function SentboxPage() {
                     filteredEmails.map((email) => (
                         <div
                             key={email._id}
-                            className="border border-red-100 rounded-lg p-4 hover:bg-red-50 transition-colors"
+                            onClick={() => router.push(`/hr/${hrId}/emails/${email._id}`)}
+                            className="border border-red-100 rounded-lg p-4 cursor-pointer hover:bg-red-50 transition-colors"
                         >
                             <div className="flex items-start justify-between mb-2">
                                 <div>

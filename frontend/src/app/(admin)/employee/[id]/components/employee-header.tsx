@@ -60,6 +60,8 @@ export function EmployeeHeader({ employeeId }: EmployeeHeaderProps) {
                 3
               </span>
             </div>
+          <div className="flex items-center space-x-4">
+           
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
               <User className="w-6 h-6 text-white" />
             </div>

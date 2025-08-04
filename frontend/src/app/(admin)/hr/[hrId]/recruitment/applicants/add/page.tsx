@@ -1,11 +1,22 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from '@/lib/axiosInstance';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Candidate {
   name: string;
   email: string;
+  department: {
+    _id: string;
+    name: string;
+  };
   appliedDate: string;
   screeningScore: number;
   source: string;
@@ -23,6 +34,11 @@ interface Candidate {
 const AddCandidateForm: React.FC = () => {
   const [candidate, setCandidate] = useState<Candidate>({
     name: '',
+    department:{
+      _id: '',
+      name: '',
+
+    },
     email: '',
     appliedDate: '',
     screeningScore: 0,
@@ -41,6 +57,29 @@ const AddCandidateForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [dragActive, setDragActive] = useState(false);
+  const [departments, setDepartments] = useState<{_id: string; name: string;}[]>([]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await axios.get('/departments/org/6889a9394f263f6b1e23a7e2');
+        console.log('Departments response:', response.data); // Debug log
+        
+        // Handle the response structure - check if data is nested
+        const departmentsData = response.data.data || response.data;
+        
+        setDepartments(
+          departmentsData.map((dept: any) => ({
+            _id: dept._id,
+            name: dept.name
+          }))
+        );
+      } catch (error) {
+        console.error('Failed to fetch departments:', error);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const sourceOptions = [
     'LinkedIn',
@@ -66,7 +105,8 @@ const AddCandidateForm: React.FC = () => {
     'Offer Accepted',
     'Offer Declined',
     'Rejected',
-    'Withdrawn'
+    'Withdrawn',
+    "Hired"
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -79,6 +119,22 @@ const AddCandidateForm: React.FC = () => {
       ...prev,
       [name]: fieldValue
     }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (name === 'department') {
+      // Find the selected department object
+      const selectedDept = departments.find(dept => dept._id === value);
+      setCandidate(prev => ({
+        ...prev,
+        department: selectedDept || { _id: '', name: '' }
+      }));
+    } else {
+      setCandidate(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleFileChange = (file: File | null) => {
@@ -141,6 +197,7 @@ const AddCandidateForm: React.FC = () => {
       
       // Create candidate data object (without resume file)
       const candidateData = {
+        department: candidate.department,
         name: candidate.name,
         email: candidate.email,
         appliedDate: candidate.appliedDate || new Date().toISOString().split('T')[0],
@@ -171,6 +228,10 @@ const AddCandidateForm: React.FC = () => {
       setCandidate({
         name: '',
         email: '',
+        department: {
+          _id: '',
+          name: '',
+        },
         appliedDate: '',
         screeningScore: 0,
         source: '',
@@ -233,6 +294,37 @@ const AddCandidateForm: React.FC = () => {
         </div>
 
         <div>
+          <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+            Department
+          </label>
+          <Select
+            value={candidate.department._id}
+            onValueChange={(value) => handleSelectChange('department', value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select department..." />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.length === 0 ? (
+                <SelectItem value="no-departments" disabled>
+                  No departments available
+                </SelectItem>
+              ) : (
+                departments.map((dept) => (
+                  <SelectItem key={dept._id} value={dept._id}>
+                    {dept.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          {/* Debug info - remove this after fixing */}
+          <p className="text-xs text-gray-500 mt-1">
+            Departments loaded: {departments.length}
+          </p>
+        </div>
+
+        <div>
           <label htmlFor="appliedDate" className="block text-sm font-medium text-gray-700 mb-1">
             Applied Date
           </label>
@@ -267,20 +359,21 @@ const AddCandidateForm: React.FC = () => {
           <label htmlFor="source" className="block text-sm font-medium text-gray-700 mb-1">
             Source
           </label>
-          <select
-            id="source"
-            name="source"
+          <Select
             value={candidate.source}
-            onChange={handleChange}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            onValueChange={(value) => handleSelectChange('source', value)}
           >
-            <option value="">Select source...</option>
-            {sourceOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select source..." />
+            </SelectTrigger>
+            <SelectContent>
+              {sourceOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
@@ -347,20 +440,21 @@ const AddCandidateForm: React.FC = () => {
           <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
             Status
           </label>
-          <select
-            id="status"
-            name="status"
+          <Select
             value={candidate.status}
-            onChange={handleChange}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            onValueChange={(value) => handleSelectChange('status', value)}
           >
-            <option value="">Select status...</option>
-            {statusOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select status..." />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="md:col-span-2">

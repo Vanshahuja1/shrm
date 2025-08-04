@@ -6,7 +6,8 @@ const {
   getById,
   addEmp,
   updateEmp,
-  deleteEmp
+  deleteEmp,
+  getNameById,
 } = require("../controllers/userController");
 const { authenticateToken } = require("../middleware/auth");
 
@@ -18,9 +19,9 @@ router.post("/addEmp", addEmp);
 router.get("/:id", getById);
 router.put("/:id", updateEmp);
 router.delete("/:id", deleteEmp);
-
-// Protected routes (authentication required)
-router.get("/profile", authenticateToken, getProfile);
-router.patch("/profile", authenticateToken, updateProfile);
+router.get("/name/:empId" , getNameById);
+router.use(authenticateToken);
+router.get("/profile", getProfile);
+router.patch("/profile", updateProfile);
 
 module.exports = router;

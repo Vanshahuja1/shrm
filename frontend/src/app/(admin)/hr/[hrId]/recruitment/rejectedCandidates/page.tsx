@@ -1,40 +1,26 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 // import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import axios from '@/lib/axiosInstance';
+import { format } from 'date-fns';
+import { Candidate } from '../applicants/page';
 
-const fallbackRejected = [
-  {
-    id: 'rob-harris',
-    name: 'Rob Harris',
-    email: 'rob@fail.com',
-    jobTitle: 'Content Writer',
-    appliedDate: '2024-05-10',
-  },
-  {
-    id: 'emma-wood',
-    name: 'Emma Wood',
-    email: 'emma@fail.com',
-    jobTitle: 'Marketing Assistant',
-    appliedDate: '2024-05-12',
-  },
-];
 
 export default function RejectedPage() {
-  const [candidates, setCandidates] = useState(fallbackRejected);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const router = useRouter();
-
+  const { hrId } = useParams();
   useEffect(() => {
     async function fetchRejected() {
       try {
-        const res = await fetch('/api/rejected');
-        const data = await res.json();
-        setCandidates(data);
+         const res = await axios.get('/recruitment/candidates?status=rejected');
+        setCandidates(res.data);
       } catch {
-        setCandidates(fallbackRejected);
+       console.log("Failed to fetch rejected candidates, using fallback data");
       }
     }
     fetchRejected();
@@ -43,7 +29,10 @@ export default function RejectedPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6 space-y-6">
       <div className="text-sm">
-        <Link href="/hr/recruitment" className="text-blue-600 underline">
+       <Link
+          href={`/hr/${hrId}/recruitment`}
+          className="text-blue-600 underline"
+        >
           ← Back to Recruitment Dashboard
         </Link>
       </div>
@@ -68,7 +57,7 @@ export default function RejectedPage() {
                 className="cursor-pointer hover:bg-[#FDD0C4] transition-colors"
                 whileHover={{ y: -2 }}
                 onClick={() =>
-                  router.push(`/hr/recruitment/rejectedCandidates/${c.id}`)
+                  router.push(`/hr/recruitment/rejectedCandidates/${c._id}`)
                 }
               >
                 <td className="px-4 py-2 border-b text-contrast font-medium">{index + 1}</td>

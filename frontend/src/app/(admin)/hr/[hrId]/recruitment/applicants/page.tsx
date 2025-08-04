@@ -9,7 +9,7 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "@/lib/axiosInstance";
 import { format } from "date-fns";
 
-type Candidate = {
+export type Candidate = {
   _id: string;
   name: string;
   email: string;

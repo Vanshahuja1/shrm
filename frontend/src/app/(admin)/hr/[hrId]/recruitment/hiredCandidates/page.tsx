@@ -1,10 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-
+import axios from '@/lib/axiosInstance';
+import { format } from 'date-fns';
+import { Candidate } from '../applicants/page';
 const fallbackHired = [
   {
     id: 'cameron-riley',
@@ -25,17 +27,16 @@ const fallbackHired = [
 ];
 
 export default function HiredCandidatesPage() {
-  const [candidates, setCandidates] = useState(fallbackHired);
+  const [candidates, setCandidates] = useState<Candidate[]>();
   const router = useRouter();
-
+  const { hrId } = useParams();
   useEffect(() => {
     async function fetchHired() {
       try {
-        const res = await fetch('/api/hired');
-        const data = await res.json();
-        setCandidates(data);
+        const res = await axios.get('/recruitment/candidates?status=hired');
+        setCandidates(res.data);
       } catch {
-        setCandidates(fallbackHired);
+        console.log("Failed to fetch hired candidates, using fallback data");
       }
     }
     fetchHired();
@@ -44,7 +45,10 @@ export default function HiredCandidatesPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6 space-y-6">
       <div className="text-sm">
-        <Link href="/hr/recruitment" className="text-blue-600 underline">
+        <Link
+          href={`/hr/${hrId}/recruitment`}
+          className="text-blue-600 underline"
+        >
           ← Back to Recruitment Dashboard
         </Link>
       </div>
@@ -62,20 +66,24 @@ export default function HiredCandidatesPage() {
             </tr>
           </thead>
           <tbody>
-            {candidates.map((c, index) => (
+            {candidates?.map((c, index) => (
               <motion.tr
                 key={index}
                 className="cursor-pointer hover:bg-[#FDD0C4] transition-colors"
                 whileHover={{ y: -2 }}
                 onClick={() =>
-                  router.push(`/hr/recruitment/hiredCandidates/${c.id}`)
+                  router.push(`/hr/${hrId}/recruitment/candidates/${c._id}`)
                 }
               >
                 <td className="px-4 py-2 border-b text-contrast font-medium">{index + 1}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.name}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.email}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.jobTitle}</td>
-                <td className="px-4 py-2 border-b text-contrast">{c.appliedDate}</td>
+                <td className="px-4 py-2 border-b text-contrast">{
+                   c.appliedDate
+                        ? format(new Date(c.appliedDate), "dd MMM yyyy")
+                        : "-"
+                  }</td>
               </motion.tr>
             ))}
           </tbody>
