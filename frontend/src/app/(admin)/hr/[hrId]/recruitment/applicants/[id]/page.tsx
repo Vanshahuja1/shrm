@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import EditApplicantModal from '../components/NewEditModal';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from '@/lib/axiosInstance';
 import {
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
+import { useRouter } from 'next/navigation';
 
 type Applicant = {
   _id?: string;
@@ -20,6 +22,10 @@ type Applicant = {
   email: string;
   appliedDate?: string | Date;
   screeningScore?: number;
+  department?: {
+    _id: string;
+    name: string;
+  };
   interviewScheduled?: {
     isScheduled?: boolean;
     scheduledDate?: string | Date;
@@ -74,6 +80,8 @@ export default function ApplicantDetailPage() {
 
   const [interviewDate, setInterviewDate] = useState('');
   const [selectedInterviewer, setSelectedInterviewer] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchData() {
@@ -156,12 +164,12 @@ export default function ApplicantDetailPage() {
 
       {/* Breadcrumb */}
       <div className="text-sm">
-        <Link
-          href={`/hr/${hrId}/recruitment`}
-          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
+        <span
+          onClick={() => { router.back() }}
+          className="inline-flex items-center gap-1 cursor-pointer text-blue-600 hover:text-blue-800 font-medium"
         >
-          ← Back to Recruitment Dashboard
-        </Link>
+          ← Back to Records
+        </span>
       </div>
 
       {/* Header */}
@@ -171,7 +179,7 @@ export default function ApplicantDetailPage() {
             <h1 className="text-3xl font-bold text-gray-900">{applicant?.name}</h1>
             <p className="text-lg text-gray-600 mt-1">{applicant?.jobTitle || 'Position Not Specified'}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {applicant?.status && (
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(applicant.status)}`}>
                 {applicant.status.charAt(0).toUpperCase() + applicant.status.slice(1)}
@@ -182,13 +190,19 @@ export default function ApplicantDetailPage() {
                 Shortlisted
               </span>
             )}
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Edit Details
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Contact Information */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
@@ -206,6 +220,10 @@ export default function ApplicantDetailPage() {
               <p className="text-gray-900">{applicant?.currentCompany || 'Not specified'}</p>
             </div>
             <div>
+              <label className="text-sm font-medium text-gray-500">Department</label>
+              <p className="text-gray-900">{applicant?.department?.name || 'Not specified'}</p>
+            </div>
+            <div>
               <label className="text-sm font-medium text-gray-500">Expected Salary</label>
               <p className="text-gray-900">{applicant?.expectedSalary || 'Not specified'}</p>
             </div>
@@ -219,8 +237,8 @@ export default function ApplicantDetailPage() {
             <div>
               <label className="text-sm font-medium text-gray-500">Applied Date</label>
               <p className="text-gray-900">
-                {applicant?.appliedDate 
-                  ? format(new Date(applicant.appliedDate), "dd MMM yyyy") 
+                {applicant?.appliedDate
+                  ? format(new Date(applicant.appliedDate), "dd MMM yyyy")
                   : 'Not available'
                 }
               </p>
@@ -232,8 +250,8 @@ export default function ApplicantDetailPage() {
             <div>
               <label className="text-sm font-medium text-gray-500">Screening Score</label>
               <p className="text-gray-900">
-                {applicant?.screeningScore !== undefined 
-                  ? `${applicant.screeningScore}/100` 
+                {applicant?.screeningScore !== undefined
+                  ? `${applicant.screeningScore}/100`
                   : 'Not evaluated'
                 }
               </p>
@@ -247,15 +265,14 @@ export default function ApplicantDetailPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-500">Interview</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                isInterviewScheduled 
-                  ? 'bg-green-100 text-green-800' 
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${isInterviewScheduled
+                  ? 'bg-green-100 text-green-800'
                   : 'bg-red-100 text-red-800'
-              }`}>
+                }`}>
                 {isInterviewScheduled ? 'Scheduled' : 'Not Scheduled'}
               </span>
             </div>
-            
+
             {isInterviewScheduled && applicant?.interviewScheduled?.scheduledDate && (
               <div className="pl-4 border-l-2 border-green-200">
                 <p className="text-sm text-gray-600">
@@ -271,11 +288,10 @@ export default function ApplicantDetailPage() {
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-500">Recruiter</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                isRecruiterAssigned 
-                  ? 'bg-green-100 text-green-800' 
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${isRecruiterAssigned
+                  ? 'bg-green-100 text-green-800'
                   : 'bg-red-100 text-red-800'
-              }`}>
+                }`}>
                 {isRecruiterAssigned ? 'Assigned' : 'Not Assigned'}
               </span>
             </div>
@@ -298,8 +314,8 @@ export default function ApplicantDetailPage() {
           <div>
             <label className="text-sm font-medium text-gray-500">Resume</label>
             {applicant?.resumeLink ? (
-              <a 
-                href={applicant.resumeLink} 
+              <a
+                href={applicant.resumeLink}
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -313,8 +329,8 @@ export default function ApplicantDetailPage() {
           <div>
             <label className="text-sm font-medium text-gray-500">Portfolio</label>
             {applicant?.portfolioLink ? (
-              <a 
-                href={applicant.portfolioLink} 
+              <a
+                href={applicant.portfolioLink}
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -387,6 +403,22 @@ export default function ApplicantDetailPage() {
           </div>
         </div>
       )}
+
+      <EditApplicantModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        applicant={applicant}
+        onUpdate={async () => {
+          try {
+            const res = await axios.get(`/recruitment/candidate/${id}`);
+            setApplicant(res.data);
+            toast.success('Candidate details updated successfully');
+          } catch (error) {
+            console.error('Failed to refresh candidate data:', error);
+            toast.error('Failed to refresh candidate data');
+          }
+        }}
+      />
     </div>
   );
 }

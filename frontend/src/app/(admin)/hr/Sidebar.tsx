@@ -1,5 +1,5 @@
 "use client";
-
+import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   
@@ -13,7 +13,9 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Building, LogOut, X } from "lucide-react";
-
+import { useState } from "react";
+import { Organization } from "../admin/page";
+import axios from "@/lib/axiosInstance";
 interface SidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean) => void;
@@ -41,6 +43,16 @@ export default function Sidebar({
     { id: "reports", label: "Reports", icon: BarChart3 },
   ];
 
+const [org, setOrg] = useState<Organization | null>(null)
+  const fetchOrg = async () => {
+    const response = await axios.get(`organizations/6889a9394f263f6b1e23a7e2`)
+    setOrg(response.data.data)
+  }
+  useEffect(() => {
+    fetchOrg()
+  }, [])
+
+
   return (
     <>
       {isSidebarOpen && (
@@ -64,9 +76,9 @@ export default function Sidebar({
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">
-                    One Aim IT Solutions
+                   {org?.name || "Organization"}
                   </h1>
-                  <p className="text-sm text-gray-500">Enterprise Dashboard</p>
+                  <p className="text-sm text-gray-500">HR Dashboard</p>
                 </div>
               </div>
               <button

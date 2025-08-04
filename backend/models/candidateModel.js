@@ -19,6 +19,10 @@ const candidateSchema = new mongoose.Schema(
     location: { type: String },
     currentCompany: { type: String },
     jobTitle: { type: String },
+    department  : { 
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
+      name: { type: String },
+     },
     shortlisted: { type: Boolean, default: false },
     status: { type: String },
     recruiterAssigned: {

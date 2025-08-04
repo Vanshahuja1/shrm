@@ -1,49 +1,37 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import axios from '@/lib/axiosInstance';
+import { format } from "date-fns";
+import { Candidate } from '../applicants/page';
 
-const fallbackShortlisted = [
-  {
-    id: 'noel-jones',
-    name: 'Noel Jones',
-    email: 'noel@dp.com',
-    jobTitle: 'Analyst',
-    appliedDate: '2024-06-01',
-  },
-  {
-    id: 'cameron-riley',
-    name: 'Cameron Riley',
-    email: 'cameron@acr.com',
-    jobTitle: 'Process Associate',
-    appliedDate: '2024-06-10',
-  },
-];
 
 export default function ShortlistedPage() {
-  const [candidates, setCandidates] = useState(fallbackShortlisted);
+  const [candidates, setCandidates] = useState<Candidate[]>();
   const router = useRouter();
-
+  const { hrId } = useParams();
   useEffect(() => {
     async function fetchShortlisted() {
       try {
-        const res = await fetch('/api/shortlisted');
-        const data = await res.json();
-        setCandidates(data);
-      } catch {
-        setCandidates(fallbackShortlisted);
+       const res = await axios.get('/recruitment/candidates?shortlisted=true');
+        setCandidates(res.data);
+      } catch(error) {
+        console.log("Failed to fetch shortlisted candidates" , error);
       }
     }
     fetchShortlisted();
   }, []);
 
+  
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 space-y-6">
       <div className="text-sm">
         <Link
-          href="/hr/recruitment"
+          href={`/hr/${hrId}/recruitment`}
           className="text-blue-600 underline"
         >
           ← Back to Recruitment Dashboard
@@ -62,18 +50,20 @@ export default function ShortlistedPage() {
             </tr>
           </thead>
           <tbody>
-            {candidates.map((c, index) => (
+            {candidates?.map((c, index) => (
               <motion.tr
                 key={index}
                 className="cursor-pointer hover:bg-[#FDD0C4] transition-colors"
                 whileHover={{ y: -2 }}
-                onClick={() => router.push(`/hr/recruitment/shortlistedCandidates/${c.id}`)}
+                onClick={() => router.push(`/hr/${hrId}/recruitment/applicants/${c._id}`)}
               >
                  <td className="px-4 py-2 border-b text-contrast font-medium">{index + 1}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.name}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.email}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.jobTitle}</td>
-                <td className="px-4 py-2 border-b text-contrast">{c.appliedDate}</td>
+                <td className="px-4 py-2 border-b text-contrast"> {c.appliedDate
+                                        ? format(new Date(c.appliedDate), "dd MMM yyyy")
+                                        : "-"}</td>
                 
               </motion.tr>
             ))}
