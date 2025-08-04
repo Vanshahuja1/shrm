@@ -112,8 +112,8 @@ export default function EditProjectPage() {
             value={project.assignDate ? new Date(project.assignDate).toISOString().slice(0, 10) : ""}
             type="date"
             onChange={(val) => {
-              // Convert YYYY-MM-DD string to Date
-              handleChange("assignDate", val ? new Date(val).toISOString() : undefined);
+              // Store the date string directly
+              handleChange("assignDate", val || "");
             }}
           />
           <Field
@@ -121,7 +121,8 @@ export default function EditProjectPage() {
             value={project.startDate ? new Date(project.startDate).toISOString().slice(0, 10) : ""}
             type="date"
             onChange={(val) => {
-              handleChange("startDate", val ? new Date(val).toISOString() : undefined);
+              // Store the date string directly
+              handleChange("startDate", val || "");
             }}
           />
           <Field
@@ -129,7 +130,8 @@ export default function EditProjectPage() {
             value={project.deadline ? new Date(project.deadline).toISOString().slice(0, 10) : ""}
             type="date"
             onChange={(val) => {
-              handleChange("deadline", val ? new Date(val).toISOString() : undefined);
+              // Store the date string directly
+              handleChange("deadline", val || "");
             }}
           />
           {/* Show end date and duration fields if project is 100% complete or status is completed */}
@@ -139,7 +141,7 @@ export default function EditProjectPage() {
                 label="End Date"
                 value={project.endDate ? new Date(project.endDate).toISOString().slice(0, 10) : ""}
                 type="date"
-                onChange={(val) => handleChange("endDate", val as string)}
+                onChange={(val) => handleChange("endDate", val || "")}
               />
               <Field
                 label="Duration (days)"
