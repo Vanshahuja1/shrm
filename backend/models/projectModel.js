@@ -15,6 +15,14 @@ const projectSchema = new mongoose.Schema(
       required: [true, "Assign date is required"],
     },
 
+    startDate: {
+      type: Date,
+    },
+
+    deadline: {
+      type: Date,
+    },
+
 
     employees: [
       {
