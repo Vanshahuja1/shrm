@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import DailyAttendance from './daily/page'
 import MonthlyCalendar from './monthly/page'
+import LeaveManagement from './leave/page'
 
 export default function AttendancePage() {
   const [tab, setTab] = useState<'refresh' | 'monthly' >('refresh')

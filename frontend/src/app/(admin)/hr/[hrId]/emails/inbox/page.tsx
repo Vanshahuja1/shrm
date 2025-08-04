@@ -22,7 +22,7 @@ interface Email {
   sentAt: string
 }
 export default function InboxPage() {
- 
+  const params = useParams()
   const [emails, setEmails] = useState<Email[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -52,7 +52,7 @@ const {hrId} = useParams()
     }
 
     fetchSentEmails()
-  }, [hrId])
+  }, [])
 
 
   if (loading) {

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 // import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import axios from '@/lib/axiosInstance';
-// import { format } from 'date-fns';
+import { format } from 'date-fns';
 import { Candidate } from '../applicants/page';
 
 

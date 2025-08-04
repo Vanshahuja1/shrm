@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-// import Link from 'next/link';
+import Link from 'next/link';
 import EditApplicantModal from '../components/NewEditModal';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from '@/lib/axiosInstance';
@@ -37,7 +36,7 @@ type Applicant = {
   } | null;
   source?: string;
   portfolio?: string;
-  
+  portfolioLink?: string;
   location?: string;
   currentCompany?: string;
   jobTitle?: string;
@@ -52,6 +51,7 @@ type Applicant = {
   } | null;
   notes?: string;
   resume?: string;
+  resumeLink?: string;
   expectedSalary?: string;
 };
 
@@ -73,6 +73,7 @@ type Interviewer = {
 
 export default function ApplicantDetailPage() {
   const { id } = useParams();
+  const { hrId } = useParams();
   const [applicant, setApplicant] = useState<Applicant>();
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -265,8 +266,8 @@ export default function ApplicantDetailPage() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-500">Interview</span>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${isInterviewScheduled
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
                 }`}>
                 {isInterviewScheduled ? 'Scheduled' : 'Not Scheduled'}
               </span>
@@ -288,8 +289,8 @@ export default function ApplicantDetailPage() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-500">Recruiter</span>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${isRecruiterAssigned
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
                 }`}>
                 {isRecruiterAssigned ? 'Assigned' : 'Not Assigned'}
               </span>
@@ -312,9 +313,9 @@ export default function ApplicantDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium text-gray-500">Resume</label>
-            {applicant?.resume ? (
+            {applicant?.resumeLink ? (
               <a
-                href={applicant.resume}
+                href={applicant.resumeLink}
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -327,9 +328,9 @@ export default function ApplicantDetailPage() {
           </div>
           <div>
             <label className="text-sm font-medium text-gray-500">Portfolio</label>
-            {applicant?.portfolio ? (
+            {applicant?.portfolioLink ? (
               <a
-                href={applicant.portfolio}
+                href={applicant.portfolioLink}
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -403,27 +404,21 @@ export default function ApplicantDetailPage() {
         </div>
       )}
 
-
-{applicant && (
-  <EditApplicantModal
-    isOpen={isEditModalOpen}
-    onClose={() => setIsEditModalOpen(false)}
-    applicant={{
-      ...applicant,
-      department: applicant.department || { _id: '', name: 'Not Assigned' }
-    }}
-    onUpdate={async () => {
-      try {
-        const res = await axios.get(`/recruitment/candidate/${id}`);
-        setApplicant(res.data);
-        toast.success('Candidate details updated successfully');
-      } catch (error) {
-        console.error('Failed to refresh candidate data:', error);
-        toast.error('Failed to refresh candidate data');
-      }
-    }}
-  />
-)}
+      <EditApplicantModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        applicant={applicant}
+        onUpdate={async () => {
+          try {
+            const res = await axios.get(`/recruitment/candidate/${id}`);
+            setApplicant(res.data);
+            toast.success('Candidate details updated successfully');
+          } catch (error) {
+            console.error('Failed to refresh candidate data:', error);
+            toast.error('Failed to refresh candidate data');
+          }
+        }}
+      />
     </div>
   );
 }

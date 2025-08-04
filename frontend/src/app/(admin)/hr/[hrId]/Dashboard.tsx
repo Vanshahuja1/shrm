@@ -86,6 +86,9 @@ const Dashboard = () => {
         const employeesOnLeave = attendanceRecords.filter(record => 
           record.attendance?.status === 'leave'
         ).length
+        const employeesAbsent = attendanceRecords.filter(record => 
+          !record.attendance || record.attendance.status === 'absent'
+        ).length
         const employeesLate = attendanceRecords.filter(record => 
           record.attendance?.status === 'late'
         ).length
