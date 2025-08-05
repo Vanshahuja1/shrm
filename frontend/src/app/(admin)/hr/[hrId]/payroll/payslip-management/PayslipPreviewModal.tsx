@@ -84,8 +84,8 @@ interface EmployeeDetails {
   pastProjects: string[];
   attendanceCount30Days: number;
   taskCountPerDay: number;
-  tasks: unknown[];
-  responses: unknown[];
+  tasks: string[];
+  responses: string[];
   managers: string[];
   photo: string;
   upperManager: string;
@@ -174,7 +174,7 @@ export default function PayslipPreviewModal({
     
     try {
       setDownloading(true);
-      generateCustomPayslipPDF(payslip, employeeDetails as EmployeeDetails);
+      await generateCustomPayslipPDF(payslip, employeeDetails as EmployeeDetails);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF. Please try again.');
