@@ -61,13 +61,43 @@ const employeePayrollSchema = new mongoose.Schema({
   dateOfJoining: Date,
   status: {
     type: String,
-    enum: ['draft', 'processed', 'approved', 'paid'],
+    enum: ['draft', 'in_process', 'pending', 'paid'],
     default: 'draft'
   },
   processedAt: Date,
   approvedAt: Date,
   paidAt: Date,
-  remarks: String
+  remarks: String,
+  
+  // Attendance-based calculations
+  attendanceData: {
+    totalWorkingDays: { type: Number, default: 0 },
+    presentDays: { type: Number, default: 0 },
+    absentDays: { type: Number, default: 0 },
+    halfDays: { type: Number, default: 0 },
+    overtimeHours: { type: Number, default: 0 },
+    lateComings: { type: Number, default: 0 }
+  },
+  
+  // HR edit tracking
+  editHistory: [{
+    field: String,
+    oldValue: mongoose.Schema.Types.Mixed,
+    newValue: mongoose.Schema.Types.Mixed,
+    editedBy: { type: String, ref: 'User' },
+    editedAt: { type: Date, default: Date.now }
+  }],
+  
+  // Approval workflow
+  approvalWorkflow: {
+    submittedBy: { type: String, ref: 'User' },
+    submittedAt: Date,
+    approvedBy: { type: String, ref: 'User' },
+    approvedAt: Date,
+    rejectedBy: { type: String, ref: 'User' },
+    rejectedAt: Date,
+    rejectionReason: String
+  }
 }, {
   timestamps: true
 });

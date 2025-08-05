@@ -57,7 +57,7 @@ export default function RejectedPage() {
                 className="cursor-pointer hover:bg-[#FDD0C4] transition-colors"
                 whileHover={{ y: -2 }}
                 onClick={() =>
-                  router.push(`/hr/recruitment/rejectedCandidates/${c._id}`)
+                  router.push(`/hr/${hrId}/recruitment/applicants/${c._id}`)
                 }
               >
                 <td className="px-4 py-2 border-b text-contrast font-medium">{index + 1}</td>

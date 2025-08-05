@@ -2,6 +2,7 @@ const { EmployeePayroll, PayrollPeriod, EmployeeJoineesExits } = require('../mod
 const { FullAndFinal, PayrollAdjustment, LeaveAttendanceDeduction } = require('../models/payrollAdjustmentModel');
 const User = require('../models/userModel');
 const Organization = require('../models/organizationModel');
+const payrollCalculationService = require('../services/payrollCalculationService');
 
 // Employee Payroll Controllers
 const getEmployeePayrollRecords = async (req, res) => {
@@ -197,7 +198,7 @@ const generatePayslip = async (req, res) => {
         employee: {
           name: employee.name,
           email: employee.email,
-          designation: employee.designation || 'Employee',
+          designation: employee.designation || 'NA',
           departmentName: employee.departmentId?.name || 'General'
         },
         payrollPeriod: {
@@ -232,7 +233,7 @@ const generatePayslip = async (req, res) => {
         totalDeductions: 13750,
         netPay: 65750,
         departmentName: employee.departmentId?.name || 'General',
-        designation: employee.designation || 'Employee',
+        designation: employee.designation || 'NA',
         dateOfJoining: employee.dateOfJoining || new Date(),
         status: 'processed'
       };
@@ -594,6 +595,525 @@ const processPayroll = async (req, res) => {
   }
 };
 
+// New HR Payslip Management Functions
+
+/**
+ * Generate attendance-based payslip for an employee
+ */
+const generateAttendanceBasedPayslip = async (req, res) => {
+  try {
+    const { employeeId, startDate, endDate, customAdjustments, allowanceConfig, attendanceConfig } = req.body;
+    const hrUserId = req.user?.id || req.body.hrUserId; // Get HR user ID from auth middleware or request
+
+    if (!employeeId || !startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'Employee ID, start date, and end date are required'
+      });
+    }
+
+    // Convert dates
+    const periodStart = new Date(startDate);
+    const periodEnd = new Date(endDate);
+
+    // Calculate payslip using attendance and salary data
+    const payslipData = await payrollCalculationService.calculatePayslip(
+      employeeId, 
+      periodStart, 
+      periodEnd, 
+      customAdjustments,
+      allowanceConfig,
+      attendanceConfig
+    );
+
+    // Save the payslip
+    const savedPayslip = await payrollCalculationService.savePayslip(payslipData, hrUserId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Attendance-based payslip generated successfully',
+      data: savedPayslip
+    });
+
+  } catch (error) {
+    console.error('Error generating attendance-based payslip:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate attendance-based payslip',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Edit payslip with HR adjustments and track changes
+ */
+const editPayslip = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { editedFields, remarks } = req.body;
+    const hrUserId = req.user?.id || req.body.hrUserId;
+
+    if (!editedFields || Object.keys(editedFields).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No fields to edit provided'
+      });
+    }
+
+    const payslip = await EmployeePayroll.findById(id);
+    if (!payslip) {
+      return res.status(404).json({
+        success: false,
+        error: 'Payslip not found'
+      });
+    }
+
+    // Track changes for edit history
+    const editHistory = [];
+
+    // Process each edited field
+    for (const [fieldPath, newValue] of Object.entries(editedFields)) {
+      const oldValue = getNestedValue(payslip, fieldPath);
+      
+      if (oldValue !== newValue) {
+        editHistory.push({
+          field: fieldPath,
+          oldValue,
+          newValue,
+          editedBy: hrUserId,
+          editedAt: new Date()
+        });
+
+        // Update the field
+        setNestedValue(payslip, fieldPath, newValue);
+      }
+    }
+
+    // Add edit history
+    payslip.editHistory.push(...editHistory);
+
+    // Update remarks if provided
+    if (remarks) {
+      payslip.remarks = remarks;
+    }
+
+    // Update status if it was in draft
+    if (payslip.status === 'draft') {
+      payslip.status = 'in_process';
+    }
+
+    await payslip.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Payslip updated successfully',
+      data: payslip,
+      editHistory: editHistory
+    });
+
+  } catch (error) {
+    console.error('Error editing payslip:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to edit payslip',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Update payslip status (draft -> in_process -> pending -> paid)
+ */
+const updatePayslipStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, remarks } = req.body;
+    const hrUserId = req.user?.id || req.body.hrUserId;
+
+    const validStatuses = ['draft', 'in_process', 'pending', 'paid'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status. Valid statuses are: ' + validStatuses.join(', ')
+      });
+    }
+
+    const payslip = await EmployeePayroll.findById(id);
+    if (!payslip) {
+      return res.status(404).json({
+        success: false,
+        error: 'Payslip not found'
+      });
+    }
+
+    const oldStatus = payslip.status;
+    payslip.status = status;
+
+    // Update timestamps based on status
+    const now = new Date();
+    switch (status) {
+      case 'in_process':
+        payslip.processedAt = now;
+        break;
+      case 'pending':
+        payslip.approvalWorkflow.submittedBy = hrUserId;
+        payslip.approvalWorkflow.submittedAt = now;
+        break;
+      case 'paid':
+        payslip.paidAt = now;
+        if (!payslip.approvalWorkflow.approvedBy) {
+          payslip.approvalWorkflow.approvedBy = hrUserId;
+          payslip.approvalWorkflow.approvedAt = now;
+        }
+        break;
+    }
+
+    // Add to edit history
+    payslip.editHistory.push({
+      field: 'status',
+      oldValue: oldStatus,
+      newValue: status,
+      editedBy: hrUserId,
+      editedAt: now
+    });
+
+    if (remarks) {
+      payslip.remarks = remarks;
+    }
+
+    await payslip.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Payslip status updated to ${status}`,
+      data: payslip
+    });
+
+  } catch (error) {
+    console.error('Error updating payslip status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update payslip status',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Bulk update payslip statuses
+ */
+const bulkUpdatePayslipStatus = async (req, res) => {
+  try {
+    const { payslipIds, status, remarks } = req.body;
+    const hrUserId = req.user?.id || req.body.hrUserId;
+
+    if (!payslipIds || !Array.isArray(payslipIds) || payslipIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Payslip IDs array is required'
+      });
+    }
+
+    const validStatuses = ['draft', 'in_process', 'pending', 'paid'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status. Valid statuses are: ' + validStatuses.join(', ')
+      });
+    }
+
+    const updateResults = [];
+    const now = new Date();
+
+    for (const payslipId of payslipIds) {
+      try {
+        const payslip = await EmployeePayroll.findById(payslipId);
+        if (!payslip) {
+          updateResults.push({
+            payslipId,
+            success: false,
+            error: 'Payslip not found'
+          });
+          continue;
+        }
+
+        const oldStatus = payslip.status;
+        payslip.status = status;
+
+        // Update timestamps based on status
+        switch (status) {
+          case 'in_process':
+            payslip.processedAt = now;
+            break;
+          case 'pending':
+            payslip.approvalWorkflow.submittedBy = hrUserId;
+            payslip.approvalWorkflow.submittedAt = now;
+            break;
+          case 'paid':
+            payslip.paidAt = now;
+            if (!payslip.approvalWorkflow.approvedBy) {
+              payslip.approvalWorkflow.approvedBy = hrUserId;
+              payslip.approvalWorkflow.approvedAt = now;
+            }
+            break;
+        }
+
+        // Add to edit history
+        payslip.editHistory.push({
+          field: 'status',
+          oldValue: oldStatus,
+          newValue: status,
+          editedBy: hrUserId,
+          editedAt: now
+        });
+
+        if (remarks) {
+          payslip.remarks = remarks;
+        }
+
+        await payslip.save();
+
+        updateResults.push({
+          payslipId,
+          success: true,
+          oldStatus,
+          newStatus: status
+        });
+
+      } catch (error) {
+        updateResults.push({
+          payslipId,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+
+    const successCount = updateResults.filter(result => result.success).length;
+
+    res.status(200).json({
+      success: true,
+      message: `${successCount} out of ${payslipIds.length} payslips updated successfully`,
+      results: updateResults
+    });
+
+  } catch (error) {
+    console.error('Error bulk updating payslip statuses:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to bulk update payslip statuses',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get payslip edit history
+ */
+const getPayslipEditHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const payslip = await EmployeePayroll.findById(id);
+
+    if (!payslip) {
+      return res.status(404).json({
+        success: false,
+        error: 'Payslip not found'
+      });
+    }
+
+    // Manually populate user data for edit history
+    let populatedEditHistory = [];
+    if (payslip.editHistory && payslip.editHistory.length > 0) {
+      populatedEditHistory = await Promise.all(
+        payslip.editHistory.map(async (edit) => {
+          const user = await User.findOne({ id: edit.editedBy });
+          return {
+            ...edit.toObject(),
+            editedByUser: user ? {
+              name: user.name,
+              email: user.email
+            } : null
+          };
+        })
+      );
+    }
+
+    // Manually populate approval workflow users
+    let populatedApprovalWorkflow = { ...payslip.approvalWorkflow };
+    if (payslip.approvalWorkflow) {
+      if (payslip.approvalWorkflow.submittedBy) {
+        const submittedByUser = await User.findOne({ id: payslip.approvalWorkflow.submittedBy });
+        populatedApprovalWorkflow.submittedByUser = submittedByUser ? {
+          name: submittedByUser.name,
+          email: submittedByUser.email
+        } : null;
+      }
+      
+      if (payslip.approvalWorkflow.approvedBy) {
+        const approvedByUser = await User.findOne({ id: payslip.approvalWorkflow.approvedBy });
+        populatedApprovalWorkflow.approvedByUser = approvedByUser ? {
+          name: approvedByUser.name,
+          email: approvedByUser.email
+        } : null;
+      }
+      
+      if (payslip.approvalWorkflow.rejectedBy) {
+        const rejectedByUser = await User.findOne({ id: payslip.approvalWorkflow.rejectedBy });
+        populatedApprovalWorkflow.rejectedByUser = rejectedByUser ? {
+          name: rejectedByUser.name,
+          email: rejectedByUser.email
+        } : null;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        editHistory: populatedEditHistory,
+        approvalWorkflow: populatedApprovalWorkflow,
+        currentStatus: payslip.status,
+        createdAt: payslip.createdAt,
+        updatedAt: payslip.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching payslip edit history:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch payslip edit history',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get payslips by status with filtering
+ */
+const getPayslipsByStatus = async (req, res) => {
+  try {
+    const { status, departmentName, employeeId, startDate, endDate } = req.query;
+
+    let filter = { };
+
+    if (status) filter.status = status;
+    if (departmentName) filter.departmentName = departmentName;
+    if (employeeId) filter.employeeId = employeeId;
+
+    // Date range filter
+    if (startDate || endDate) {
+      filter['payrollPeriod.startDate'] = {};
+      if (startDate) filter['payrollPeriod.startDate'].$gte = new Date(startDate);
+      if (endDate) filter['payrollPeriod.endDate'] = { $lte: new Date(endDate) };
+    }
+
+    const payslips = await EmployeePayroll.find(filter)
+      .sort({ updatedAt: -1 });
+
+    // Group by status for dashboard view
+    const groupedByStatus = {
+      draft: [],
+      in_process: [],
+      pending: [],
+      paid: []
+    };
+
+    payslips.forEach(payslip => {
+      if (groupedByStatus[payslip.status]) {
+        groupedByStatus[payslip.status].push(payslip);
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        all: payslips,
+        grouped: groupedByStatus,
+        counts: {
+          total: payslips.length,
+          draft: groupedByStatus.draft.length,
+          in_process: groupedByStatus.in_process.length,
+          pending: groupedByStatus.pending.length,
+          paid: groupedByStatus.paid.length
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching payslips by status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch payslips by status',
+      details: error.message
+    });
+  }
+};
+
+// Helper functions for nested object operations
+function getNestedValue(obj, path) {
+  return path.split('.').reduce((current, key) => current && current[key], obj);
+}
+
+function setNestedValue(obj, path, value) {
+  const keys = path.split('.');
+  const lastKey = keys.pop();
+  const target = keys.reduce((current, key) => {
+    if (!current[key]) current[key] = {};
+    return current[key];
+  }, obj);
+  target[lastKey] = value;
+}
+
+/**
+ * Delete a payslip
+ */
+const deletePayslip = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const hrUserId = req.user?.id || req.body.hrUserId;
+
+    const payslip = await EmployeePayroll.findById(id);
+    if (!payslip) {
+      return res.status(404).json({
+        success: false,
+        error: 'Payslip not found'
+      });
+    }
+
+    // Only allow deletion of draft payslips for safety
+    if (payslip.status !== 'draft') {
+      return res.status(400).json({
+        success: false,
+        error: 'Only draft payslips can be deleted. Please set status to draft first.'
+      });
+    }
+
+    await EmployeePayroll.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Payslip deleted successfully',
+      deletedPayslip: {
+        id: payslip._id,
+        employeeId: payslip.employeeId,
+        name: payslip.name,
+        period: payslip.payrollPeriod.label
+      }
+    });
+
+  } catch (error) {
+    console.error('Error deleting payslip:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete payslip',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getEmployeePayrollRecords,
   createEmployeePayroll,
@@ -604,5 +1124,13 @@ module.exports = {
   setActivePayrollPeriod,
   getJoineesExits,
   finalizeJoineesExits,
-  processPayroll
+  processPayroll,
+  // New HR management functions
+  generateAttendanceBasedPayslip,
+  editPayslip,
+  updatePayslipStatus,
+  bulkUpdatePayslipStatus,
+  getPayslipEditHistory,
+  getPayslipsByStatus,
+  deletePayslip
 };

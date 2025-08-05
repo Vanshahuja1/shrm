@@ -12,7 +12,15 @@ const {
   setActivePayrollPeriod,
   getJoineesExits,
   finalizeJoineesExits,
-  processPayroll
+  processPayroll,
+  // New HR management functions
+  generateAttendanceBasedPayslip,
+  editPayslip,
+  updatePayslipStatus,
+  bulkUpdatePayslipStatus,
+  getPayslipEditHistory,
+  getPayslipsByStatus,
+  deletePayslip
 } = require('../controllers/payrollController');
 
 const {
@@ -31,6 +39,15 @@ router.get('/employees',  getEmployeePayrollRecords);
 router.post('/employees',  createEmployeePayroll);
 router.put('/employees/:id',  updateEmployeePayroll);
 router.post('/generate-payslip', generatePayslip);
+
+// New HR Payslip Management Routes
+router.post('/generate-attendance-payslip', generateAttendanceBasedPayslip);
+router.put('/edit/:id', editPayslip);
+router.put('/status/:id', updatePayslipStatus);
+router.put('/bulk-status', bulkUpdatePayslipStatus);
+router.get('/history/:id', getPayslipEditHistory);
+router.get('/by-status', getPayslipsByStatus);
+router.delete('/delete/:id', deletePayslip);
 
 // Payroll Period Routes
 router.get('/periods', getPayrollPeriods);
