@@ -770,8 +770,8 @@ export default function RegisterPage() {
             <Building2Icon className="w-8 h-8 text-white" />
           </motion.div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">SHRM Portal</h1>
-          <p className="text-gray-600">Employee Management System</p>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">Member Registration</h1>
+          {/* <p className="text-gray-600">Employee Management System</p> */}
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">Registration</h1>
         </motion.div>
         {/* Progress Steps */}
         <div className="flex justify-center mb-8">

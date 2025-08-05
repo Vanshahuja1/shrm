@@ -207,8 +207,8 @@ export default function LoginPage() {
             <Building2 className="w-8 h-8 text-white" />
           </motion.div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">SHRM Portal</h1>
-          <p className="text-gray-600 text-sm">Employee Management System</p>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">Member Login</h1>
+          {/* <p className="text-gray-600 text-sm">Employee Management System</p> */}
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">Login</h1>
         </motion.div>
 
         {/* Login form */}
