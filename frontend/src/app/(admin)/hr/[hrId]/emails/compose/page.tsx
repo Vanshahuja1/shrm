@@ -111,20 +111,7 @@ HR Department`
     }
 }
 
-type Email = {
-    _id?: number;
-    type?: "member_crud" | "increment" | "decrement" | "penalty" | "general";
-    recipient?: string;
-    sender?: string;
-    subject?: string;
-    message?: string;
-    sentAt?: string;
-    status?: "sent" | "pending" | "failed" | "draft";
-    isRead?: boolean;
-    isStarred?: boolean;
-    attachments?: string[];
-    recipientEmail?: string; // Optional for "other" recipient
-};
+import { Email } from "../types" // Import from types file
 
 
 
@@ -133,22 +120,22 @@ export default function ComposeEmailPage() {
     const [formData, setFormData] = useState<Email>({
         type: "general",
         recipient: "",
+        recipients: [],
+        cc: [],
         sender: "",
         subject: emailTemplates.general.subject,
         message: emailTemplates.general.message,
         recipientEmail: "",
+        recipientEmails: [],
+        ccEmails: [],
     })
-
-    const [errors, setErrors] = useState({
-        sender: "",
-        recipient: "",
-        subject: "",
-        message: "",
-        recipientEmail: "",
-    })
+    const [loading, setLoading] = useState(false)
+    const [selectedRecipients, setSelectedRecipients] = useState<{ id: string; email: string; name: string }[]>([])
+    const [selectedCC, setSelectedCC] = useState<{ id: string; email: string; name: string }[]>([])
+    const [customRecipient, setCustomRecipient] = useState("")
+    const [customCC, setCustomCC] = useState("")
 
     const { hrId } = useParams()
-    const [loading, setLoading] = useState(false)
 
     const [members, setMembers] = useState<{ id: string; email: string, name: string }[]>([])
 
@@ -172,6 +159,8 @@ export default function ComposeEmailPage() {
                 setFormData(prev => ({
                     ...prev,
                     sender: response.data.contactInfo.email || "",
+                    senderName: response.data.name || "",
+                    senderId: hrId as string,
                 }))
             }
             catch (error) {
@@ -181,85 +170,123 @@ export default function ComposeEmailPage() {
         fetchEmployee()
     }, [hrId])
 
-
-    const validateForm = () => {
-        let isValid = true;
-        const newErrors = {
-            sender: "",
-            recipient: "",
-            subject: "",
-            message: "",
-            recipientEmail: "",
-        };
-
-        // Validate sender
-        if (!formData?.sender?.trim()) {
-            newErrors.sender = "Sender email is required";
-            isValid = false;
-        } else if (!/\S+@\S+\.\S+/.test(formData.sender)) {
-            newErrors.sender = "Please enter a valid email address";
-            isValid = false;
+    const addRecipient = (memberInfo: { id: string; email: string; name: string } | string) => {
+        const email = typeof memberInfo === 'string' ? memberInfo : memberInfo.email;
+        
+        // Prevent adding sender's own email
+        if (email === formData.sender) {
+            alert("You cannot send an email to yourself");
+            return;
         }
-
-        // Validate recipient
-        if (!formData.recipient) {
-            newErrors.recipient = "Please select a recipient";
-            isValid = false;
+        
+        if (typeof memberInfo === 'string') {
+            // Handle custom email
+            const customMember = { id: '', email: memberInfo, name: memberInfo };
+            if (!selectedRecipients.some(r => r.email === memberInfo)) {
+                const newRecipients = [...selectedRecipients, customMember];
+                setSelectedRecipients(newRecipients);
+                setFormData(prev => ({ ...prev, recipients: newRecipients.map(r => r.email) }));
+            }
+        } else {
+            // Handle member from dropdown
+            if (!selectedRecipients.some(r => r.email === memberInfo.email)) {
+                const newRecipients = [...selectedRecipients, memberInfo];
+                setSelectedRecipients(newRecipients);
+                setFormData(prev => ({ ...prev, recipients: newRecipients.map(r => r.email) }));
+            }
         }
+    }
 
-        // Validate recipient email if "other" is selected
-        if (formData.recipient === "other" && !formData.recipientEmail?.trim()) {
-            newErrors.recipientEmail = "Recipient email is required";
-            isValid = false;
-        } else if (formData.recipient === "other" && !/\S+@\S+\.\S+/.test(formData.recipientEmail || "")) {
-            newErrors.recipientEmail = "Please enter a valid email address";
-            isValid = false;
+    const removeRecipient = (memberToRemove: { id: string; email: string; name: string }) => {
+        const newRecipients = selectedRecipients.filter(r => r.email !== memberToRemove.email);
+        setSelectedRecipients(newRecipients);
+        setFormData(prev => ({ ...prev, recipients: newRecipients.map(r => r.email) }));
+    }
+
+    const addCC = (memberInfo: { id: string; email: string; name: string } | string) => {
+        const email = typeof memberInfo === 'string' ? memberInfo : memberInfo.email;
+        
+        // Prevent adding sender's own email to CC
+        if (email === formData.sender) {
+            alert("You cannot add yourself to CC");
+            return;
         }
-
-        // Validate subject
-        if (!formData?.subject?.trim()) {
-            newErrors.subject = "Subject is required";
-            isValid = false;
+        
+        if (typeof memberInfo === 'string') {
+            // Handle custom email
+            const customMember = { id: '', email: memberInfo, name: memberInfo };
+            if (!selectedCC.some(c => c.email === memberInfo)) {
+                const newCC = [...selectedCC, customMember];
+                setSelectedCC(newCC);
+                setFormData(prev => ({ ...prev, cc: newCC.map(c => c.email) }));
+            }
+        } else {
+            // Handle member from dropdown
+            if (!selectedCC.some(c => c.email === memberInfo.email)) {
+                const newCC = [...selectedCC, memberInfo];
+                setSelectedCC(newCC);
+                setFormData(prev => ({ ...prev, cc: newCC.map(c => c.email) }));
+            }
         }
+    }
 
-        // Validate message
-        if (!formData?.message?.trim()) {
-            newErrors.message = "Message is required";
-            isValid = false;
+    const removeCC = (memberToRemove: { id: string; email: string; name: string }) => {
+        const newCC = selectedCC.filter(c => c.email !== memberToRemove.email);
+        setSelectedCC(newCC);
+        setFormData(prev => ({ ...prev, cc: newCC.map(c => c.email) }));
+    }
+
+    const addCustomRecipient = () => {
+        if (customRecipient.trim()) {
+            addRecipient(customRecipient.trim());
+            setCustomRecipient("");
         }
+    }
 
-        setErrors(newErrors);
-        return isValid;
-    };
+    const addCustomCC = () => {
+        if (customCC.trim()) {
+            addCC(customCC.trim());
+            setCustomCC("");
+        }
+    }
+
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault()
+        setLoading(true) // Start loading
 
-        if (!validateForm()) {
+        // Validate that at least one recipient is selected
+        if (selectedRecipients.length === 0) {
+            alert("Please select at least one recipient");
+            setLoading(false);
             return;
         }
 
-        setLoading(true);
-
-        const recipient =
-            formData.recipient === "other"
-                ? formData.recipientEmail
-                : formData.recipient;
-
-        // Find the selected member to get their ID
-        let recipientId = "";
-        if (formData.recipient !== "other") {
-            const selectedMember = members.find(member => member.email === formData.recipient);
-            recipientId = selectedMember?.id || "";
-        }
-
+        // Get recipient IDs for members
+        const recipientIds: string[] = [];
+        const ccIds: string[] = [];
+        
+        selectedRecipients.forEach(recipient => {
+            if (recipient.id) {
+                recipientIds.push(recipient.id);
+            }
+        });
+        
+        selectedCC.forEach(ccMember => {
+            if (ccMember.id) {
+                ccIds.push(ccMember.id);
+            }
+        });
 
         axios.post("/mail/send", {
             type: formData.type,
-            to: recipient,
+            to: selectedRecipients.map(r => r.email),
+            cc: selectedCC.map(c => c.email),
             from: formData.sender,
-            senderId: hrId, // Assuming admin is sending the email
-            recipientId: recipientId,
+            senderId: hrId, // HR ID as sender
+            recipientId: recipientIds[0] || "", // Primary recipient ID for backward compatibility
+            recipientIds: recipientIds,
+            ccIds: ccIds,
             subject: formData.subject,
             text: formData.message,
         })
@@ -268,6 +295,7 @@ export default function ComposeEmailPage() {
             })
             .catch((error) => {
                 console.error("Error sending email:", error)
+                alert("Failed to send email. Please try again.");
             })
             .finally(() => {
                 setLoading(false) // Stop loading
@@ -317,66 +345,192 @@ export default function ComposeEmailPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
                             <input
-                                type="email"
-                                value={formData.sender}
-                                onChange={(e) => setFormData({ ...formData, sender: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                required
+                                type="text"
+                                value={formData.senderName && formData.senderId 
+                                    ? `${formData.senderName} [${formData.senderId}]` 
+                                    : formData.sender || "Loading..."
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                                disabled
                             />
                         </div>
                     </div>
                     
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex gap-2">
-                                <Select
-                                    value={formData.recipient}
-                                    onValueChange={(value) => setFormData({ ...formData, recipient: value })}
-                                >
-                                    <SelectTrigger className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.recipient ? 'border-red-500' : 'border-gray-300'
-                                        }`}>
-                                        <SelectValue placeholder="Select recipient" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {members.map((member) => (
-                                            <SelectItem key={member.id} value={member.email || member.id}>
-                                                {member.name ? (
-                                                    <>
-                                                        {member.name} ({member.email}){" "}
-                                                        <span className="text-gray-500">[{member.id}]</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        {member.email || member.id} <span className="text-gray-500">[{member.id}]</span>
-                                                    </>
-                                                )}
-                                            </SelectItem>
-                                        ))}
-                                        <SelectItem value="other">Other</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {formData.recipient === "other" && (
-                                    <input
-                                        type="email"
-                                        placeholder="Enter recipient email"
-                                        value={formData.recipientEmail || ""}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, recipientEmail: e.target.value })
-                                        }
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.recipientEmail ? 'border-red-500' : 'border-gray-300'
-                                            }`}
-                                        autoComplete="off"
-                                    />
-                                )}
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            To (Recipients) <span className="text-red-500">*</span>
+                        </label>
+                        
+                        {/* Selected Recipients Display */}
+                        {selectedRecipients.length > 0 && (
+                            <div className="mb-2 flex flex-wrap gap-2">
+                                {selectedRecipients.map((recipient) => (
+                                    <span key={recipient.email} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm">
+                                        {recipient.name || recipient.email}
+                                        <button
+                                            type="button"
+                                            onClick={() => removeRecipient(recipient)}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
                             </div>
-                            {errors.recipient && (
-                                <p className="text-sm text-red-500">{errors.recipient}</p>
-                            )}
-                            {errors.recipientEmail && formData.recipient === "other" && (
-                                <p className="text-sm text-red-500">{errors.recipientEmail}</p>
-                            )}
+                        )}
+
+                        <div className="flex gap-2 mb-2">
+                            <Select
+                                value=""
+                                onValueChange={(value) => {
+                                    if (value) {
+                                        const selectedMember = members.find(m => m.email === value);
+                                        if (selectedMember) {
+                                            addRecipient(selectedMember);
+                                        }
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <SelectValue placeholder="Select recipient from organization" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {members
+                                        .filter(member => 
+                                            !selectedRecipients.some(r => r.email === member.email) &&
+                                            member.email !== formData.sender
+                                        )
+                                        .map((member) => (
+                                        <SelectItem key={member.id} value={member.email || member.id}>
+                                            {member.name ? (
+                                                <>
+                                                    {member.name} ({member.email}){" "}
+                                                    <span className="text-gray-500">[{member.id}]</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {member.email || member.id} <span className="text-gray-500">[{member.id}]</span>
+                                                </>
+                                            )}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Custom Recipient Input */}
+                        <div className="flex gap-2">
+                            <input
+                                type="email"
+                                placeholder="Enter custom email address"
+                                value={customRecipient}
+                                onChange={(e) => setCustomRecipient(e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        addCustomRecipient();
+                                    }
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={addCustomRecipient}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                                Add
+                            </button>
+                        </div>
+                        
+                        {selectedRecipients.length === 0 && (
+                            <p className="text-sm text-red-500 mt-1">At least one recipient is required</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">CC (Carbon Copy) <span className="text-gray-400 text-xs">(Optional)</span></label>
+                        
+                        {/* Selected CC Display */}
+                        {selectedCC.length > 0 && (
+                            <div className="mb-2 flex flex-wrap gap-2">
+                                {selectedCC.map((ccMember) => (
+                                    <span key={ccMember.email} className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-sm">
+                                        {ccMember.name || ccMember.email}
+                                        <button
+                                            type="button"
+                                            onClick={() => removeCC(ccMember)}
+                                            className="text-gray-600 hover:text-gray-800"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex gap-2 mb-2">
+                            <Select
+                                value=""
+                                onValueChange={(value) => {
+                                    if (value) {
+                                        const selectedMember = members.find(m => m.email === value);
+                                        if (selectedMember) {
+                                            addCC(selectedMember);
+                                        }
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <SelectValue placeholder="Select CC from organization" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {members
+                                        .filter(member => 
+                                            !selectedCC.some(c => c.email === member.email) && 
+                                            !selectedRecipients.some(r => r.email === member.email) &&
+                                            member.email !== formData.sender
+                                        )
+                                        .map((member) => (
+                                        <SelectItem key={member.id} value={member.email || member.id}>
+                                            {member.name ? (
+                                                <>
+                                                    {member.name} ({member.email}){" "}
+                                                    <span className="text-gray-500">[{member.id}]</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {member.email || member.id} <span className="text-gray-500">[{member.id}]</span>
+                                                </>
+                                            )}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Custom CC Input */}
+                        <div className="flex gap-2">
+                            <input
+                                type="email"
+                                placeholder="Enter custom CC email address"
+                                value={customCC}
+                                onChange={(e) => setCustomCC(e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        addCustomCC();
+                                    }
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={addCustomCC}
+                                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                            >
+                                Add CC
+                            </button>
                         </div>
                     </div>
 
@@ -386,12 +540,9 @@ export default function ComposeEmailPage() {
                             type="text"
                             value={formData.subject || ''}
                             onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.subject ? 'border-red-500' : 'border-gray-300'
-                                }`}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            required
                         />
-                        {errors.subject && (
-                            <p className="mt-1 text-sm text-red-500">{errors.subject}</p>
-                        )}
                     </div>
 
                     <div>
@@ -400,12 +551,9 @@ export default function ComposeEmailPage() {
                             value={formData.message || ''}
                             onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                             rows={10}
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.message ? 'border-red-500' : 'border-gray-300'
-                                }`}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            required
                         />
-                        {errors.message && (
-                            <p className="mt-1 text-sm text-red-500">{errors.message}</p>
-                        )}
                     </div>
 
                     <div className="flex gap-4">

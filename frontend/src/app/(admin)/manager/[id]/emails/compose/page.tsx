@@ -122,6 +122,7 @@ export default function ComposeEmailPage() {
     })
 
     const [errors, setErrors] = useState({
+        general: "",
         sender: "",
         recipient: "",
         subject: "",
@@ -167,6 +168,7 @@ export default function ComposeEmailPage() {
     const validateForm = () => {
         let isValid = true;
         const newErrors = {
+            general: "",
             sender: "",
             recipient: "",
             subject: "",
@@ -187,6 +189,13 @@ export default function ComposeEmailPage() {
         if (!formData.recipient) {
             newErrors.recipient = "Please select a recipient";
             isValid = false;
+        } else {
+            // Check if user is trying to send email to themselves
+            const recipientEmail = formData.recipient === "other" ? formData.recipientEmail : formData.recipient;
+            if (recipientEmail === formData.sender) {
+                newErrors.recipient = "You cannot send an email to yourself";
+                isValid = false;
+            }
         }
 
         // Validate recipient email if "other" is selected
@@ -195,6 +204,9 @@ export default function ComposeEmailPage() {
             isValid = false;
         } else if (formData.recipient === "other" && !/\S+@\S+\.\S+/.test(formData.recipientEmail || "")) {
             newErrors.recipientEmail = "Please enter a valid email address";
+            isValid = false;
+        } else if (formData.recipient === "other" && formData.recipientEmail === formData.sender) {
+            newErrors.recipientEmail = "You cannot send an email to yourself";
             isValid = false;
         }
 
@@ -240,19 +252,26 @@ export default function ComposeEmailPage() {
             type: formData.type,
             to: recipient,
             from: formData.sender,
-            senderId: id, // Assuming admin is sending the email
+            senderId: id,
             recipientId: recipientId,
+            recipientIds: [recipientId].filter(Boolean),  // Filter out empty strings
             subject: formData.subject,
             text: formData.message,
+            status: "sent"
         })
             .then(() => {
                 router.push(`/manager/${id}/emails`)
             })
             .catch((error) => {
                 console.error("Error sending email:", error)
+                const errorMessage = error.response?.data?.message || "Failed to send email. Please try again."
+                setErrors(prev => ({
+                    ...prev,
+                    general: errorMessage
+                }))
             })
             .finally(() => {
-                setLoading(false) // Stop loading
+                setLoading(false)
             })
     }
 
@@ -261,7 +280,7 @@ export default function ComposeEmailPage() {
             <div className="flex items-center justify-between">
                 <button
                     onClick={() => router.back()}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-red-600 hover:text-red-800 font-medium"
                 >
                     ← Back to Inbox
                 </button>
@@ -269,6 +288,11 @@ export default function ComposeEmailPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                {errors.general && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                        {errors.general}
+                    </div>
+                )}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -287,7 +311,7 @@ export default function ComposeEmailPage() {
                                         }));
                                     }
                                 }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                             >
                                 <option value="general">General</option>
                                 <option value="increment">Salary Increment</option>
@@ -317,12 +341,14 @@ export default function ComposeEmailPage() {
                                     value={formData.recipient}
                                     onValueChange={(value) => setFormData({ ...formData, recipient: value })}
                                 >
-                                    <SelectTrigger className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.recipient ? 'border-red-500' : 'border-gray-300'
+                                    <SelectTrigger className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 ${errors.recipient ? 'border-red-500' : 'border-gray-300'
                                         }`}>
                                         <SelectValue placeholder="Select recipient" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {members.map((member) => (
+                                        {members
+                                            .filter(member => member.email !== formData.sender)
+                                            .map((member) => (
                                             <SelectItem key={member.id} value={member.email || member.id}>
                                                 {member.name ? (
                                                     <>
