@@ -323,42 +323,6 @@ export default function LoginPage() {
               </div>
             </motion.button>
           </form>
-
-          {/* Registration Option */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
-            className="mt-6 text-center"
-          >
-            <p className="text-gray-600 text-sm mb-3">New to the organization?</p>
-            <motion.button
-              onClick={() => router.push('/register')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border border-gray-300 hover:border-red-300 transition-all duration-300 px-6 py-3 rounded-xl text-gray-700 hover:text-red-600 font-medium shadow-sm hover:shadow-md"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <User className="w-4 h-4" />
-                <span>Register as New Member</span>
-              </div>
-            </motion.button>
-          </motion.div>
-
-          {/* Footer */}
-          {/* <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-            className="mt-8 pt-6 border-t border-gray-200 text-center"
-          >
-            <p className="text-gray-500 text-xs">
-              Need assistance? Contact{" "}
-              <motion.span whileHover={{ color: "#ef4444" }} className="text-red-400 cursor-pointer transition-colors">
-                support@enterprise.com
-              </motion.span>
-            </p>
-          </motion.div> */}
         </motion.div>
       </motion.div>
 
