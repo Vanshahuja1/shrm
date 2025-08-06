@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import type { Project } from "@/types/index"
+import axios from "@/lib/axiosInstance"
 import {
   Dialog,
   DialogContent,
@@ -26,11 +27,8 @@ export default function PastProjects() {
     async function fetchProjects() {
       try {
         setLoading(true)
-        const response = await fetch("http://localhost:5000/api/projects")
-        if (!response.ok) {
-          throw new Error("Failed to fetch projects")
-        }
-        const data: Project[] = await response.json()
+        const response = await axios.get("/projects")
+        const data: Project[] = response.data
         // Filter for completed projects only
         const completed = data.filter((p) => p.completionPercentage === 100)
         setProjects(completed)
@@ -63,19 +61,8 @@ export default function PastProjects() {
     if (!editingProject) return
 
     try {
-      const response = await fetch(`http://localhost:5000/api/projects/${editingProject.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editingProject),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update project')
-      }
-
-      const updatedProject = await response.json()
+      const response = await axios.put(`/projects/${editingProject.id}`, editingProject)
+      const updatedProject = response.data
       
       // Update the projects list
       setProjects(projects.map(p => p.id === updatedProject._id ? updatedProject : p))
