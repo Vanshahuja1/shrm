@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import axios from '@/lib/axiosInstance';
 import Axios from 'axios';
 import {
@@ -33,6 +35,7 @@ interface Candidate {
 }
 
 const AddCandidateForm: React.FC = () => {
+  const router = useRouter();
   const [candidate, setCandidate] = useState<Candidate>({
     name: '',
     department:{
@@ -316,11 +319,21 @@ const AddCandidateForm: React.FC = () => {
   };
 
   return (
-    <form 
-      onSubmit={handleSubmit}
-      className="max-w-6xl mx-auto p-6 bg-white rounded-2xl shadow space-y-6"
-    >
-      <h2 className="text-2xl font-semibold text-center">Add New Candidate</h2>
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Back Button */}
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft size={20} />
+        <span>Back</span>
+      </button>
+
+      <form 
+        onSubmit={handleSubmit}
+        className="bg-white rounded-2xl shadow space-y-6 p-6"
+      >
+        <h2 className="text-2xl font-semibold text-center">Add New Candidate</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -653,7 +666,8 @@ const AddCandidateForm: React.FC = () => {
       {message && (
         <p className="text-center text-sm">{message}</p>
       )}
-    </form>
+      </form>
+    </div>
   );
 };
 

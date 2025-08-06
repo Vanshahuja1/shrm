@@ -4,16 +4,31 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import type { Project } from "../../../../types";
-import type { Department, OrganizationMember } from "@/types/index";
 import axios from "@/lib/axiosInstance";
+
+// Simple interface for dropdown options
+interface DropdownOption {
+  id: string | number;
+  name: string;
+  role?: string;
+}
+
+// Interface for API response data
+interface MemberData {
+  id?: string | number;
+  _id?: string;
+  name?: string;
+  memberName?: string;
+  role?: string;
+}
 
 export default function EditProjectPage() {
   const { id } = useParams();
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
-  const [allDepartments, setAllDepartments] = useState<Department[]>([]);
-  const [allMembers, setAllMembers] = useState<OrganizationMember[]>([]);
-  const [allManagers, setAllManagers] = useState<OrganizationMember[]>([]);
+  const [allDepartments, setAllDepartments] = useState<DropdownOption[]>([]);
+  const [allMembers, setAllMembers] = useState<DropdownOption[]>([]);
+  const [allManagers, setAllManagers] = useState<DropdownOption[]>([]);
   // Local state for skills text
   const [skillsText, setSkillsText] = useState<string>("");
 
@@ -37,23 +52,63 @@ export default function EditProjectPage() {
     }
     async function fetchOptions() {
       try {
+        // Fetch departments
         const deptRes = await axios.get("/departments");
-        setAllDepartments(
-          (deptRes.data || []).map((d: { _id?: string; id?: string; name: string }) => ({
-            id: d._id ?? d.id,
+        console.log("Departments response:", deptRes.data);
+        
+        if (deptRes.data && deptRes.data.success && Array.isArray(deptRes.data.data)) {
+          const formattedDepartments: DropdownOption[] = deptRes.data.data.map((d: { _id?: string; id?: string; name: string }) => ({
+            id: d._id ?? d.id ?? d.name,
             name: d.name,
-          }))
+          }));
+          setAllDepartments(formattedDepartments);
+        } else {
+          setAllDepartments([]);
+        }
+
+        // Fetch organization members
+        let memberRes;
+        try {
+          memberRes = await axios.get("/IT/org-members");
+        } catch {
+          console.log("First API failed, trying alternative...");
+          // Try alternative API if the first one fails
+          try {
+            memberRes = await axios.get("/IT/org-members/empInfo");
+          } catch {
+            console.log("Second API failed, trying third alternative...");
+            // Try another alternative
+            memberRes = await axios.get("/departments/6889a9394f263f6b1e23a7e2");
+          }
+        }
+        
+        console.log("Members response:", memberRes.data);
+        
+        const members = Array.isArray(memberRes.data) ? memberRes.data : [];
+        
+        // Filter and format members with proper structure
+        const formattedMembers: DropdownOption[] = members
+          .filter((m: MemberData) => m && (m.name || m.memberName))
+          .map((m: MemberData) => ({
+            id: m.id || m._id || m.name || m.memberName || 'unknown',
+            name: m.name || m.memberName || 'Unknown',
+            role: (m.role || 'employee').toLowerCase(),
+          }));
+
+        setAllMembers(formattedMembers);
+        
+        // Filter managers
+        const managers = formattedMembers.filter(
+          (m: DropdownOption) =>
+            m.role && m.role.toLowerCase().trim() === "manager" && m.name
         );
-        const memberRes = await axios.get("/IT/org-members");
-        const members = memberRes.data || [];
-        setAllMembers(members);
-        setAllManagers(
-          members.filter(
-            (m: { role?: string; name?: string }) =>
-              m.role && m.role.toLowerCase().trim() === "manager" && m.name
-          )
-        );
-      } catch {
+        setAllManagers(managers);
+        
+        console.log("Formatted members:", formattedMembers);
+        console.log("Filtered managers:", managers);
+        
+      } catch (error) {
+        console.error("Error fetching options:", error);
         setAllDepartments([]);
         setAllMembers([]);
         setAllManagers([]);

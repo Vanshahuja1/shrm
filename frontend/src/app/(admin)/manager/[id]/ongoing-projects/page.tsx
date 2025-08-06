@@ -95,13 +95,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
 
 export default function OngoingProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
-  // Use a static array for members to avoid 404 error
-  const [allMembers] = useState<Member[]>([
-    { id: '1', name: 'John Doe' },
-    { id: '2', name: 'Jane Smith' },
-    { id: '3', name: 'Alice Johnson' },
-    { id: '4', name: 'Bob Lee' },
-  ]);
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -116,20 +110,79 @@ export default function OngoingProjects() {
       router.replace("/admin");
       return;
     }
-    // Fetch ongoing projects for the manager
-    const fetchProjects = async () => {
+
+    const fetchData = async () => {
       try {
+        // First fetch manager data to get organization ID
+        const managerResponse = await axios.get(`/user/${managerId}`);
+        if (managerResponse.data.success) {
+          const manager = managerResponse.data.data;
+
+          // Fetch organization members using organization ID
+          if (manager.organizationId) {
+            try {
+              // Try multiple possible endpoints for fetching organization members
+              let membersResponse;
+              try {
+                // First try the org-members endpoint with empInfo
+                membersResponse = await axios.get(`/IT/org-members/empInfo?organizationId=${manager.organizationId}`);
+              } catch {
+                try {
+                  // If that fails, try the direct org-members endpoint
+                  membersResponse = await axios.get(`/IT/org-members`);
+                } catch {
+                  // If both fail, try using organization name if available
+                  if (manager.organizationName) {
+                    membersResponse = await axios.get(`/IT/org-members/${manager.organizationName}`);
+                  } else {
+                    throw new Error('Unable to fetch organization members');
+                  }
+                }
+              }
+              
+              console.log('Members response:', membersResponse.data);
+              
+              // Handle different response formats
+              const membersData = Array.isArray(membersResponse.data) 
+                ? membersResponse.data 
+                : membersResponse.data.data || [];
+              
+              // Transform members data to match our Member interface
+              const transformedMembers = membersData.map((member: { 
+                id?: string; 
+                _id?: string; 
+                employeeId?: string; 
+                name?: string; 
+                firstName?: string; 
+                lastName?: string; 
+              }) => ({
+                id: member.id || member._id || member.employeeId || String(Math.random()),
+                name: member.name || `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Unknown Member'
+              })).filter((member: Member) => member.name !== 'Unknown Member');
+
+              setAllMembers(transformedMembers);
+              console.log('Transformed members:', transformedMembers);
+            } catch (memberError) {
+              console.error("Error fetching organization members:", memberError);
+              // Fallback to empty array if members fetch fails
+              setAllMembers([]);
+            }
+          }
+        }
+
+        // Fetch ongoing projects for the manager
         const response = await axios.get("/projects");
         const data = response.data;
         const ongoingProjects = data.filter((p: Project) => p.status !== "completed" && p.completionPercentage !== 100);
         setProjects(ongoingProjects);
       } catch (error) {
-        console.error("Error fetching projects:", error);
+        console.error("Error fetching data:", error);
         setProjects([]);
+        setAllMembers([]);
       }
     };
-    fetchProjects();
-    // No member fetch to avoid 404
+
+    fetchData();
   }, [managerId, router]);
 
   return (
@@ -223,7 +276,7 @@ export default function OngoingProjects() {
                     setShowEditModal(true);
                   }}
                 >
-                  Edit Task
+                  Edit Project
                 </button>
               </div>
             </div>

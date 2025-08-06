@@ -21,17 +21,18 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
   
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         hrId={hrId as string}
+        hrName={hrName}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopHeader setIsSidebarOpen={setIsSidebarOpen} hrName={hrName} />
 
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-6 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={typeof window !== "undefined" ? location.pathname : "initial"}

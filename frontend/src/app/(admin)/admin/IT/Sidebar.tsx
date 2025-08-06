@@ -11,7 +11,7 @@ import {
   Mail,
   X,
   LogOut,
-  BarChart3,
+  // BarChart3,
 } from "lucide-react"
 import { Organization } from "../page"
 import { useEffect, useState } from "react"
@@ -49,7 +49,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen, adminName, or
     { id: "members", label: "Organization Members", icon: Users },
     { id: "hierarchy", label: "Organization Hierarchy", icon: Activity },
     { id: "task", label: "Task Management", icon: CheckSquare },
-    { id: "analytics", label: "Analytics & Charts", icon: BarChart3 },
+    // { id: "analytics", label: "Analytics & Charts", icon: BarChart3 },
     { id: "emails", label: "Email System", icon: Mail },
   ]
 
@@ -60,8 +60,8 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen, adminName, or
       )}
 
       <div
-        className={`fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:-translate-x-0"
         }`}
       >
         <div className="flex flex-col h-full">
@@ -120,7 +120,10 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen, adminName, or
                 <p className="font-semibold text-gray-900">{adminName || "Admin User"}</p>
                 <p className="text-sm text-gray-500">System Administrator</p>
               </div>
-              <button className="text-gray-400 hover:text-blue-600">
+              <button 
+                onClick={() => router.push("/admin")}
+                className="text-gray-400 hover:text-blue-600"
+              >
                 <LogOut size={18} />
               </button>
             </div>

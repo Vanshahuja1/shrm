@@ -330,10 +330,6 @@ export default function HRDashboard(): React.JSX.Element | null {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            <Users size={20} className="inline text-blue-600 mr-1" />
-            Team | Period: Q3 2024 | Live Data
-          </div>
           <div className="text-sm text-green-600 font-medium">
             Last updated: {new Date().toLocaleString()}
           </div>

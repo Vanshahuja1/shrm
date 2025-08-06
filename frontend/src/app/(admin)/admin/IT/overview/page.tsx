@@ -9,7 +9,7 @@ import {
   TrendingUp, 
   Building, 
   CheckCircle, 
-  DollarSign,
+  // DollarSign,
   Clock
 } from "lucide-react"
 import {
@@ -40,10 +40,13 @@ interface StatItem {
 }
 
 export default function Overview() {
-  const [monthlyData, setMonthlyData] = useState<Array<{ month: string; revenue: number; employees: number; activeProjects: number; completedProjects: number; attendance: number }>>([])
+  const [monthlyData, setMonthlyData] = useState<Array<{ month: string; employees: number; activeProjects: number; completedProjects: number; attendance: number }>>([])
   const [departmentData, setDepartmentData] = useState<Array<{ name: string; value: number; employees: number; color: string }>>([])
   const [projectStatusData, setProjectStatusData] = useState<Array<{ name: string; value: number; color: string }>>([])
-  const [revenueByDepartment, setRevenueByDepartment] = useState<Array<{ department: string; revenue: number; projects: number }>>([])
+  const [totalEmployees, setTotalEmployees] = useState(0)
+  const [totalDepartments, setTotalDepartments] = useState(0)
+  const [activeProjects, setActiveProjects] = useState(0)
+  const [completedProjects, setCompletedProjects] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -54,28 +57,23 @@ export default function Overview() {
         setMonthlyData(res.data.monthlyData)
         setDepartmentData(res.data.departmentData)
         setProjectStatusData(res.data.projectStatusData)
-        setRevenueByDepartment(res.data.revenueByDepartment)
-      } catch {
-        // handle error
+        setTotalEmployees(res.data.totalEmployees)
+        setTotalDepartments(res.data.totalDepartments)
+        setActiveProjects(res.data.activeProjects)
+        setCompletedProjects(res.data.completedProjects)
+      } catch (error) {
+        console.error("Failed to fetch overview data:", error)
       }
       setLoading(false)
     }
     fetchOverview()
   }, [])
 
-  // Calculate totals
-  const totalRevenue = monthlyData.length ? monthlyData[monthlyData.length - 1].revenue : 0
-  const totalEmployees = monthlyData.length ? monthlyData[monthlyData.length - 1].employees : 0
-  const totalActiveProjects = monthlyData.length ? monthlyData[monthlyData.length - 1].activeProjects : 0
-  const totalCompletedProjects = monthlyData.reduce((sum, month) => sum + (month.completedProjects || 0), 0)
-  // const avgAttendance = monthlyData.length ? Math.round(monthlyData.reduce((sum, month) => sum + (month.attendance || 0), 0) / monthlyData.length) : 0
-
   const stats: StatItem[] = [
     { title: "Total Employees", value: totalEmployees.toString(), change: "+12%", icon: Users, color: "blue" },
-    { title: "Active Projects", value: totalActiveProjects.toString(), change: "+5%", icon: Briefcase, color: "green" },
-    { title: "Completed Projects", value: totalCompletedProjects.toString(), change: "+23%", icon: CheckCircle, color: "emerald" },
-    { title: "Total Revenue", value: `${(totalRevenue / 1000000).toFixed(1)}M`, change: "+18%", icon: DollarSign, color: "purple" },
-    { title: "Departments", value: departmentData.length.toString(), change: "0%", icon: Building, color: "orange" },
+    { title: "Active Projects", value: activeProjects.toString(), change: "+5%", icon: Briefcase, color: "green" },
+    { title: "Completed Projects", value: completedProjects.toString(), change: "+23%", icon: CheckCircle, color: "emerald" },
+    { title: "Departments", value: totalDepartments.toString(), change: "0%", icon: Building, color: "orange" },
   ]
 
   const colorClasses: Record<ColorType, string> = {
@@ -123,14 +121,14 @@ export default function Overview() {
                 <div className={`p-3 rounded-lg ${getIconBackgroundClass(stat.color)} shadow-sm`}>
                   <Icon size={24} />
                 </div>
-                <span
+                {/* <span
                   className={`text-sm font-semibold px-3 py-1 rounded-full ${
                     stat.change.startsWith("+") ? "bg-green-100 text-green-700" : 
                     stat.change === "0%" ? "bg-gray-100 text-gray-600" : "bg-red-100 text-red-700"
                   }`}
                 >
                   {stat.change}
-                </span>
+                </span> */}
               </div>
               <p className="text-3xl font-bold mb-1 text-gray-900">{stat.value}</p>
               <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
@@ -150,30 +148,22 @@ export default function Overview() {
         >
           <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
             <TrendingUp size={20} className="text-purple-600" />
-            Revenue & Attendance Trend
+            Attendance Trend
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={monthlyData}>
               <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
                   <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="month" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <YAxis stroke="#6b7280" domain={[80, 100]} />
               <Tooltip
-                formatter={(value, name) => [
-                  name === "revenue"
-                    ? `${(Number(value) / 1000000).toFixed(1)}M`
-                    : `${value}%`,
-                  name === "revenue" ? "Revenue" : "Attendance",
-                ]}
+                formatter={(value) => [`${value}%`, "Attendance"]}
+                labelFormatter={(label) => `Month: ${label}`}
                 contentStyle={{
                   backgroundColor: "white",
                   border: "1px solid #e5e7eb",
@@ -181,8 +171,14 @@ export default function Overview() {
                   boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                 }}
               />
-              <Area type="monotone" dataKey="revenue" stroke="#8B5CF6" fillOpacity={1} fill="url(#revenueGradient)" strokeWidth={3} />
-              <Area type="monotone" dataKey="attendance" stroke="#10B981" fillOpacity={1} fill="url(#attendanceGradient)" strokeWidth={2} />
+              <Area 
+                type="monotone" 
+                dataKey="attendance" 
+                stroke="#8B5CF6" 
+                fillOpacity={1} 
+                fill="url(#attendanceGradient)" 
+                strokeWidth={3} 
+              />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
@@ -253,7 +249,7 @@ export default function Overview() {
         </motion.div>
 
         {/* Revenue by Department */}
-        <motion.div 
+        {/* <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
@@ -277,7 +273,7 @@ export default function Overview() {
               <Bar dataKey="revenue" fill="#10B981" name="revenue" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </motion.div>
+        </motion.div> */}
       </div>
 
       {/* Full Width Chart */}
@@ -301,14 +297,14 @@ export default function Overview() {
                 if (name === "employees") return [value, "Employees"]
                 if (name === "activeProjects") return [value, "Active Projects"]
                 if (name === "completedProjects") return [value, "Completed Projects"]
-                if (name === "productivity") return [`${value}%`, "Productivity"]
+                if (name === "attendance") return [`${value}%`, "Attendance"]
                 return [value, name]
               }}
             />
             <Line type="monotone" dataKey="employees" stroke="#3B82F6" strokeWidth={3} name="employees" />
             <Line type="monotone" dataKey="activeProjects" stroke="#8B5CF6" strokeWidth={2} name="activeProjects" />
             <Line type="monotone" dataKey="completedProjects" stroke="#10B981" strokeWidth={2} name="completedProjects" />
-            <Line type="monotone" dataKey="productivity" stroke="#F59E0B" strokeWidth={2} name="productivity" />
+            <Line type="monotone" dataKey="attendance" stroke="#F59E0B" strokeWidth={2} name="attendance" />
           </LineChart>
         </ResponsiveContainer>
       </motion.div>

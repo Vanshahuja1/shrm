@@ -32,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
@@ -40,8 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         organizationName={organizationData?.name}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <TopHeader setIsSidebarOpen={setIsSidebarOpen} adminName={adminData?.name} />
+      <div className="lg:ml-72 flex flex-col min-h-screen">
+        <div className="sticky top-0 z-30">
+          <TopHeader setIsSidebarOpen={setIsSidebarOpen} adminName={adminData?.name} />
+        </div>
 
         <main className="flex-1 p-6 overflow-auto">
           <AnimatePresence mode="wait">

@@ -27,7 +27,7 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
           <div>
             <h4 className="text-2xl font-bold text-gray-900">{employeeInfo.name}</h4>
             <p className="text-blue-600 font-medium text-lg">{employeeInfo.role}</p>
-            <p className="text-gray-600">{employeeInfo.designation}</p>
+            {/* <p className="text-gray-600">{employeeInfo.designation}</p> */}
             <p className="text-sm text-gray-500">Employee ID: {employeeInfo.employeeId}</p>
           </div>
         </div>

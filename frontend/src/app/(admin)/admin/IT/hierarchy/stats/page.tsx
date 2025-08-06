@@ -12,8 +12,8 @@ interface DepartmentStats {
   employees: number
   interns: number
   totalMembers: number
-  averageSalary: number
-  activeMembers: number
+  budget: number
+  // activeMembers: number
 }
 
 export default function StatsSection() {
@@ -49,7 +49,7 @@ export default function StatsSection() {
             const managers = deptUsers.filter((u) => u.role.toLowerCase() === "manager")
             const employees = deptUsers.filter((u) => u.role.toLowerCase() === "employee")
             const interns = deptUsers.filter((u) => u.role.toLowerCase() === "intern")
-            const activeMembers = deptUsers.filter((u) => u.isActive)
+            // const activeMembers = deptUsers.filter((u) => u.isActive)
 
             // Find department head
             const head =
@@ -70,8 +70,8 @@ export default function StatsSection() {
               employees: employees.length,
               interns: interns.length,
               totalMembers: deptUsers.length,
-              averageSalary: Math.round(averageSalary),
-              activeMembers: activeMembers.length,
+              budget: Math.round(averageSalary),
+              // activeMembers: activeMembers.length,
             }
           },
         )
@@ -146,8 +146,8 @@ export default function StatsSection() {
             <p className="text-gray-600">Department Head: {selectedDept.head}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-green-600">${selectedDept.averageSalary.toLocaleString()}</p>
-            <p className="text-gray-600">Average Salary</p>
+            <p className="text-2xl font-bold text-green-600">${selectedDept.budget.toLocaleString()}</p>
+            <p className="text-gray-600">Budget</p>
           </div>
         </div>
 
@@ -155,15 +155,15 @@ export default function StatsSection() {
           <StatsCard label="Managers" value={selectedDept.managers} color="blue" />
           <StatsCard label="Employees" value={selectedDept.employees} color="green" />
           <StatsCard label="Interns" value={selectedDept.interns} color="purple" />
-          <StatsCard label="Active Members" value={selectedDept.activeMembers} color="orange" />
+          {/* <StatsCard label="Active Members" value={selectedDept.activeMembers} color="orange" /> */}
         </div>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
+          {/* <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">Total Members</p>
             <p className="text-2xl font-bold text-gray-900">{selectedDept.totalMembers}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
+          </div> */}
+          {/* <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">Active Rate</p>
             <p className="text-2xl font-bold text-gray-900">
               {selectedDept.totalMembers > 0
@@ -171,7 +171,7 @@ export default function StatsSection() {
                 : 0}
               %
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

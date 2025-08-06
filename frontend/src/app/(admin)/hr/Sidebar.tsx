@@ -63,12 +63,12 @@ const [org, setOrg] = useState<Organization | null>(null)
       )}
 
       <div
-        className={`fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`w-72 bg-white border-r border-gray-200 shadow-xl h-full flex-shrink-0 transform transition-transform duration-300 ease-in-out lg:translate-x-0 fixed lg:relative z-50 lg:z-auto ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-lg flex items-center justify-center">
@@ -90,7 +90,7 @@ const [org, setOrg] = useState<Organization | null>(null)
             </div>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon;
               // Update the active logic for dashboard
@@ -120,7 +120,7 @@ const [org, setOrg] = useState<Organization | null>(null)
             })}
           </nav>
 
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 flex-shrink-0">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
               <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center text-white font-semibold">
                 M
