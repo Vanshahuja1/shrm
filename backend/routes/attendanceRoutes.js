@@ -1,5 +1,5 @@
-const expores = require('express');
-const router = expores.Router();
+const express = require('express');
+const router = express.Router();
 
 const {getTodaysAttendance , getAttendanceByEmpId, getStats} = require('../controllers/attendanceController');
 

@@ -100,6 +100,13 @@ export default function ComposeEmailPage() {
     if (!formData.recipient) {
       newErrors.recipient = "Please select a recipient";
       isValid = false;
+    } else {
+      // Check if user is trying to send email to themselves
+      const recipientEmail = formData.recipient === "other" ? formData.recipientEmail : formData.recipient;
+      if (recipientEmail === formData.sender) {
+        newErrors.recipient = "You cannot send an email to yourself";
+        isValid = false;
+      }
     }
 
     // Validate recipient email if "other" is selected
@@ -108,6 +115,9 @@ export default function ComposeEmailPage() {
       isValid = false;
     } else if (formData.recipient === "other" && !/\S+@\S+\.\S+/.test(formData.recipientEmail || "")) {
       newErrors.recipientEmail = "Please enter a valid email address";
+      isValid = false;
+    } else if (formData.recipient === "other" && formData.recipientEmail === formData.sender) {
+      newErrors.recipientEmail = "You cannot send an email to yourself";
       isValid = false;
     }
 
@@ -215,7 +225,9 @@ export default function ComposeEmailPage() {
                     <SelectValue placeholder="Select recipient" />
                   </SelectTrigger>
                   <SelectContent>
-                    {members.map((member) => (
+                    {members
+                      .filter(member => member.email !== formData.sender)
+                      .map((member) => (
                       <SelectItem key={member.id} value={member.email || member.id}>
                         {member.name ? (
                           <>

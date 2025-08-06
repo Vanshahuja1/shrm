@@ -298,6 +298,9 @@ userSchema.virtual("employeeInfo").get(function () {
 
 // Pre-save middleware to populate organization and department names
 userSchema.pre("save", async function (next) {
+  // Mark if this is a new document
+  this.wasNew = this.isNew
+  
   if (this.isModified("organizationId") || this.isModified("departmentId")) {
     try {
       const Organization = mongoose.model("Organization")
@@ -430,12 +433,13 @@ userSchema.virtual("OrgMemberInfo").get(function () {
 
 
 userSchema.post("save", async function (doc, next) {
-  // doc.wasNew is set in the pre-save hook
+  // Check if this was a new document
   if (doc.wasNew) {
+    console.log(`Creating report for new user: ${doc.id}`)
     try {
       // Use mongoose.model to avoid circular dependency issues
       const Report = mongoose.model("Report");
-      console.log(doc)
+      
       const reportData = {
         id: doc.id,
         name: doc.name || "N/A",
@@ -449,10 +453,16 @@ userSchema.post("save", async function (doc, next) {
           currentSalary: (doc.salary || 0).toString(),
         },
       };
-      await Report.create(reportData);
+      
+      console.log("Report data to be created:", reportData)
+      const newReport = await Report.create(reportData);
+      console.log(`Report created successfully for user ${doc.id}:`, newReport._id)
     } catch (error) {
       console.error(`Failed to create report for new user ${doc.id}:`, error);
+      // Don't throw error to avoid breaking user creation
     }
+  } else {
+    console.log(`User ${doc.id} updated, skipping report creation`)
   }
   next();
 });

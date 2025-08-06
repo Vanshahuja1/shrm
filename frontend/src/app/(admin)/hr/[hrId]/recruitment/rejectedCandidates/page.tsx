@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 // import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import axios from '@/lib/axiosInstance';
-// import { format } from 'date-fns';
+import { format } from 'date-fns';
 import { Candidate } from '../applicants/page';
 
 
@@ -57,14 +57,14 @@ export default function RejectedPage() {
                 className="cursor-pointer hover:bg-[#FDD0C4] transition-colors"
                 whileHover={{ y: -2 }}
                 onClick={() =>
-                  router.push(`/hr/recruitment/rejectedCandidates/${c._id}`)
+                  router.push(`/hr/${hrId}/recruitment/applicants/${c._id}`)
                 }
               >
                 <td className="px-4 py-2 border-b text-contrast font-medium">{index + 1}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.name}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.email}</td>
                 <td className="px-4 py-2 border-b text-contrast">{c.jobTitle}</td>
-                <td className="px-4 py-2 border-b text-contrast">{c.appliedDate}</td>
+                <td className="px-4 py-2 border-b text-contrast">{format(new Date(c.appliedDate), 'dd MMM yyyy')}</td>
               </motion.tr>
             ))}
           </tbody>

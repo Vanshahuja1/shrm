@@ -185,8 +185,8 @@ export default function HRDashboard(): React.JSX.Element | null {
   const calculateStats = (): Stats => {
     const totalApplicants = candidates.length;
     const shortlistedCandidates = candidates.filter(c => c.shortlisted).length;
-    const hiredCandidates = candidates.filter(c => c.status === "Hired").length;
-    const rejectedCandidates = candidates.filter(c => c.status === "Rejected").length;
+    const hiredCandidates = candidates.filter(c => c.status === "Hired" || c.status === "hired").length;
+    const rejectedCandidates = candidates.filter(c => c.status === "Rejected" || c.status === "rejected").length;
     
     // Calculate average time to hire (mock calculation based on applied date)
     const hiredCandidatesWithDates = candidates.filter(c => c.status === "Hired" && c.appliedDate);
