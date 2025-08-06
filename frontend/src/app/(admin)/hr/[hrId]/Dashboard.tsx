@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { CircularProgress } from '@mui/material'
-import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts'
+// import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts'
 import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import axios from '@/lib/axiosInstance'
@@ -100,19 +100,13 @@ const Dashboard = () => {
             checkout: record.attendance?.punchOut || '-'
           }))
 
-        // Mock data for charts and other sections (since we don't have historical data)
+        // Dashboard data
         const dashboardData: DashboardData = {
           totalEmployees,
           employeesPresent,
           employeesOnLeave,
           employeesLate,
-          attendanceBar: [
-            { month: 'Jan', value: Math.max(1, totalEmployees - 20) },
-            { month: 'Feb', value: Math.max(1, totalEmployees - 15) },
-            { month: 'Mar', value: Math.max(1, totalEmployees - 10) },
-            { month: 'Apr', value: Math.max(1, totalEmployees - 5) },
-            { month: 'May', value: totalEmployees }
-          ],
+          attendanceBar: [],
           presentList: attendanceRecords
             .filter(record => record.attendance?.status === 'present')
             .slice(0, 5)
@@ -126,44 +120,16 @@ const Dashboard = () => {
             .slice(0, 5)
             .map(record => ({
               name: record.employeeInfo.name,
-              days: '1/3' // Mock data since we don't have leave days info
+              days: '' // Leave days info not available
             })),
           attendanceToday,
-          birthdays: [] // Mock empty since we don't have birthday data
+          birthdays: [] // Birthday data not available
         }
 
         setData(dashboardData)
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error)
-        // Fallback to mock data if API fails
-        setData({
-          totalEmployees: 53,
-          employeesPresent: 44,
-          employeesOnLeave: 9,
-          employeesLate: 0,
-          attendanceBar: [
-            { month: 'Jan', value: 30 },
-            { month: 'Feb', value: 40 },
-            { month: 'Mar', value: 45 },
-            { month: 'Apr', value: 50 },
-            { month: 'May', value: 53 }
-          ],
-          presentList: [
-            { name: 'Kitty', checkin: '09.02', status: 'present' },
-            { name: 'Olivia', checkin: '09.04', status: 'present' },
-            { name: 'Peter', checkin: '09.05', status: 'present' }
-          ],
-          leaveList: [
-            { name: 'Kitty', days: '2/3' },
-            { name: 'Olivia', days: '4/5' }
-          ],
-          attendanceToday: [
-            { name: 'Adhvik', id: '14', checkin: '09:00 AM', checkout: '-' }
-          ],
-          birthdays: [
-            { name: 'Kitty', date: '21 Jan 2025' }
-          ]
-        })
+        setData(null)
       } finally {
         setLoading(false)
       }
@@ -209,15 +175,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-3xl font-bold text-indigo-700">{data.totalEmployees}</span>
-              <div className="w-24 h-16">
-                <ResponsiveContainer width="100%" height={60}>
-                  <BarChart data={data.attendanceBar}>
-                    <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} />
-                    <XAxis dataKey="month" fontSize={10} stroke="#6b7280" />
-                    <Tooltip />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              
             </div>
           </CardContent>
         </Card>
@@ -230,6 +188,7 @@ const Dashboard = () => {
               <CircularProgress 
                 variant="determinate" 
                 value={presentPercentage} 
+                
                 color="success" 
                 size={60} 
                 thickness={5} 

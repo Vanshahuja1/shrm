@@ -2,11 +2,15 @@ export type Email = {
   _id?: number;
   type?: "member_crud" | "increment" | "decrement" | "penalty" | "general";
   recipient?: string;
-  senderId?: string;
-  recipientId?: string;
-  senderName?: string;
-  recipientName?: string;
+  recipients?: string[];
+  cc?: string[];
   sender?: string;
+  senderId?: string;
+  senderName?: string;
+  recipientId?: string;
+  recipientIds?: string[];
+  recipientName?: string;
+  ccIds?: string[];
   subject?: string;
   message?: string;
   sentAt?: string;
@@ -15,4 +19,6 @@ export type Email = {
   isStarred?: boolean;
   attachments?: string[];
   recipientEmail?: string; // Optional for "other" recipient
+  recipientEmails?: string[]; // Optional for multiple "other" recipients
+  ccEmails?: string[]; // Optional for "other" CC recipients
 };

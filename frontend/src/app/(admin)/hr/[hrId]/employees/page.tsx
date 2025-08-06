@@ -32,6 +32,7 @@ interface APIEmployee {
 
 export default function EmployeeRecords() {
   const [records, setRecords] = useState<EmployeeRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "All" | "Active" | "On Leave" | "Inactive"
@@ -58,6 +59,7 @@ export default function EmployeeRecords() {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
+        setLoading(true);
         const response = await axios.get(`/user`);
         const apiData = response.data;
       
@@ -66,11 +68,11 @@ export default function EmployeeRecords() {
         const transformedData = transformAPIData(employees);
         // console.log("Transformed employee data:", transformedData);
         // console.log("Employee records set:", transformedData);
-        setRecords(transformedData)
+        setRecords(transformedData);
       } catch (error) {
         console.error("Failed to fetch employees:", error);
-
-
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -88,6 +90,110 @@ export default function EmployeeRecords() {
   const handleRowClick = (employeeId: string) => {
     router.push(`/hr/${hrId}/employees/${employeeId}`);
   };
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="bg-white border rounded-xl shadow-sm">
+      {/* Header Section */}
+      <div className="px-6 py-4 border-b">
+        <div className="flex justify-between items-center">
+          <div className="h-7 bg-gray-200 rounded w-48 animate-pulse"></div>
+          <div className="h-9 bg-gray-200 rounded w-32 animate-pulse"></div>
+        </div>
+        
+        {/* Search and Filter Skeleton */}
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-1 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="w-full sm:w-48 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+        </div>
+      </div>
+
+      {/* Table Skeleton - Desktop */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead>
+            <tr className="bg-gray-50">
+              <th className="px-6 py-3 border-b border-gray-200">
+                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200">
+                <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200">
+                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200">
+                <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200">
+                <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+              </th>
+              <th className="px-6 py-3 border-b border-gray-200">
+                <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {[...Array(5)].map((_, index) => (
+              <tr key={index}>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div>
+                      <div className="h-4 bg-gray-200 rounded w-32 mb-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-gray-200 rounded w-40 animate-pulse"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Skeleton */}
+      <div className="sm:hidden divide-y divide-gray-200">
+        {[...Array(3)].map((_, index) => (
+          <div key={index} className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
+              <div>
+                <div className="h-4 bg-gray-200 rounded w-32 mb-1 animate-pulse"></div>
+                <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+              </div>
+            </div>
+            <div className="ml-13 space-y-2">
+              <div className="h-3 bg-gray-200 rounded w-48 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-40 animate-pulse"></div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Show loading skeleton while data is being fetched
+  if (loading) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="bg-white border rounded-xl shadow-sm">

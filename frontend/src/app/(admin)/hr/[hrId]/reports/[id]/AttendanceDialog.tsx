@@ -20,7 +20,14 @@ interface AttendanceDialogProps {
   onOpenChange: (open: boolean) => void
   attendanceStart: string
   attendanceEnd: string
-  attendanceData: Array<{date: string, status: string}>
+  attendanceData: Array<{
+    date: string, 
+    status: string,
+    punchIn: string | null,
+    punchOut: string | null,
+    totalHours: number,
+    breakTime: number
+  }>
   setAttendanceStart: (date: string) => void
   setAttendanceEnd: (date: string) => void
   exportAttendanceCSV: () => void
@@ -41,7 +48,14 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
   employeeName
 }) => {
   // Function to mark Sundays as off days
-  const markSundaysAsOff = (data: Array<{date: string, status: string}>) => {
+  const markSundaysAsOff = (data: Array<{
+    date: string, 
+    status: string,
+    punchIn: string | null,
+    punchOut: string | null,
+    totalHours: number,
+    breakTime: number
+  }>) => {
     return data.map(item => {
       const date = new Date(item.date)
       const dayOfWeek = date.getDay() // 0 = Sunday
@@ -367,6 +381,12 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
           
           <TabsContent value="data" className="mt-4">
             <div className="bg-white rounded-lg border border-gray-200">
+              <div className="p-4 bg-blue-50 border-b border-gray-200">
+                <p className="text-sm text-blue-700">
+                  📝 <strong>Note:</strong> This view shows all working days (Mon-Fri). 
+                  Days marked as &quot;Absent&quot; with no punch times indicate no attendance record was found in the system.
+                </p>
+              </div>
               <div className="overflow-x-auto max-h-96">
                 <table className="w-full">
                   <thead className="bg-gray-50 sticky top-0">
@@ -380,29 +400,70 @@ const AttendanceDialog: React.FC<AttendanceDialogProps> = ({
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Punch In
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Punch Out
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Hours
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Record Type
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {processedAttendanceData.map((row, i) => (
-                      <tr key={row.date} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(row.date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            year: 'numeric', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(row.date).toLocaleDateString('en-US', { weekday: 'long' })}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(row.status)}`}>
-                            {row.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {processedAttendanceData.map((row, i) => {
+                      const isSystemGenerated = row.status === 'Absent' && !row.punchIn && !row.punchOut && row.totalHours === 0
+                      return (
+                        <tr key={row.date} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {new Date(row.date).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(row.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(row.status)}`}>
+                                {row.status}
+                              </span>
+                              {isSystemGenerated && (
+                                <span className="text-xs text-gray-400" title="No attendance record found">
+                                  ⚠️
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {row.punchIn || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {row.punchOut || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {row.totalHours > 0 ? `${row.totalHours.toFixed(1)}h` : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-xs">
+                            {isSystemGenerated ? (
+                              <span className="text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+                                Auto-generated
+                              </span>
+                            ) : (
+                              <span className="text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                Actual record
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

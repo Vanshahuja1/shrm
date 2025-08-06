@@ -52,6 +52,7 @@ app.use("/api/files", require("./routes/fileRoutes"))
 app.use("/api/task-responses", taskResponseRoutes);
 app.use("/api/attendance", require("./routes/attendanceRoutes"))
 app.use("/api/recruitment", require("./routes/recruitmentRoutes"))
+app.use("/api/payroll", require("./routes/payrollRoutes")) // Add payroll routes
 app.use(
   "/api/:orgName/org-members",
   (req, res, next) => {

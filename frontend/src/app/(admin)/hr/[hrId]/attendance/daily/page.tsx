@@ -96,10 +96,10 @@ export default function DailyAttendance() {
       } finally {
         setLoading(false)
       }
-      console.log('Fetched attendance data:', data);
+      // console.log('Fetched attendance data:', data);
     }
     fetchAttendance()
-  }, [hrId, data])
+  }, [hrId])
 
   // Calculate summary statistics
   const summary = data ? {

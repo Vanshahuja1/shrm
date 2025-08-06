@@ -59,6 +59,7 @@ const AddCandidateForm: React.FC = () => {
   const [message, setMessage] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [departments, setDepartments] = useState<{_id: string; name: string;}[]>([]);
+  const [uploadingResume, setUploadingResume] = useState(false);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -83,31 +84,31 @@ const AddCandidateForm: React.FC = () => {
   }, []);
 
   const sourceOptions = [
-    'LinkedIn',
-    'Indeed',
-    'Company Website',
-    'Referral',
-    'Job Board',
-    'Recruitment Agency',
-    'Direct Application',
-    'Career Fair',
-    'Social Media',
-    'Other'
+    { value: 'linkedin', label: 'LinkedIn' },
+    { value: 'indeed', label: 'Indeed' },
+    { value: 'company website', label: 'Company Website' },
+    { value: 'referral', label: 'Referral' },
+    { value: 'job board', label: 'Job Board' },
+    { value: 'recruitment agency', label: 'Recruitment Agency' },
+    { value: 'direct application', label: 'Direct Application' },
+    { value: 'career fair', label: 'Career Fair' },
+    { value: 'social media', label: 'Social Media' },
+    { value: 'other', label: 'Other' }
   ];
 
   const statusOptions = [
-    'Application Received',
-    'Under Review',
-    'Phone Screening',
-    'Technical Interview',
-    'Final Interview',
-    'Reference Check',
-    'Offer Extended',
-    'Offer Accepted',
-    'Offer Declined',
-    'Rejected',
-    'Withdrawn',
-    "Hired"
+    { value: 'application received', label: 'Application Received' },
+    { value: 'under review', label: 'Under Review' },
+    { value: 'phone screening', label: 'Phone Screening' },
+    { value: 'technical interview', label: 'Technical Interview' },
+    { value: 'final interview', label: 'Final Interview' },
+    { value: 'reference check', label: 'Reference Check' },
+    { value: 'offer extended', label: 'Offer Extended' },
+    { value: 'offer accepted', label: 'Offer Accepted' },
+    { value: 'offer declined', label: 'Offer Declined' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'withdrawn', label: 'Withdrawn' },
+    { value: 'hired', label: 'Hired' }
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -145,6 +146,42 @@ const AddCandidateForm: React.FC = () => {
     }));
   };
 
+  const handleFileUpload = async (file: File) => {
+    setUploadingResume(true);
+    setMessage('');
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await axios.post('/upload/single', uploadFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        const fileUrl = response.data.data.url;
+        setCandidate(prev => ({
+          ...prev,
+          resume: file // Keep the file object for display purposes
+        }));
+        setMessage('✅ Resume uploaded successfully!');
+        setTimeout(() => setMessage(''), 3000);
+        return fileUrl;
+      } else {
+        throw new Error(response.data.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      setMessage('❌ Error uploading resume. Please try again.');
+      setTimeout(() => setMessage(''), 3000);
+      throw error;
+    } finally {
+      setUploadingResume(false);
+    }
+  };
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -155,7 +192,7 @@ const AddCandidateForm: React.FC = () => {
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -163,7 +200,11 @@ const AddCandidateForm: React.FC = () => {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        handleFileChange(file);
+        try {
+          await handleFileUpload(file);
+        } catch {
+          // Error already handled in handleFileUpload
+        }
       } else {
         setMessage('❌ Please upload a PDF file only');
         setTimeout(() => setMessage(''), 3000);
@@ -171,11 +212,15 @@ const AddCandidateForm: React.FC = () => {
     }
   };
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        handleFileChange(file);
+        try {
+          await handleFileUpload(file);
+        } catch {
+          // Error already handled in handleFileUpload
+        }
       } else {
         setMessage('❌ Please upload a PDF file only');
         setTimeout(() => setMessage(''), 3000);
@@ -195,8 +240,20 @@ const AddCandidateForm: React.FC = () => {
         setLoading(false);
         return;
       }
+
+      let resumeUrl = '';
       
-      // Create candidate data object (without resume file)
+      // Upload resume if file is selected but not yet uploaded
+      if (candidate.resume && typeof candidate.resume !== 'string') {
+        try {
+          resumeUrl = await handleFileUpload(candidate.resume);
+        } catch {
+          setLoading(false);
+          return; // Upload failed, don't proceed with form submission
+        }
+      }
+      
+      // Create candidate data object
       const candidateData = {
         department: candidate.department,
         name: candidate.name,
@@ -204,20 +261,19 @@ const AddCandidateForm: React.FC = () => {
         appliedDate: candidate.appliedDate || new Date().toISOString().split('T')[0],
         screeningScore: candidate.screeningScore,
         source: candidate.source,
-        portfolio: candidate.portfolio, // We're using portfolio in frontend but backend schema has portfolioLink
+        portfolio: candidate.portfolio,
         location: candidate.location,
         currentCompany: candidate.currentCompany,
         jobTitle: candidate.jobTitle,
         shortlisted: candidate.shortlisted,
-        status: candidate.status || 'Application Received',
+        status: candidate.status || 'application received',
         notes: candidate.notes,
         expectedSalary: candidate.expectedSalary,
-        resume: candidate.resume ? 'dummy-resume-url.pdf' : '' // Dummy resume URL
+        resume: resumeUrl || '' // Use uploaded file URL
       };
 
       console.log('Submitting candidate data:', candidateData);
       
-      // Replace with your backend endpoint - use JSON instead of FormData
       const response = await axios.post('/recruitment/candidate', candidateData, {
         headers: {
           'Content-Type': 'application/json',
@@ -374,8 +430,8 @@ const AddCandidateForm: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               {sourceOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -455,8 +511,8 @@ const AddCandidateForm: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               {statusOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -472,7 +528,7 @@ const AddCandidateForm: React.FC = () => {
               dragActive 
                 ? 'border-red-500 bg-red-50' 
                 : 'border-gray-300 hover:border-red-400 hover:bg-gray-50'
-            }`}
+            } ${uploadingResume ? 'opacity-50 pointer-events-none' : ''}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -485,6 +541,7 @@ const AddCandidateForm: React.FC = () => {
               accept=".pdf"
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={uploadingResume}
             />
             <div className="space-y-2">
               <svg
@@ -500,7 +557,17 @@ const AddCandidateForm: React.FC = () => {
                   strokeLinejoin="round"
                 />
               </svg>
-              {candidate.resume ? (
+              {uploadingResume ? (
+                <div>
+                  <div className="animate-spin h-8 w-8 border-4 border-red-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                  <p className="text-sm font-medium text-red-600">
+                    Uploading resume...
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Please wait while we upload your file
+                  </p>
+                </div>
+              ) : candidate.resume ? (
                 <div>
                   <p className="text-sm font-medium text-green-600">
                     ✓ {candidate.resume.name}
@@ -511,7 +578,7 @@ const AddCandidateForm: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleFileChange(null)}
-                    className="mt-2 text-xs text-red-600 hover:text-red-800"
+                    className="mt-2 text-xs text-red-600 hover:text-red-800 underline"
                   >
                     Remove file
                   </button>
@@ -577,10 +644,10 @@ const AddCandidateForm: React.FC = () => {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || uploadingResume}
         className="w-full py-2 bg-red-500 text-white font-semibold rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
-        {loading ? 'Adding...' : 'Add Candidate'}
+        {loading ? 'Adding...' : uploadingResume ? 'Uploading Resume...' : 'Add Candidate'}
       </button>
 
       {message && (

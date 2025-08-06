@@ -20,9 +20,29 @@ const emailSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  recipients: {
+    type: [String],
+    default: [],
+    trim: true,
+  },
   recipientId: {
     type: String,
     required: true,
+    trim: true,
+  },
+  recipientIds: {
+    type: [String],
+    default: [],
+    trim: true,
+  },
+  cc: {
+    type: [String],
+    default: [],
+    trim: true,
+  },
+  ccIds: {
+    type: [String],
+    default: [],
     trim: true,
   },
   sender: {

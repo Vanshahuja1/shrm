@@ -6,18 +6,72 @@ import axios from "@/lib/axiosInstance"
 import { Mail, Clock, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useRouter } from 'next/navigation'
+
 interface Email {
     _id: string
     type: string
     subject: string
     recipient: string
+    recipients?: string[]
+    cc?: string[]
     recipientId: string
+    recipientIds?: string[]
+    ccIds?: string[]
     senderId: string
     message: string
     sender: string
     status: 'sent' | 'pending' | 'failed'
     sentAt: string
 }
+
+// Employee name cache for performance
+const nameCache: { [key: string]: string } = {};
+
+// Utility function to fetch employee name by ID
+const fetchEmployeeName = async (empId: string): Promise<string> => {
+  if (nameCache[empId]) {
+    return nameCache[empId];
+  }
+  
+  try {
+    const response = await axios.get(`/user/name/${empId}`);
+    const name = response.data.name || empId;
+    nameCache[empId] = name;
+    return name;
+  } catch {
+    return empId;
+  }
+};
+
+// Component to display employee info with name resolution
+const EmployeeEmailDisplay = ({ 
+  empId, 
+  email 
+}: { 
+  empId?: string; 
+  email?: string;
+}) => {
+  const [name, setName] = useState<string>("");
+
+  useEffect(() => {
+    const getName = async () => {
+      if (empId) {
+        try {
+          const employeeName = await fetchEmployeeName(empId);
+          setName(employeeName);
+        } catch {
+          setName(email || empId || "Unknown");
+        }
+      } else {
+        setName(email || "Unknown");
+      }
+    };
+
+    getName();
+  }, [empId, email]);
+
+  return <span>{name}</span>;
+};
 
 export default function SentboxPage() {
     const params = useParams()
@@ -98,7 +152,22 @@ export default function SentboxPage() {
                             <div className="flex items-start justify-between mb-2">
                                 <div>
                                     <h3 className="font-medium text-gray-900">{email.subject}</h3>
-                                    <p className="text-sm text-gray-600">To: {email.recipient}</p>
+                                    <p className="text-sm text-gray-600">
+                                        To: {email.recipientIds && email.recipientIds.length > 0 ? (
+                                            email.recipientIds.length === 1 ? (
+                                                <EmployeeEmailDisplay empId={email.recipientIds[0]} email={email.recipients?.[0] || email.recipient} />
+                                            ) : (
+                                                `${email.recipientIds.length} recipients`
+                                            )
+                                        ) : email.recipientId ? (
+                                            <EmployeeEmailDisplay empId={email.recipientId} email={email.recipient} />
+                                        ) : (
+                                            email.recipient || "Unknown"
+                                        )}
+                                        {email.ccIds && email.ccIds.length > 0 && (
+                                            <span className="text-gray-500"> (+{email.ccIds.length} CC)</span>
+                                        )}
+                                    </p>
                                 </div>
                                 <span className={`px-2 py-1 text-xs rounded-full ${email.status === 'sent' ? 'bg-green-100 text-green-800' :
                                     email.status === 'failed' ? 'bg-red-100 text-red-800' :
