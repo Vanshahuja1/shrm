@@ -54,6 +54,7 @@ export default function Overview() {
       setLoading(true)
       try {
         const res = await axios.get("/overview")
+        console.log(res.data)
         setMonthlyData(res.data.monthlyData)
         setDepartmentData(res.data.departmentData)
         setProjectStatusData(res.data.projectStatusData)
@@ -70,10 +71,10 @@ export default function Overview() {
   }, [])
 
   const stats: StatItem[] = [
-    { title: "Total Employees", value: totalEmployees.toString(), change: "+12%", icon: Users, color: "blue" },
-    { title: "Active Projects", value: activeProjects.toString(), change: "+5%", icon: Briefcase, color: "green" },
-    { title: "Completed Projects", value: completedProjects.toString(), change: "+23%", icon: CheckCircle, color: "emerald" },
-    { title: "Departments", value: totalDepartments.toString(), change: "0%", icon: Building, color: "orange" },
+    { title: "Total Employees", value: String(totalEmployees), change: "+12%", icon: Users, color: "blue" },
+    { title: "Active Projects", value: String(activeProjects), change: "+5%", icon: Briefcase, color: "green" },
+    { title: "Completed Projects", value: String(completedProjects), change: "+23%", icon: CheckCircle, color: "emerald" },
+    { title: "Departments", value: String(totalDepartments), change: "0%", icon: Building, color: "orange" },
   ]
 
   const colorClasses: Record<ColorType, string> = {
