@@ -53,17 +53,43 @@ export default function Overview() {
     async function fetchOverview() {
       setLoading(true)
       try {
+        console.log("Fetching overview data...")
         const res = await axios.get("/overview")
-        console.log(res.data)
-        setMonthlyData(res.data.monthlyData)
-        setDepartmentData(res.data.departmentData)
-        setProjectStatusData(res.data.projectStatusData)
-        setTotalEmployees(res.data.totalEmployees)
-        setTotalDepartments(res.data.totalDepartments)
-        setActiveProjects(res.data.activeProjects)
-        setCompletedProjects(res.data.completedProjects)
+        console.log("Overview API response:", res.data)
+        
+        // Safely extract data with fallbacks
+        const data = res.data
+        
+        if (data.success !== false) {
+          setMonthlyData(data.monthlyData || [])
+          setDepartmentData(data.departmentData || [])
+          setProjectStatusData(data.projectStatusData || [])
+          setTotalEmployees(data.totalEmployees || 0)
+          setTotalDepartments(data.totalDepartments || 0)
+          setActiveProjects(data.activeProjects || 0)
+          setCompletedProjects(data.completedProjects || 0)
+          
+          console.log("Data set successfully:", {
+            totalEmployees: data.totalEmployees,
+            totalDepartments: data.totalDepartments,
+            activeProjects: data.activeProjects,
+            completedProjects: data.completedProjects
+          })
+        } else {
+          console.error("API returned error:", data.error)
+        }
       } catch (error) {
         console.error("Failed to fetch overview data:", error)
+        // console.error("Error details:", error.response?.data || error.message)
+        
+        // Set default values on error
+        setTotalEmployees(0)
+        setTotalDepartments(0)
+        setActiveProjects(0)
+        setCompletedProjects(0)
+        setMonthlyData([])
+        setDepartmentData([])
+        setProjectStatusData([])
       }
       setLoading(false)
     }
@@ -71,11 +97,14 @@ export default function Overview() {
   }, [])
 
   const stats: StatItem[] = [
-    { title: "Total Employees", value: String(totalEmployees), change: "+12%", icon: Users, color: "blue" },
-    { title: "Active Projects", value: String(activeProjects), change: "+5%", icon: Briefcase, color: "green" },
-    { title: "Completed Projects", value: String(completedProjects), change: "+23%", icon: CheckCircle, color: "emerald" },
-    { title: "Departments", value: String(totalDepartments), change: "0%", icon: Building, color: "orange" },
+    { title: "Total Employees", value: String(totalEmployees || 0), change: "+12%", icon: Users, color: "blue" },
+    { title: "Active Projects", value: String(activeProjects || 0), change: "+5%", icon: Briefcase, color: "green" },
+    { title: "Completed Projects", value: String(completedProjects || 0), change: "+23%", icon: CheckCircle, color: "emerald" },
+    { title: "Departments", value: String(totalDepartments || 0), change: "0%", icon: Building, color: "orange" },
   ]
+
+  console.log("Current state values:", { totalEmployees, activeProjects, completedProjects, totalDepartments })
+  console.log("Stats array:", stats)
 
   const colorClasses: Record<ColorType, string> = {
     blue: "bg-blue-50 text-blue-700 border-blue-200",
