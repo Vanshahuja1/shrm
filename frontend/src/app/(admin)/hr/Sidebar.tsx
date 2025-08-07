@@ -11,6 +11,7 @@ import {
   Users,
   BarChart3,
   Mail,
+  TrendingUp,
 } from "lucide-react";
 import { Building, LogOut, X } from "lucide-react";
 import { useState } from "react";
@@ -35,6 +36,7 @@ export default function Sidebar({
   const menuItems = [
     { id: "", label: "Dashboard", icon: Target }, // Add this line
     { id: "attendance", label: "Attendance", icon: Calendar },
+    { id: "performance", label: "Performance", icon: TrendingUp },
     { id: "payroll", label: "Payroll", icon: Wallet },
     { id: "recruitment", label: "Recruitment", icon: Briefcase },
     { id: "emails", label: "Email System", icon: Mail },

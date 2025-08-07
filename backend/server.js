@@ -14,6 +14,18 @@ const mailRoutes = require("./routes/mailRoutes")
 const employeeRoutes = require("./routes/employeeRoutes")
 const uploadRoutes = require("./routes/uploadRoutes") // Update this
 const taskResponseRoutes = require("./routes/taskResponseRoutes") // Update this
+
+// Performance Management System Routes
+const performanceScoreRoutes = require("./routes/performanceScoreRoutes")
+const kraRoutes = require("./routes/kraRoutes")
+const kpiRoutes = require("./routes/kpiRoutes")
+const taskPerformanceRoutes = require("./routes/taskPerformanceRoutes")
+const performanceReviewRoutes = require("./routes/performanceReviewRoutes")
+const companyGrowthRoutes = require("./routes/companyGrowthRoutes")
+const salaryIncrementRoutes = require("./routes/salaryIncrementRoutes")
+const incentiveRoutes = require("./routes/incentiveRoutes")
+const performanceOverviewRoutes = require("./routes/performanceOverviewRoutes")
+
 const app = express()
 const PORT = process.env.PORT || 5000
 
@@ -53,6 +65,18 @@ app.use("/api/task-responses", taskResponseRoutes);
 app.use("/api/attendance", require("./routes/attendanceRoutes"))
 app.use("/api/recruitment", require("./routes/recruitmentRoutes"))
 app.use("/api/payroll", require("./routes/payrollRoutes")) // Add payroll routes
+
+// Performance Management System Routes
+app.use("/api/performance-scores", performanceScoreRoutes)
+app.use("/api/kra", kraRoutes)
+app.use("/api/kpi", kpiRoutes)
+app.use("/api/task-performance", taskPerformanceRoutes)
+app.use("/api/performance-reviews", performanceReviewRoutes)
+app.use("/api/company-growth", companyGrowthRoutes)
+app.use("/api/salary-increments", salaryIncrementRoutes)
+app.use("/api/incentives", incentiveRoutes)
+app.use("/api/performance-overview", performanceOverviewRoutes)
+
 app.use(
   "/api/:orgName/org-members",
   (req, res, next) => {

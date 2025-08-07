@@ -547,8 +547,7 @@ export default function MonthlyCalendar() {
                 >
                   {months.map((m, idx) => (
                     <option key={m} value={idx}>
-                      <span className="sm:hidden">{m.slice(0, 3)}</span>
-                      <span className="hidden sm:inline">{m}</span>
+                      {m}
                     </option>
                   ))}
                 </select>
