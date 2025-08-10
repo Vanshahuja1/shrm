@@ -1,4 +1,4 @@
-import { ArrowRight, Code, Pencil, Trash } from "lucide-react";
+import { ArrowRight,Pencil, Trash } from "lucide-react";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "@/lib/axiosInstance";
@@ -65,19 +65,25 @@ function OrgCard({ org, fetchOrgs, index = 0 }: { org: Organization, fetchOrgs: 
   return (
     <>
       <div
-        
-        className="group bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer hover:-translate-y-2 transform"
+        className="bg-gradient-to-br from-pink-100 via-white to-red-100 border-2 border-pink-200 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 flex flex-col justify-between group hover:border-red-400"
       >
-        <div className={`bg-gradient-to-r ${theme.gradient} p-6 text-center relative overflow-hidden`}>
-          {/* Decorative background pattern */}
-          <div className="absolute inset-0 bg-black bg-opacity-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          
-          <div className={`w-16 h-16 ${theme.iconBg} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg relative z-10`}>
-            <Code className={`w-8 h-8 ${theme.iconColor}`} />
+        {/* Logo and Name */}
+        <div className="flex items-center mb-4">
+          {org.logo ? (
+            <img
+              src={org.logo}
+              alt={org.name}
+              className="w-14 h-14 rounded-full border-2 border-red-200 shadow-sm mr-4 bg-white"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-200 to-pink-200 flex items-center justify-center text-2xl font-bold text-white mr-4 shadow-sm">
+              {org.name[0]}
+            </div>
+          )}
+          <div>
+            <h3 className="text-lg font-bold text-red-700 group-hover:text-red-900">{org.name}</h3>
+            <p className="text-xs text-gray-500">{org.description}</p>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2 relative z-10 group-hover:text-gray-100 transition-colors duration-300">
-            {org.name}
-          </h3>
         </div>
         
         <div className="px-6 py-3 bg-gradient-to-b from-gray-50 to-white">

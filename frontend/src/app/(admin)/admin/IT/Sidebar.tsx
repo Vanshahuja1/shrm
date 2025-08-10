@@ -11,7 +11,8 @@ import {
   Mail,
   X,
   LogOut,
-  // BarChart3,
+  // TrendingUp,
+  BarChart3,
 } from "lucide-react"
 import { Organization } from "../page"
 import { useEffect, useState } from "react"
@@ -49,7 +50,8 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen, adminName, or
     { id: "members", label: "Organization Members", icon: Users },
     { id: "hierarchy", label: "Organization Hierarchy", icon: Activity },
     { id: "task", label: "Task Management", icon: CheckSquare },
-    // { id: "analytics", label: "Analytics & Charts", icon: BarChart3 },
+    { id: "analytics", label: "Analytics & Charts", icon: BarChart3 },
+    // { id: "performance", label: "Performance", icon: TrendingUp },
     { id: "emails", label: "Email System", icon: Mail },
   ]
 
