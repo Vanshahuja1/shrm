@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { User, Calendar, CheckCircle, Send, MessageSquare, Settings, Target, Mail } from "lucide-react"
+import { User, Calendar, CheckCircle, Send, MessageSquare, Settings, Target, Mail,TrendingUp, } from "lucide-react"
 import { Building, LogOut, X } from "lucide-react"
 
 interface SidebarProps {
@@ -23,6 +23,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName,
     { id: "task-assignment", label: "Task Assignment", icon: Send },
     { id: "emp-response", label: "Employee Responses", icon: MessageSquare },
     { id: "attendance-mgmt", label: "Attendance Management", icon: Calendar },
+    { id: "performance", label: "Performance", icon: TrendingUp },
     { id: "emails", label: "Emails", icon: Mail },
     { id: "personal-details", label: "Personal Details", icon: Settings },
     

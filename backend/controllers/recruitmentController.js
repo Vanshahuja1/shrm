@@ -1,6 +1,5 @@
-
 import Candidate from '../models/candidateModel.js';
-
+// const Candidate = require('../models/candidateModel.js');
 // Create a new candidate
 export const createCandidate = async (req, res) => {
   try {

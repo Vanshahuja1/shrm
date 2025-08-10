@@ -18,7 +18,7 @@ interface PerformanceLayoutProps {
 }
 
 export default function PerformanceLayout({ children }: PerformanceLayoutProps) {
-  const { hrId } = useParams()
+  const { id: managerId } = useParams()
   const pathname = usePathname()
   const router = useRouter()
 
@@ -62,7 +62,7 @@ export default function PerformanceLayout({ children }: PerformanceLayoutProps) 
   ]
 
   const getActiveItem = () => {
-    const performanceBasePath = `/hr/${hrId}/performance`
+    const performanceBasePath = `/manager/${managerId}/performance`
     
     if (pathname === performanceBasePath) {
       return ""
@@ -102,8 +102,8 @@ export default function PerformanceLayout({ children }: PerformanceLayoutProps) 
                 key={item.id}
                 onClick={() => {
                   const targetPath = item.id === "" 
-                    ? `/hr/${hrId}/performance`
-                    : `/hr/${hrId}/performance/${item.id}`
+                    ? `/manager/${managerId}/performance`
+                    : `/manager/${managerId}/performance/${item.id}`
                   router.push(targetPath)
                 }}
                 className={`flex flex-col items-center space-y-2 px-4 py-3 rounded-lg transition-all duration-200 min-w-fit ${
