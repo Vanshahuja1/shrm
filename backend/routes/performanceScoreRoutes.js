@@ -10,7 +10,8 @@ const {
   addSelfAssessment,
   calculateIncrementEligibility,
   getPerformanceAnalytics,
-  deletePerformanceScore
+  deletePerformanceScore,
+  getPerformanceScoreByManager
 } = require("../controllers/performanceScoreController")
 
 // Basic CRUD routes
@@ -21,6 +22,8 @@ router.get("/:id", getPerformanceScoreById)
 router.post("/", createPerformanceScore)
 router.put("/:id", updatePerformanceScore)
 router.delete("/:id", deletePerformanceScore)
+
+router.get("/manager/:managerId", getPerformanceScoreByManager)
 
 // Evaluation routes
 router.post("/:id/manager-evaluation", addManagerEvaluation)

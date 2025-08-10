@@ -13,9 +13,30 @@ const getAllKRAs = async (req, res) => {
     if (employeeId) filter.employeeId = employeeId
     
     const kras = await KRA.find(filter)
-      .populate("employeeId", "name email department role")
-      .populate("setBy", "name email")
-      .populate("approvedBy", "name email")
+      .populate({
+        path: "employeeId",
+        select: "name email department role",
+        model: "User",
+        localField: "employeeId",
+        foreignField: "id",
+        justOne: true
+      })
+      .populate({
+        path: "setBy",
+        select: "name email",
+        model: "User",
+        localField: "setBy",
+        foreignField: "id",
+        justOne: true
+      })
+      .populate({
+        path: "approvedBy",
+        select: "name email",
+        model: "User",
+        localField: "approvedBy",
+        foreignField: "id",
+        justOne: true
+      })
       .sort({ "evaluationPeriod.year": -1, "evaluationPeriod.quarter": -1 })
     
     res.json({
@@ -25,6 +46,55 @@ const getAllKRAs = async (req, res) => {
     })
   } catch (error) {
     console.error("Get all KRAs error:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch KRAs",
+      details: error.message
+    })
+  }
+}
+const getKRAByManager = async (req ,res) =>{
+  try {
+    const { managerId } = req.params
+    const { year, quarter } = req.query
+
+    const filter = { "setBy": managerId }
+    if (year) filter["evaluationPeriod.year"] = parseInt(year)
+    if (quarter) filter["evaluationPeriod.quarter"] = quarter
+
+    const kras = await KRA.find(filter)
+      .populate({
+        path: "employeeId",
+        select: "name email department role",
+        model: "User",
+        localField: "employeeId",
+        foreignField: "id",
+        justOne: true
+      })
+      .populate({
+        path: "setBy",
+        select: "name email",
+        model: "User",
+        localField: "setBy",
+        foreignField: "id",
+        justOne: true
+      })
+      .populate({
+        path: "approvedBy",
+        select: "name email",
+        model: "User",
+        localField: "approvedBy",
+        foreignField: "id",
+        justOne: true
+      })
+
+    res.json({
+      success: true,
+      count: kras.length,
+      data: kras
+    })
+  } catch (error) {
+    console.error("Get KRA by manager error:", error)
     res.status(500).json({
       success: false,
       error: "Failed to fetch KRAs",
@@ -44,9 +114,30 @@ const getKRAByEmployee = async (req, res) => {
     if (quarter) filter["evaluationPeriod.quarter"] = quarter
     
     const kras = await KRA.find(filter)
-      .populate("employeeId", "name email department role")
-      .populate("setBy", "name email")
-      .populate("approvedBy", "name email")
+      .populate({
+        path: "employeeId",
+        select: "name email department role",
+        model: "User",
+        localField: "employeeId",
+        foreignField: "id",
+        justOne: true
+      })
+      .populate({
+        path: "setBy",
+        select: "name email",
+        model: "User",
+        localField: "setBy",
+        foreignField: "id",
+        justOne: true
+      })
+      .populate({
+        path: "approvedBy",
+        select: "name email",
+        model: "User",
+        localField: "approvedBy",
+        foreignField: "id",
+        justOne: true
+      })
       .sort({ "evaluationPeriod.year": -1, "evaluationPeriod.quarter": -1 })
     
     if (!kras || kras.length === 0) {
@@ -77,9 +168,30 @@ const getKRAById = async (req, res) => {
     const { id } = req.params
     
     const kra = await KRA.findById(id)
-      .populate("employeeId", "name email department role")
-      .populate("setBy", "name email")
-      .populate("approvedBy", "name email")
+      .populate({
+        path: "employeeId",
+        select: "name email department role",
+        model: "User",
+        localField: "employeeId",
+        foreignField: "id",
+        justOne: true
+      })
+      .populate({
+        path: "setBy",
+        select: "name email",
+        model: "User",
+        localField: "setBy",
+        foreignField: "id",
+        justOne: true
+      })
+      .populate({
+        path: "approvedBy",
+        select: "name email",
+        model: "User",
+        localField: "approvedBy",
+        foreignField: "id",
+        justOne: true
+      })
     
     if (!kra) {
       return res.status(404).json({
@@ -105,52 +217,79 @@ const getKRAById = async (req, res) => {
 // Create KRA
 const createKRA = async (req, res) => {
   try {
-    const kraData = req.body
-    
+    const kraData = { ...req.body };
+
+    // Remove _id if present
+    if (kraData._id) delete kraData._id;
+
+    // Set initial status to draft (valid enum for top-level KRA status)
+    kraData.status = "draft";
+
+    // Accept employeeId as string
+    if (kraData.employeeId && typeof kraData.employeeId === "object" && kraData.employeeId.id) {
+      kraData.employeeId = kraData.employeeId.id;
+    }
+
     // Validate employee exists
-    const employee = await User.findOne({ id: kraData.employeeId })
+    const employee = await User.findOne({ id: kraData.employeeId });
     if (!employee) {
       return res.status(404).json({
         success: false,
         error: "Employee not found"
-      })
+      });
     }
-    
+
     // Validate manager exists
-    const manager = await User.findOne({ id: kraData.setBy })
+    const manager = await User.findOne({ id: kraData.setBy });
     if (!manager) {
       return res.status(404).json({
         success: false,
         error: "Manager not found"
-      })
+      });
     }
-    
-    const kra = new KRA(kraData)
-    await kra.save()
-    
-    await kra.populate("employeeId", "name email department role")
-    await kra.populate("setBy", "name email")
-    
+
+
+
+    const kra = new KRA(kraData);
+    await kra.save();
+
+    await kra.populate({
+      path: "employeeId",
+      select: "name email department role",
+      model: "User",
+      localField: "employeeId",
+      foreignField: "id",
+      justOne: true
+    });
+    await kra.populate({
+      path: "setBy",
+      select: "name email",
+      model: "User",
+      localField: "setBy",
+      foreignField: "id",
+      justOne: true
+    });
+
     res.status(201).json({
       success: true,
       message: "KRA created successfully",
       data: kra
-    })
+    });
   } catch (error) {
-    console.error("Create KRA error:", error)
-    
+    console.error("Create KRA error:", error);
+
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
         error: "KRA already exists for this employee in this period"
-      })
+      });
     }
-    
+
     res.status(400).json({
       success: false,
       error: "Failed to create KRA",
       details: error.message
-    })
+    });
   }
 }
 
@@ -439,5 +578,6 @@ module.exports = {
   getKRAProgress,
   approveKRA,
   getKRAAnalytics,
-  deleteKRA
+  deleteKRA,
+  getKRAByManager
 }
