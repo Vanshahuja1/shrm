@@ -40,7 +40,7 @@ type PerformanceScore = {
   createdAt: string;
   updatedAt: string;
   // Add these for demo rating usage
-  managerEvaluation?: { rating: number; comments: string };
+  managerEvaluation?: { managerId: string; rating: number; comments: string };
   selfAssessment?: { rating: number; comments: string };
 };
 
@@ -88,11 +88,17 @@ export default function PerformanceScoresPage() {
     };
     fetchManagerTeam();
     fetchPerformanceScores();
-  }, [managerId]);
+  }, []);
+
+
 
   const fetchPerformanceScores = async () => {
-    // Replace with your actual API endpoint for fetching scores
-    setPerformanceScores([]); // Placeholder, implement as needed
+    try {
+      const res = await axios.get(`/performance-scores/manager/${managerId}`);
+      setPerformanceScores(res.data.data || []);
+    } catch {
+      setPerformanceScores([]);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -124,6 +130,11 @@ export default function PerformanceScoresPage() {
           teamCoordination: Number(form.teamCoordination),
           efficiency: Number(form.efficiency),
           totalScore,
+        },
+        managerEvaluation: {
+          managerId: managerId,
+          comments: "",
+          rating: 1,
         },
       };
       await axios.post("/performance-scores", payload);

@@ -22,31 +22,63 @@ import {
   Search
 } from "lucide-react"
 import { toast } from "react-hot-toast"
+import { useParams } from "next/navigation"
+import axiosInstance from "@/lib/axiosInstance"
+type OrgMemberInfo = {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+  department?: string;
+};
+interface KraItem {
+  title: string
+  description: string
+  weight: number
+  target: string
+  achievement: string
+  score: number
+  evidence: string[]
+  managerComments: string
+  status: "pending" | "achieved" | "partially-achieved" | "not-achieved"
+  priority: "high" | "medium" | "low"
+  deadline: string
+  completedAt?: string
+}
 
 interface KRA {
-  _id: string
+  _id: string;
   employeeId: {
-    id: string
-    name: string
-    email: string
-    department: string
-    role: string
-  }
-  kraTitle: string
-  description: string
-  targetValue: number
-  achievedValue: number
-  weightage: number
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    _id?: string;
+    department?: string;
+  };
   evaluationPeriod: {
-    year: number
-    quarter: string
-  }
-  status: "not_started" | "in_progress" | "completed" | "overdue"
-  priority: "low" | "medium" | "high" | "critical"
-  dueDate: string
-  achievementPercentage: number
-  createdAt: string
-  updatedAt: string
+    quarter: string;
+    year: number;
+  };
+  kras?: KraItem[];
+  overallKraScore?: number;
+  setBy: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  status: "draft" | "submitted" | "approved" | "in-progress" | "completed" | "pending" | "achieved" | "partially-achieved" | "not-achieved";
+  comments?: string;
+  createdAt: string;
+  updatedAt: string;
+  completionPercentage?: number;
+  weightedAverageScore?: number;
+  kraTitle: string;
+  description: string;
+  targetValue: number;
+  achievedValue: number;
+  weightage: number;
+  priority: "low" | "medium" | "high" | "critical";
+  dueDate: string;
+  achievementPercentage: number;
 }
 
 interface Employee {
@@ -59,7 +91,7 @@ interface Employee {
 
 export default function KRAManagement() {
   const [kraList, setKraList] = useState<KRA[]>([])
-  const [employees, setEmployees] = useState<Employee[]>([])
+  const [employees, setEmployees] = useState<OrgMemberInfo[]>([]);
   const [loading, setLoading] = useState(true)
   const [createLoading, setCreateLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -74,6 +106,8 @@ export default function KRAManagement() {
   const [editLoading, setEditLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
+   
+  const {id} = useParams<{id: string}>()
   // Form state
   const [formData, setFormData] = useState({
     employeeId: "",
@@ -81,10 +115,11 @@ export default function KRAManagement() {
     description: "",
     targetValue: 0,
     weightage: 0,
-    priority: "medium",
+    priority: "medium" as "high" | "medium" | "low",
     year: new Date().getFullYear(),
     quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`,
-    dueDate: ""
+    dueDate: "",
+    setBy: id
   })
 
   // Edit form state
@@ -99,150 +134,164 @@ export default function KRAManagement() {
     year: new Date().getFullYear(),
     quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`,
     dueDate: "",
-    status: "not_started"
+    status: "pending",
+    
   })
+
+ useEffect(() => {
+    const fetchManagerTeam = async () => {
+      try {
+        const res = await axiosInstance.get(`/IT/org-members/${id}`);
+        const data = res.data;
+        setEmployees(data.employees || []);
+      } catch {
+        setEmployees([]);
+      }
+    };
+    fetchManagerTeam();
+    fetchKRAs();
+  }, []);
 
   const fetchKRAs = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
+
+      // Fetch KRAs from API
+      const response = await axiosInstance.get(`/kra/manager/${id}`)
+      console.log("Fetched KRAs:", response.data)
+      setKraList(response.data.data || [])
       
-      // Using mock data since API is not working
-      console.log("Using mock data for KRAs")
-      
-      const mockKRAs: KRA[] = [
-        {
-          _id: "kra1",
-          employeeId: {
-            id: "EMP001",
-            name: "Alice Johnson",
-            email: "alice.johnson@company.com",
-            department: "Engineering",
-            role: "Senior Developer"
-          },
-          kraTitle: "Develop New Feature Module",
-          description: "Design and implement the user authentication module with advanced security features",
-          targetValue: 100,
-          achievedValue: 85,
-          weightage: 30,
-          evaluationPeriod: {
-            year: 2024,
-            quarter: "Q1"
-          },
-          status: "in_progress",
-          priority: "high",
-          dueDate: "2024-03-31",
-          achievementPercentage: 85,
-          createdAt: "2024-01-15T10:30:00Z",
-          updatedAt: "2024-02-20T14:45:00Z"
-        },
-        {
-          _id: "kra2",
-          employeeId: {
-            id: "EMP002",
-            name: "Bob Smith",
-            email: "bob.smith@company.com",
-            department: "Sales",
-            role: "Sales Manager"
-          },
-          kraTitle: "Achieve Quarterly Sales Target",
-          description: "Meet or exceed the quarterly sales target of $500K with new client acquisitions",
-          targetValue: 500000,
-          achievedValue: 520000,
-          weightage: 40,
-          evaluationPeriod: {
-            year: 2024,
-            quarter: "Q1"
-          },
-          status: "completed",
-          priority: "critical",
-          dueDate: "2024-03-31",
-          achievementPercentage: 104,
-          createdAt: "2024-01-10T09:15:00Z",
-          updatedAt: "2024-03-25T16:20:00Z"
-        },
-        {
-          _id: "kra3",
-          employeeId: {
-            id: "EMP003",
-            name: "Carol Davis",
-            email: "carol.davis@company.com",
-            department: "Marketing",
-            role: "Marketing Specialist"
-          },
-          kraTitle: "Launch Digital Marketing Campaign",
-          description: "Plan and execute a comprehensive digital marketing campaign for the new product line",
-          targetValue: 10,
-          achievedValue: 6,
-          weightage: 25,
-          evaluationPeriod: {
-            year: 2024,
-            quarter: "Q1"
-          },
-          status: "in_progress",
-          priority: "medium",
-          dueDate: "2024-04-15",
-          achievementPercentage: 60,
-          createdAt: "2024-01-08T08:45:00Z",
-          updatedAt: "2024-02-15T11:30:00Z"
-        },
-        {
-          _id: "kra4",
-          employeeId: {
-            id: "EMP004",
-            name: "David Wilson",
-            email: "david.wilson@company.com",
-            department: "HR",
-            role: "HR Coordinator"
-          },
-          kraTitle: "Implement Employee Wellness Program",
-          description: "Design and launch a comprehensive employee wellness program to improve workplace satisfaction",
-          targetValue: 100,
-          achievedValue: 45,
-          weightage: 20,
-          evaluationPeriod: {
-            year: 2024,
-            quarter: "Q1"
-          },
-          status: "overdue",
-          priority: "medium",
-          dueDate: "2024-02-28",
-          achievementPercentage: 45,
-          createdAt: "2024-01-12T12:00:00Z",
-          updatedAt: "2024-03-01T09:15:00Z"
-        },
-        {
-          _id: "kra5",
-          employeeId: {
-            id: "EMP005",
-            name: "Eva Brown",
-            email: "eva.brown@company.com",
-            department: "Finance",
-            role: "Financial Analyst"
-          },
-          kraTitle: "Optimize Budget Allocation Process",
-          description: "Streamline the budget allocation process and reduce processing time by 25%",
-          targetValue: 25,
-          achievedValue: 0,
-          weightage: 15,
-          evaluationPeriod: {
-            year: 2024,
-            quarter: "Q2"
-          },
-          status: "not_started",
-          priority: "low",
-          dueDate: "2024-06-30",
-          achievementPercentage: 0,
-          createdAt: "2024-02-01T14:30:00Z",
-          updatedAt: "2024-02-01T14:30:00Z"
-        }
-      ]
+      // const mockKRAs: KRA[] = [
+      //   {
+      //     _id: "kra1",
+      //     employeeId: {
+      //       id: "EMP001",
+      //       name: "Alice Johnson",
+      //       email: "alice.johnson@company.com",
+      //       department: "Engineering",
+      //       role: "Senior Developer"
+      //     },
+      //     kraTitle: "Develop New Feature Module",
+      //     description: "Design and implement the user authentication module with advanced security features",
+      //     targetValue: 100,
+      //     achievedValue: 85,
+      //     weightage: 30,
+      //     evaluationPeriod: {
+      //       year: 2024,
+      //       quarter: "Q1"
+      //     },
+      //     status: "in_progress",
+      //     priority: "high",
+      //     dueDate: "2024-03-31",
+      //     achievementPercentage: 85,
+      //     createdAt: "2024-01-15T10:30:00Z",
+      //     updatedAt: "2024-02-20T14:45:00Z"
+      //   },
+      //   {
+      //     _id: "kra2",
+      //     employeeId: {
+      //       id: "EMP002",
+      //       name: "Bob Smith",
+      //       email: "bob.smith@company.com",
+      //       department: "Sales",
+      //       role: "Sales Manager"
+      //     },
+      //     kraTitle: "Achieve Quarterly Sales Target",
+      //     description: "Meet or exceed the quarterly sales target of $500K with new client acquisitions",
+      //     targetValue: 500000,
+      //     achievedValue: 520000,
+      //     weightage: 40,
+      //     evaluationPeriod: {
+      //       year: 2024,
+      //       quarter: "Q1"
+      //     },
+      //     status: "completed",
+      //     priority: "critical",
+      //     dueDate: "2024-03-31",
+      //     achievementPercentage: 104,
+      //     createdAt: "2024-01-10T09:15:00Z",
+      //     updatedAt: "2024-03-25T16:20:00Z"
+      //   },
+      //   {
+      //     _id: "kra3",
+      //     employeeId: {
+      //       id: "EMP003",
+      //       name: "Carol Davis",
+      //       email: "carol.davis@company.com",
+      //       department: "Marketing",
+      //       role: "Marketing Specialist"
+      //     },
+      //     kraTitle: "Launch Digital Marketing Campaign",
+      //     description: "Plan and execute a comprehensive digital marketing campaign for the new product line",
+      //     targetValue: 10,
+      //     achievedValue: 6,
+      //     weightage: 25,
+      //     evaluationPeriod: {
+      //       year: 2024,
+      //       quarter: "Q1"
+      //     },
+      //     status: "in_progress",
+      //     priority: "medium",
+      //     dueDate: "2024-04-15",
+      //     achievementPercentage: 60,
+      //     createdAt: "2024-01-08T08:45:00Z",
+      //     updatedAt: "2024-02-15T11:30:00Z"
+      //   },
+      //   {
+      //     _id: "kra4",
+      //     employeeId: {
+      //       id: "EMP004",
+      //       name: "David Wilson",
+      //       email: "david.wilson@company.com",
+      //       department: "HR",
+      //       role: "HR Coordinator"
+      //     },
+      //     kraTitle: "Implement Employee Wellness Program",
+      //     description: "Design and launch a comprehensive employee wellness program to improve workplace satisfaction",
+      //     targetValue: 100,
+      //     achievedValue: 45,
+      //     weightage: 20,
+      //     evaluationPeriod: {
+      //       year: 2024,
+      //       quarter: "Q1"
+      //     },
+      //     status: "overdue",
+      //     priority: "medium",
+      //     dueDate: "2024-02-28",
+      //     achievementPercentage: 45,
+      //     createdAt: "2024-01-12T12:00:00Z",
+      //     updatedAt: "2024-03-01T09:15:00Z"
+      //   },
+      //   {
+      //     _id: "kra5",
+      //     employeeId: {
+      //       id: "EMP005",
+      //       name: "Eva Brown",
+      //       email: "eva.brown@company.com",
+      //       department: "Finance",
+      //       role: "Financial Analyst"
+      //     },
+      //     kraTitle: "Optimize Budget Allocation Process",
+      //     description: "Streamline the budget allocation process and reduce processing time by 25%",
+      //     targetValue: 25,
+      //     achievedValue: 0,
+      //     weightage: 15,
+      //     evaluationPeriod: {
+      //       year: 2024,
+      //       quarter: "Q2"
+      //     },
+      //     status: "not_started",
+      //     priority: "low",
+      //     dueDate: "2024-06-30",
+      //     achievementPercentage: 0,
+      //     createdAt: "2024-02-01T14:30:00Z",
+      //     updatedAt: "2024-02-01T14:30:00Z"
+      //   }
+      // ]
       
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 600))
-      
-      setKraList(mockKRAs)
-      toast.success("KRAs loaded successfully!")
+     
       
     } catch (error: unknown) {
       console.error("Failed to fetch KRAs:", error)
@@ -252,7 +301,7 @@ export default function KRAManagement() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [id])
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -327,10 +376,7 @@ export default function KRAManagement() {
   const handleCreateKRA = async () => {
     try {
       setCreateLoading(true)
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
+
       const selectedEmployee = employees.find(emp => emp.id === formData.employeeId)
       
       if (!selectedEmployee) {
@@ -340,26 +386,36 @@ export default function KRAManagement() {
 
       const newKRA: KRA = {
         _id: `kra_${Date.now()}`,
-        employeeId: selectedEmployee,
+        employeeId: {
+          id: selectedEmployee.id,
+          name: selectedEmployee.name,
+          email: selectedEmployee.email,
+          department: selectedEmployee.department ?? "",
+          role: selectedEmployee.role ?? ""
+        },
         kraTitle: formData.kraTitle,
         description: formData.description,
         targetValue: formData.targetValue,
         achievedValue: 0,
-        weightage: formData.weightage,
+        weightage: formData.weight,
         evaluationPeriod: {
           year: formData.year,
           quarter: formData.quarter
         },
-        status: "not_started",
+        status: "pending",
         priority: formData.priority as "low" | "medium" | "high" | "critical",
-        dueDate: formData.dueDate,
+        dueDate: formData.deadline,
         achievementPercentage: 0,
+        setBy: id,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
 
+      // Simulate API delay
+      await axiosInstance.post("/kra", newKRA);
+
       // Add to the current KRA list
-      setKraList(prev => [newKRA, ...prev])
+      fetchKRAs();
       
       toast.success("KRA created successfully!")
       setIsCreateDialogOpen(false)
@@ -383,7 +439,8 @@ export default function KRAManagement() {
       priority: "medium",
       year: new Date().getFullYear(),
       quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`,
-      dueDate: ""
+      dueDate: "",
+      setBy: id
     })
   }
 
@@ -399,7 +456,7 @@ export default function KRAManagement() {
       year: new Date().getFullYear(),
       quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`,
       dueDate: "",
-      status: "not_started"
+      status: "pending"
     })
   }
 
@@ -437,9 +494,23 @@ export default function KRAManagement() {
         return
       }
 
+      // Map status to backend enum
+      let mappedStatus = editFormData.status;
+      if (mappedStatus === "pending") mappedStatus = "pending";
+      else if (mappedStatus === "achieved") mappedStatus = "achieved";
+      else if (mappedStatus === "partially-achieved") mappedStatus = "partially-achieved";
+      else if (mappedStatus === "not-achieved") mappedStatus = "not-achieved";
+      else mappedStatus = "pending";
+
       const updatedKRA: KRA = {
         ...selectedKRA,
-        employeeId: selectedEmployee,
+        employeeId: {
+          id: selectedEmployee.id,
+          name: selectedEmployee.name,
+          email: selectedEmployee.email,
+          department: selectedEmployee.department ?? "",
+          role: selectedEmployee.role ?? ""
+        },
         kraTitle: editFormData.kraTitle,
         description: editFormData.description,
         targetValue: editFormData.targetValue,
@@ -449,7 +520,7 @@ export default function KRAManagement() {
           year: editFormData.year,
           quarter: editFormData.quarter
         },
-        status: editFormData.status as "not_started" | "in_progress" | "completed" | "overdue",
+        status: mappedStatus as KRA["status"],
         priority: editFormData.priority as "low" | "medium" | "high" | "critical",
         dueDate: editFormData.dueDate,
         achievementPercentage: editFormData.targetValue > 0 ? Math.round((editFormData.achievedValue / editFormData.targetValue) * 100) : 0,
@@ -503,10 +574,10 @@ export default function KRAManagement() {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      not_started: "bg-gray-100 text-gray-800",
-      in_progress: "bg-blue-100 text-blue-800",
-      completed: "bg-green-100 text-green-800",
-      overdue: "bg-red-100 text-red-800"
+      pending: "bg-gray-100 text-gray-800",
+      achieved: "bg-green-100 text-green-800",
+      "partially-achieved": "bg-yellow-100 text-yellow-800",
+      "not-achieved": "bg-red-100 text-red-800"
     }
     return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800"
   }
@@ -523,19 +594,21 @@ export default function KRAManagement() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "completed":
+      case "achieved":
         return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "overdue":
+      case "partially-achieved":
+        return <Target className="h-4 w-4 text-yellow-500" />
+      case "not-achieved":
         return <AlertCircle className="h-4 w-4 text-red-500" />
-      case "in_progress":
-        return <Target className="h-4 w-4 text-blue-500" />
+      case "pending":
+        return <Target className="h-4 w-4 text-gray-500" />
       default:
         return <Target className="h-4 w-4 text-gray-500" />
     }
   }
 
-  const filteredKRAs = kraList.filter(kra => {
-    const matchesSearch = kra.kraTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredKRAs = kraList?.filter(kra => {
+    const matchesSearch = kra.kraTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          kra.employeeId.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || kra.status === statusFilter
     const matchesPriority = priorityFilter === "all" || kra.priority === priorityFilter
@@ -725,10 +798,10 @@ export default function KRAManagement() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="not_started">Not Started</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="overdue">Overdue</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="achieved">Achieved</SelectItem>
+            <SelectItem value="partially-achieved">Partially Achieved</SelectItem>
+            <SelectItem value="not-achieved">Not Achieved</SelectItem>
           </SelectContent>
         </Select>
         
@@ -754,42 +827,42 @@ export default function KRAManagement() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kraList.length}</div>
+            <div className="text-2xl font-bold">{kraList?.length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">Achieved</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {kraList.filter(kra => kra.status === "completed").length}
+              {kraList?.filter(kra => kra.status === "achieved").length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">Partially Achieved</CardTitle>
             <Target className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {kraList.filter(kra => kra.status === "in_progress").length}
+              {kraList?.filter(kra => kra.status === "partially-achieved").length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+            <CardTitle className="text-sm font-medium">Not Achieved</CardTitle>
             <AlertCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {kraList.filter(kra => kra.status === "overdue").length}
+              {kraList?.filter(kra => kra.status === "not-achieved").length}
             </div>
           </CardContent>
         </Card>
@@ -798,7 +871,7 @@ export default function KRAManagement() {
       {/* KRA Table */}
       <Card>
         <CardHeader>
-          <CardTitle>KRA List ({filteredKRAs.length})</CardTitle>
+          <CardTitle>KRA List ({filteredKRAs?.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -814,7 +887,7 @@ export default function KRAManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredKRAs.map((kra) => (
+              {filteredKRAs?.map((kra) => (
                 <TableRow key={kra._id}>
                   <TableCell>
                     <div>
@@ -846,7 +919,7 @@ export default function KRAManagement() {
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(kra.status)}
                       <Badge variant="outline" className={getStatusColor(kra.status)}>
-                        {kra.status.replace("_", " ")}
+                        {kra.status.replace("-", " ")}
                       </Badge>
                     </div>
                   </TableCell>
@@ -960,7 +1033,7 @@ export default function KRAManagement() {
                     <div className="flex justify-between items-center">
                       <span>Status:</span>
                       <Badge variant="outline" className={getStatusColor(selectedKRA.status)}>
-                        {selectedKRA.status.replace("_", " ")}
+                        {selectedKRA.status.replace("-", " ")}
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center">
@@ -1097,10 +1170,10 @@ export default function KRAManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="not_started">Not Started</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="achieved">Achieved</SelectItem>
+                    <SelectItem value="partially-achieved">Partially Achieved</SelectItem>
+                    <SelectItem value="not-achieved">Not Achieved</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1155,7 +1228,7 @@ export default function KRAManagement() {
                   <div><strong>Employee:</strong> {selectedKRA.employeeId.name}</div>
                   <div><strong>Department:</strong> {selectedKRA.employeeId.department}</div>
                   <div><strong>Priority:</strong> {selectedKRA.priority}</div>
-                  <div><strong>Status:</strong> {selectedKRA.status.replace("_", " ")}</div>
+                  <div><strong>Status:</strong> {selectedKRA.status.replace("-", " ")}</div>
                 </div>
               </div>
             </div>
