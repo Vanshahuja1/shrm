@@ -41,7 +41,7 @@ interface KraItem {
   evidence: string[]
   managerComments: string
   status: "pending" | "achieved" | "partially-achieved" | "not-achieved"
-  priority: "high" | "medium" | "low"
+  priority: "high" | "medium" | "low" | "critical"
   deadline: string
   completedAt?: string
 }
@@ -130,27 +130,12 @@ export default function KRAManagement() {
     targetValue: 0,
     achievedValue: 0,
     weightage: 0,
-    priority: "medium",
+    priority: "medium" as "low" | "medium" | "high" | "critical",
     year: new Date().getFullYear(),
     quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3)}`,
     dueDate: "",
     status: "pending",
-    
   })
-
- useEffect(() => {
-    const fetchManagerTeam = async () => {
-      try {
-        const res = await axiosInstance.get(`/IT/org-members/${id}`);
-        const data = res.data;
-        setEmployees(data.employees || []);
-      } catch {
-        setEmployees([]);
-      }
-    };
-    fetchManagerTeam();
-    fetchKRAs();
-  }, []);
 
   const fetchKRAs = useCallback(async () => {
     try {
@@ -161,136 +146,6 @@ export default function KRAManagement() {
       const response = await axiosInstance.get(`/kra/manager/${id}`)
       console.log("Fetched KRAs:", response.data)
       setKraList(response.data.data || [])
-      
-      // const mockKRAs: KRA[] = [
-      //   {
-      //     _id: "kra1",
-      //     employeeId: {
-      //       id: "EMP001",
-      //       name: "Alice Johnson",
-      //       email: "alice.johnson@company.com",
-      //       department: "Engineering",
-      //       role: "Senior Developer"
-      //     },
-      //     kraTitle: "Develop New Feature Module",
-      //     description: "Design and implement the user authentication module with advanced security features",
-      //     targetValue: 100,
-      //     achievedValue: 85,
-      //     weightage: 30,
-      //     evaluationPeriod: {
-      //       year: 2024,
-      //       quarter: "Q1"
-      //     },
-      //     status: "in_progress",
-      //     priority: "high",
-      //     dueDate: "2024-03-31",
-      //     achievementPercentage: 85,
-      //     createdAt: "2024-01-15T10:30:00Z",
-      //     updatedAt: "2024-02-20T14:45:00Z"
-      //   },
-      //   {
-      //     _id: "kra2",
-      //     employeeId: {
-      //       id: "EMP002",
-      //       name: "Bob Smith",
-      //       email: "bob.smith@company.com",
-      //       department: "Sales",
-      //       role: "Sales Manager"
-      //     },
-      //     kraTitle: "Achieve Quarterly Sales Target",
-      //     description: "Meet or exceed the quarterly sales target of $500K with new client acquisitions",
-      //     targetValue: 500000,
-      //     achievedValue: 520000,
-      //     weightage: 40,
-      //     evaluationPeriod: {
-      //       year: 2024,
-      //       quarter: "Q1"
-      //     },
-      //     status: "completed",
-      //     priority: "critical",
-      //     dueDate: "2024-03-31",
-      //     achievementPercentage: 104,
-      //     createdAt: "2024-01-10T09:15:00Z",
-      //     updatedAt: "2024-03-25T16:20:00Z"
-      //   },
-      //   {
-      //     _id: "kra3",
-      //     employeeId: {
-      //       id: "EMP003",
-      //       name: "Carol Davis",
-      //       email: "carol.davis@company.com",
-      //       department: "Marketing",
-      //       role: "Marketing Specialist"
-      //     },
-      //     kraTitle: "Launch Digital Marketing Campaign",
-      //     description: "Plan and execute a comprehensive digital marketing campaign for the new product line",
-      //     targetValue: 10,
-      //     achievedValue: 6,
-      //     weightage: 25,
-      //     evaluationPeriod: {
-      //       year: 2024,
-      //       quarter: "Q1"
-      //     },
-      //     status: "in_progress",
-      //     priority: "medium",
-      //     dueDate: "2024-04-15",
-      //     achievementPercentage: 60,
-      //     createdAt: "2024-01-08T08:45:00Z",
-      //     updatedAt: "2024-02-15T11:30:00Z"
-      //   },
-      //   {
-      //     _id: "kra4",
-      //     employeeId: {
-      //       id: "EMP004",
-      //       name: "David Wilson",
-      //       email: "david.wilson@company.com",
-      //       department: "HR",
-      //       role: "HR Coordinator"
-      //     },
-      //     kraTitle: "Implement Employee Wellness Program",
-      //     description: "Design and launch a comprehensive employee wellness program to improve workplace satisfaction",
-      //     targetValue: 100,
-      //     achievedValue: 45,
-      //     weightage: 20,
-      //     evaluationPeriod: {
-      //       year: 2024,
-      //       quarter: "Q1"
-      //     },
-      //     status: "overdue",
-      //     priority: "medium",
-      //     dueDate: "2024-02-28",
-      //     achievementPercentage: 45,
-      //     createdAt: "2024-01-12T12:00:00Z",
-      //     updatedAt: "2024-03-01T09:15:00Z"
-      //   },
-      //   {
-      //     _id: "kra5",
-      //     employeeId: {
-      //       id: "EMP005",
-      //       name: "Eva Brown",
-      //       email: "eva.brown@company.com",
-      //       department: "Finance",
-      //       role: "Financial Analyst"
-      //     },
-      //     kraTitle: "Optimize Budget Allocation Process",
-      //     description: "Streamline the budget allocation process and reduce processing time by 25%",
-      //     targetValue: 25,
-      //     achievedValue: 0,
-      //     weightage: 15,
-      //     evaluationPeriod: {
-      //       year: 2024,
-      //       quarter: "Q2"
-      //     },
-      //     status: "not_started",
-      //     priority: "low",
-      //     dueDate: "2024-06-30",
-      //     achievementPercentage: 0,
-      //     createdAt: "2024-02-01T14:30:00Z",
-      //     updatedAt: "2024-02-01T14:30:00Z"
-      //   }
-      // ]
-      
-      // Simulate API delay
      
       
     } catch (error: unknown) {
@@ -302,6 +157,20 @@ export default function KRAManagement() {
       setLoading(false)
     }
   }, [id])
+
+   useEffect(() => {
+    const fetchManagerTeam = async () => {
+      try {
+        const res = await axiosInstance.get(`/IT/org-members/${id}`);
+        const data = res.data;
+        setEmployees(data.employees || []);
+      } catch {
+        setEmployees([]);
+      }
+    };
+    fetchManagerTeam();
+    fetchKRAs();
+  }, [fetchKRAs, id]);
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -397,14 +266,14 @@ export default function KRAManagement() {
         description: formData.description,
         targetValue: formData.targetValue,
         achievedValue: 0,
-        weightage: formData.weight,
+        weightage: formData.weightage,
         evaluationPeriod: {
           year: formData.year,
           quarter: formData.quarter
         },
         status: "pending",
         priority: formData.priority as "low" | "medium" | "high" | "critical",
-        dueDate: formData.deadline,
+        dueDate: formData.dueDate,
         achievementPercentage: 0,
         setBy: id,
         createdAt: new Date().toISOString(),
@@ -469,7 +338,7 @@ export default function KRAManagement() {
       targetValue: kra.targetValue,
       achievedValue: kra.achievedValue,
       weightage: kra.weightage,
-      priority: kra.priority,
+      priority: kra.priority as "low" | "medium" | "high" | "critical",
       year: kra.evaluationPeriod.year,
       quarter: kra.evaluationPeriod.quarter,
       dueDate: kra.dueDate,
@@ -735,7 +604,7 @@ export default function KRAManagement() {
                 
                 <div>
                   <Label htmlFor="priority">Priority</Label>
-                  <Select value={formData.priority} onValueChange={(value) => setFormData({...formData, priority: value})}>
+                  <Select value={formData.priority} onValueChange={(value) => setFormData({...formData, priority: value as "low" | "medium" | "high"})}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -1150,7 +1019,7 @@ export default function KRAManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="editPriority">Priority</Label>
-                <Select value={editFormData.priority} onValueChange={(value) => setEditFormData({...editFormData, priority: value})}>
+                <Select value={editFormData.priority} onValueChange={(value) => setEditFormData({...editFormData, priority: value as "low" | "medium" | "high" | "critical"})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

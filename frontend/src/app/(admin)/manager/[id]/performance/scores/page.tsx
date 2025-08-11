@@ -74,6 +74,16 @@ export default function PerformanceScoresPage() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedScore, setSelectedScore] = useState<PerformanceScore | null>(null);
 
+
+  const fetchPerformanceScores = React.useCallback(async () => {
+  try {
+    const res = await axios.get(`/performance-scores/manager/${managerId}`);
+    setPerformanceScores(res.data.data || []);
+  } catch {
+    setPerformanceScores([]);
+  }
+}, [managerId]);
+  
   useEffect(() => {
     const fetchManagerTeam = async () => {
       try {
@@ -88,18 +98,8 @@ export default function PerformanceScoresPage() {
     };
     fetchManagerTeam();
     fetchPerformanceScores();
-  }, []);
+  }, [fetchPerformanceScores, managerId]);
 
-
-
-  const fetchPerformanceScores = async () => {
-    try {
-      const res = await axios.get(`/performance-scores/manager/${managerId}`);
-      setPerformanceScores(res.data.data || []);
-    } catch {
-      setPerformanceScores([]);
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });

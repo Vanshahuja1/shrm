@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import axios from "@/lib/axiosInstance";
 import { Organization } from "./page";
 import NewOrganizationModal from './NewOrganizationModal';
+import Image from "next/image";
 
 // Define color themes for cards
 const colorThemes = [
@@ -70,9 +71,11 @@ function OrgCard({ org, fetchOrgs, index = 0 }: { org: Organization, fetchOrgs: 
         {/* Logo and Name */}
         <div className="flex items-center mb-4">
           {org.logo ? (
-            <img
+            <Image
               src={org.logo}
               alt={org.name}
+              width={56}
+              height={56}
               className="w-14 h-14 rounded-full border-2 border-red-200 shadow-sm mr-4 bg-white"
             />
           ) : (

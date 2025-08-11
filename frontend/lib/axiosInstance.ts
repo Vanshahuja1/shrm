@@ -1,8 +1,8 @@
 import axios from "axios"
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5000/api",
-  // baseURL: "https://shrm-backend.onrender.com/api",
+  // baseURL: "http://localhost:5000/api",
+  baseURL: "https://shrm-backend.onrender.com/api",
   withCredentials: true,
   timeout: 10000, // 10 second timeout
   headers: {
