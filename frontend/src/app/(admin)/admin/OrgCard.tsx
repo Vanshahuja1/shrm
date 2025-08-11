@@ -72,7 +72,7 @@ function OrgCard({ org, fetchOrgs, index = 0 }: { org: Organization, fetchOrgs: 
         <div className="flex items-center mb-4">
           {org.logo ? (
             <Image
-              src={org.logo}
+              src='/it.png'
               alt={org.name}
               width={56}
               height={56}
