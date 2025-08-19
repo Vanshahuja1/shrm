@@ -48,7 +48,7 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
   ]
 
   return (
-    <div className="w-72 bg-white rounded-lg shadow-sm border border-blue-200 p-4 sticky top-20 h-fit z-20">
+    <div className="w-72 bg-white rounded-lg shadow-sm border border-blue-200 p-4">
       <nav className="space-y-2">
         {tabs.map((tab) => {
           const Icon = tab.icon
@@ -67,6 +67,9 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
           )
         })}
       </nav>
+
+      {/* Quick Stats */}
+
 
       {/* Status Indicator */}
       <div className="mt-6 pt-6 border-t border-blue-200">

@@ -11,12 +11,13 @@ import {
   Users,
   BarChart3,
   Mail,
-  TrendingUp,
+
 } from "lucide-react";
-import { Building, LogOut, X } from "lucide-react";
+import {LogOut, X } from "lucide-react";
 import { useState } from "react";
 import { Organization } from "../admin/page";
 import axios from "@/lib/axiosInstance";
+import Image from "next/image";
 interface SidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean) => void;
@@ -34,9 +35,8 @@ export default function Sidebar({
   const pathname = usePathname();
 
   const menuItems = [
-    { id: "", label: "Dashboard", icon: Target }, // Add this line
+    { id: "", label: "Dashboard", icon: Target },
     { id: "attendance", label: "Attendance", icon: Calendar },
-    { id: "performance", label: "Performance", icon: TrendingUp },
     { id: "payroll", label: "Payroll", icon: Wallet },
     { id: "recruitment", label: "Recruitment", icon: Briefcase },
     { id: "emails", label: "Email System", icon: Mail },
@@ -73,9 +73,15 @@ const [org, setOrg] = useState<Organization | null>(null)
           <div className="p-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-lg flex items-center justify-center">
-                  <Building className="w-6 h-6 text-white" />
-                </div>
+                 <Image
+                              src="/one_aim.jpg"
+                              alt="SHRM Logo"
+                              width={56}
+                              height={56}
+                              className="w-14 h-14 object-cover rounded-2xl shadow-lg relative z-10"
+                              draggable={false}
+                              priority
+                            />
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">
                    {org?.name || "Organization"}

@@ -105,7 +105,7 @@ export default function TaskResponsesPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Task List</h2>
+      <h2 className="text-2xl font-bold text-gray-900">Task Responses</h2>
       {tasks.map((task) => (
         <div key={task._id} className="border border-gray-300 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-gray-800">{task.title}</h3>

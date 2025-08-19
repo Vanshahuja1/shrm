@@ -20,10 +20,10 @@ import {
   AlertCircle,
   Mail,
   Phone,
-  Building2Icon,
 } from "lucide-react"
 import Link from "next/link"
 import axiosInstance from "@/lib/axiosInstance"
+import Image from "next/image"
 
 interface BankDetails {
   accountHolder: string
@@ -766,8 +766,15 @@ export default function RegisterPage() {
             whileHover={{ scale: 1.05 }}
             className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl mb-4 shadow-lg shadow-red-500/25"
           >
-            {/* <Users className="w-8 h-8 text-white" /> */}
-            <Building2Icon className="w-8 h-8 text-white" />
+            <Image
+                          src="/one_aim.jpg"
+                          alt="SHRM Logo"
+                          width={56}
+                          height={56}
+                          className="w-14 h-14 object-cover rounded-2xl shadow-lg relative z-10"
+                          draggable={false}
+                          priority
+              />
           </motion.div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">SHRM Portal</h1>
           {/* <p className="text-gray-600">Employee Management System</p> */}
@@ -867,7 +874,7 @@ export default function RegisterPage() {
                         validationErrors.phone
                           ? "border-red-500 bg-red-50"
                           : focusedField === "phone"
-                            ? "border-green-500 bg-green-50"
+                            ? "border-red-500 bg-green-50"
                             : "border-gray-300 bg-gray-50/50"
                       }`}
                     >
@@ -875,9 +882,9 @@ export default function RegisterPage() {
                         <Phone
                           className={`w-5 h-5 transition-colors duration-500 ease-out ${
                             validationErrors.phone
-                              ? "text-red-400"
+                              ? "text-red-500"
                               : focusedField === "phone"
-                                ? "text-green-400"
+                                ? "text-red-500"
                                 : "text-gray-400"
                           }`}
                         />

@@ -2,7 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation"
 import { User, Calendar, CheckCircle, Send, MessageSquare, Settings, Target, Mail,TrendingUp, } from "lucide-react"
-import { Building, LogOut, X } from "lucide-react"
+import {  LogOut, X } from "lucide-react"
+import Image from "next/image"
 
 interface SidebarProps {
   isSidebarOpen: boolean
@@ -44,9 +45,15 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen , managerName,
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-lg flex items-center justify-center">
-                  <Building className="w-6 h-6 text-white" />
-                </div>
+                 <Image
+                              src="/one_aim.jpg"
+                              alt="SHRM Logo"
+                              width={56}
+                              height={56}
+                              className="w-14 h-14 object-cover rounded-2xl shadow-lg relative z-10"
+                              draggable={false}
+                              priority
+                            />
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">{organizationName || "Organization"}</h1>
                   <p className="text-sm text-gray-500">Manager Dashboard</p>

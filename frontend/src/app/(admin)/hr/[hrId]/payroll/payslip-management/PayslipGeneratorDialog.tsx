@@ -500,16 +500,16 @@ export default function PayslipGeneratorDialog({
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-start gap-2 mt-2">
+                    {/* <div className="flex items-start gap-2 mt-2">
                       <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-muted-foreground">
-                        Leave fields at 0 to use automatic calculations based on salary and attendance
+                      <p className="text-sm text-muted-foreground font-semibold">
+                        All deduction values must be entered . <br />
+                        <span className="text-red-600 font-bold">No automatic calculations are performed for deductions.</span>
                       </p>
-                    </div>
+                    </div> */}
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {/* Statutory Deductions */}
                       <div>
                         <h4 className="font-medium mb-4 text-orange-800 flex items-center gap-2">
                           <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
@@ -521,7 +521,7 @@ export default function PayslipGeneratorDialog({
                             <Input
                               id="pf"
                               type="number"
-                              placeholder="Auto: 12% of basic"
+                              placeholder="Enter amount "
                               value={customAdjustments.deductions.pf || ""}
                               onChange={(e) => updateCustomAdjustment('deductions', 'pf', e.target.value)}
                               className="text-right"
@@ -533,7 +533,7 @@ export default function PayslipGeneratorDialog({
                             <Input
                               id="esi"
                               type="number"
-                              placeholder="Auto: 0.75% if gross < 25k"
+                              placeholder="Enter amount "
                               value={customAdjustments.deductions.esi || ""}
                               onChange={(e) => updateCustomAdjustment('deductions', 'esi', e.target.value)}
                               className="text-right"
@@ -545,7 +545,7 @@ export default function PayslipGeneratorDialog({
                             <Input
                               id="professionalTax"
                               type="number"
-                              placeholder="Auto: ₹200"
+                              placeholder="Enter amount "
                               value={customAdjustments.deductions.professionalTax || ""}
                               onChange={(e) => updateCustomAdjustment('deductions', 'professionalTax', e.target.value)}
                               className="text-right"
@@ -557,7 +557,7 @@ export default function PayslipGeneratorDialog({
                             <Input
                               id="tds"
                               type="number"
-                              placeholder="Auto: 5% if gross > 50k"
+                              placeholder="Enter amount "
                               value={customAdjustments.deductions.tds || ""}
                               onChange={(e) => updateCustomAdjustment('deductions', 'tds', e.target.value)}
                               className="text-right"
@@ -568,7 +568,6 @@ export default function PayslipGeneratorDialog({
 
                       <Separator />
 
-                      {/* Other Deductions */}
                       <div>
                         <h4 className="font-medium mb-4 text-purple-800 flex items-center gap-2">
                           <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
@@ -580,7 +579,7 @@ export default function PayslipGeneratorDialog({
                             <Input
                               id="loanDeduction"
                               type="number"
-                              placeholder="0"
+                              placeholder="Enter amount"
                               value={customAdjustments.deductions.loanDeduction || ""}
                               onChange={(e) => updateCustomAdjustment('deductions', 'loanDeduction', e.target.value)}
                               className="text-right"
@@ -592,7 +591,7 @@ export default function PayslipGeneratorDialog({
                             <Input
                               id="leaveDeduction"
                               type="number"
-                              placeholder="0"
+                              placeholder="Enter amount"
                               value={customAdjustments.deductions.leaveDeduction || ""}
                               onChange={(e) => updateCustomAdjustment('deductions', 'leaveDeduction', e.target.value)}
                               className="text-right"
@@ -604,7 +603,7 @@ export default function PayslipGeneratorDialog({
                             <Input
                               id="otherDeductions"
                               type="number"
-                              placeholder="0"
+                              placeholder="Enter amount"
                               value={customAdjustments.deductions.otherDeductions || ""}
                               onChange={(e) => updateCustomAdjustment('deductions', 'otherDeductions', e.target.value)}
                               className="text-right"

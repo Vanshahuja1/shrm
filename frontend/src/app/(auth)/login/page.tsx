@@ -4,7 +4,8 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { User, Lock, LogIn, Building2, Eye, EyeOff } from "lucide-react"
+import { User, Lock, LogIn, Eye, EyeOff } from "lucide-react"
+import Image from "next/image"
 import Loading from "../../components/Authenticating"
 import axiosInstance from "@/lib/axiosInstance"
 
@@ -299,7 +300,15 @@ export default function LoginPage() {
               }}
               className="absolute inset-1 border border-red-300/30 rounded-2xl"
             />
-            <Building2 className="w-10 h-10 text-white relative z-10" />
+            <Image
+              src="/one_aim.jpg"
+              alt="SHRM Logo"
+              width={56}
+              height={56}
+              className="w-14 h-14 object-cover rounded-2xl shadow-lg relative z-10"
+              draggable={false}
+              priority
+            />
           </motion.div>
           
           <motion.h1 
