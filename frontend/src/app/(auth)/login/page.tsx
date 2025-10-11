@@ -161,7 +161,7 @@ export default function LoginPage() {
       case "admin":
         return "/admin"
       case "hr":
-        return "/hr"
+        return `/hr/${id}`
       case "manager":
         return `/manager/${id}`
       case "employee":
@@ -193,8 +193,7 @@ export default function LoginPage() {
         setError("")
 
         // Redirect based on user role and id
-        const redirectPath = getRedirectPath(data.data.user.role, data.data.user.id)
-
+      const redirectPath = getRedirectPath(data.data.user.role, data.data.user.id)
         // Add a small delay for better UX
         setTimeout(() => {
           router.push(redirectPath)
