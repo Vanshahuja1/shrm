@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, /* useEffect */ } from "react"
+import { /* useEffect */ } from "react"
 import { Clock, /* Play, Pause, Square, Coffee, */ LogIn, LogOut, AlertCircle } from "lucide-react"
 import type { BreakSession } from "../../types/employees";
 

@@ -61,31 +61,31 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  const handleBreakStart = async (breakType: "break1" | "break2" | "lunch") => {
-    try {
-      await axios.post(`/employees/${id}/attendance/breaks`, {
-        type: breakType,
-        action: "start",
-        tzOffset: new Date().getTimezoneOffset(),
-      })
-      fetchAttendanceData()
-    } catch (error) {
-      console.error("Failed to start break:", error)
-    }
-  }
+  // const handleBreakStart = async (breakType: "break1" | "break2" | "lunch") => {
+  //   try {
+  //     await axios.post(`/employees/${id}/attendance/breaks`, {
+  //       type: breakType,
+  //       action: "start",
+  //       tzOffset: new Date().getTimezoneOffset(),
+  //     })
+  //     fetchAttendanceData()
+  //   } catch (error) {
+  //     console.error("Failed to start break:", error)
+  //   }
+  // }
 
-  const handleBreakEnd = async (breakType: "break1" | "break2" | "lunch") => {
-    try {
-      await axios.post(`/employees/${id}/attendance/breaks`, {
-        type: breakType,
-        action: "end",
-        tzOffset: new Date().getTimezoneOffset(),
-      })
-      fetchAttendanceData()
-    } catch (error) {
-      console.error("Failed to end break:", error)
-    }
-  }
+  // const handleBreakEnd = async (breakType: "break1" | "break2" | "lunch") => {
+  //   try {
+  //     await axios.post(`/employees/${id}/attendance/breaks`, {
+  //       type: breakType,
+  //       action: "end",
+  //       tzOffset: new Date().getTimezoneOffset(),
+  //     })
+  //     fetchAttendanceData()
+  //   } catch (error) {
+  //     console.error("Failed to end break:", error)
+  //   }
+  // }
 
 // ...existing code...
 
