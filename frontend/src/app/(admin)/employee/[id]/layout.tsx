@@ -1,5 +1,7 @@
+"use client"
 import type React from "react"
-import { use } from "react"
+import { use, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { EmployeeNavigation } from "./components/employee-navigation"
 import { EmployeeHeader } from "./components/employee-header"
 
@@ -11,6 +13,21 @@ export default function EmployeeLayout({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const router = useRouter()
+  const [authorized, setAuthorized] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+    if (!token) {
+      router.replace('/login')
+      return
+    }
+    setAuthorized(true)
+  }, [router])
+
+  if (!authorized) {
+    return null
+  }
   
   return (
     <div className="min-h-screen bg-blue-50">

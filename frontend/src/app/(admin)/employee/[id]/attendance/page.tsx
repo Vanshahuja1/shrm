@@ -20,7 +20,9 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
 
   const fetchAttendanceData = useCallback(async () => {
     try {
-      const response = await axios.get(`/employees/${id}/attendance`)
+      const response = await axios.get(`/employees/${id}/attendance`, {
+        params: { tzOffset: new Date().getTimezoneOffset() },
+      })
       setAttendanceData(response.data)
     } catch (error) {
       console.error("Failed to fetch attendance data:", error)
@@ -39,6 +41,7 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
     try {
       await axios.post(`/employees/${id}/attendance`, {
         timestamp: new Date().toISOString(),
+        tzOffset: new Date().getTimezoneOffset(),
       });
       fetchAttendanceData();
     } catch (error) {
@@ -50,6 +53,7 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
     try {
       await axios.post(`/employees/${id}/attendance/punch-out`, {
         timestamp: new Date().toISOString(),
+        tzOffset: new Date().getTimezoneOffset(),
       })
       fetchAttendanceData()
     } catch (error) {
@@ -62,6 +66,7 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
       await axios.post(`/employees/${id}/attendance/breaks`, {
         type: breakType,
         action: "start",
+        tzOffset: new Date().getTimezoneOffset(),
       })
       fetchAttendanceData()
     } catch (error) {
@@ -74,6 +79,7 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
       await axios.post(`/employees/${id}/attendance/breaks`, {
         type: breakType,
         action: "end",
+        tzOffset: new Date().getTimezoneOffset(),
       })
       fetchAttendanceData()
     } catch (error) {
@@ -91,8 +97,8 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
     <AttendanceSystem
       onPunchIn={handlePunchIn}
       onPunchOut={handlePunchOut}
-      onBreakStart={handleBreakStart}
-      onBreakEnd={handleBreakEnd}
+     // onBreakStart={handleBreakStart}
+     // onBreakEnd={handleBreakEnd}
       isPunchedIn={attendanceData?.isPunchedIn || false}
       currentTime={currentTime}
       workStartTime={attendanceData?.workStartTime || ""}

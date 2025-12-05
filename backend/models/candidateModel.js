@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const candidateSchema = new mongoose.Schema(
   {
@@ -19,26 +19,24 @@ const candidateSchema = new mongoose.Schema(
     location: { type: String },
     currentCompany: { type: String },
     jobTitle: { type: String },
-    department  : { 
+    department: {
       _id: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
-      name: { type: String },
-     },
+      name: { type: String }
+    },
     shortlisted: { type: Boolean, default: false },
     status: { type: String },
     recruiterAssigned: {
       isAssigned: { type: Boolean, default: false },
       interviewer: {
         id: { type: String },
-        name: { type: String },
-      },
+        name: { type: String }
+      }
     },
     notes: { type: String },
     resume: { type: String },
-    expectedSalary: { type: String },
+    expectedSalary: { type: String }
   },
   { timestamps: true }
 );
 
-const Candidate = mongoose.model("Candidate", candidateSchema);
-
-export default Candidate;
+module.exports = mongoose.model("Candidate", candidateSchema);

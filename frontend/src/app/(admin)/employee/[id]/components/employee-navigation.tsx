@@ -22,10 +22,12 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`attendance/employee/stats/${employeeId}`)
+        const res = await axios.get(`/employees/${employeeId}/attendance`, {
+          params: { tzOffset: new Date().getTimezoneOffset() },
+        })
         setStats({
           isWorking: res.data.isPunchedIn,
-          workingHrs: res.data.attendanceRecord?.totalHours || 0
+          workingHrs: res.data.totalWorkHours || 0,
         })
       } catch (error) {
         console.error('Error fetching stats:', error)

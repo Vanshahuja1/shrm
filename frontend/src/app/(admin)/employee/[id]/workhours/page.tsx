@@ -13,7 +13,13 @@ export default function WorkHoursPage({ params }: { params: Promise<{ id: string
 
   const fetchWorkHours = useCallback(async () => {
     try {
-      const response = await axios.get(`/employees/${id}/work-hours`)
+      const now = new Date()
+      const localISODate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+        .toISOString()
+        .split("T")[0]
+      const response = await axios.get(`/employees/${id}/work-hours`, {
+        params: { date: localISODate, tzOffset: new Date().getTimezoneOffset() },
+      })
       setWorkHours(response.data)
       setIsActive(response.data.isActive || false)
     } catch (error) {

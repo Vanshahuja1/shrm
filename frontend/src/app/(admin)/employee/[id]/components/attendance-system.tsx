@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Clock, Play, Pause, Square, Coffee, LogIn, LogOut, AlertCircle } from "lucide-react"
+import { useState, /* useEffect */ } from "react"
+import { Clock, /* Play, Pause, Square, Coffee, */ LogIn, LogOut, AlertCircle } from "lucide-react"
 import type { BreakSession } from "../../types/employees";
 
 interface AttendanceSystemProps {
   onPunchIn: () => void
   onPunchOut: () => void
-  onBreakStart: (breakType: "break1" | "break2" | "lunch") => void
-  onBreakEnd: (breakType: "break1" | "break2" | "lunch") => void
+  // onBreakStart: (breakType: "break1" | "break2" | "lunch") => void
+  // onBreakEnd: (breakType: "break1" | "break2" | "lunch") => void
   isPunchedIn: boolean
   currentTime: Date
   workStartTime?: string
@@ -20,83 +20,87 @@ interface AttendanceSystemProps {
 export function AttendanceSystem({
   onPunchIn,
   onPunchOut,
-  onBreakStart,
-  onBreakEnd,
+  // onBreakStart,
+  // onBreakEnd,
   isPunchedIn,
   currentTime,
   workStartTime,
   totalWorkHours,
-  breakTime,
+  /* breakTime, */
   overtimeHours,
 }: AttendanceSystemProps) {
-  const [breaks, setBreaks] = useState<BreakSession[]>([
-    { id: 1, type: "break1", duration: 15, status: "available" },
-    { id: 2, type: "break2", duration: 15, status: "available" },
-    { id: 3, type: "lunch", duration: 30, status: "available" },
-  ])
+  // const [breaks, setBreaks] = useState<BreakSession[]>([
+  //   { id: 1, type: "break1", duration: 15, status: "available" },
+  //   { id: 2, type: "break2", duration: 15, status: "available" },
+  //   { id: 3, type: "lunch", duration: 30, status: "available" },
+  // ])
 
-  const [activeBreak, setActiveBreak] = useState<string | null>(null)
-  const [breakStartTime, setBreakStartTime] = useState<Date | null>(null)
-  const [breakElapsed, setBreakElapsed] = useState(0)
+  // const [activeBreak, setActiveBreak] = useState<string | null>(null)
+  // const [breakStartTime, setBreakStartTime] = useState<Date | null>(null)
+  // const [breakElapsed, setBreakElapsed] = useState(0)
 
   // Update break timer
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (activeBreak && breakStartTime) {
-      interval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - breakStartTime.getTime()) / 1000)
-        setBreakElapsed(elapsed)
-      }, 1000)
-    }
-    return () => clearInterval(interval)
-  }, [activeBreak, breakStartTime])
+  // useEffect(() => {
+  //   let interval: NodeJS.Timeout
+  //   if (activeBreak && breakStartTime) {
+  //     interval = setInterval(() => {
+  //       const elapsed = Math.floor((Date.now() - breakStartTime.getTime()) / 1000)
+  //       setBreakElapsed(elapsed)
+  //     }, 1000)
+  //   }
+  //   return () => clearInterval(interval)
+  // }, [activeBreak, breakStartTime])
 
-  const handleBreakStart = (breakType: "break1" | "break2" | "lunch") => {
-    setActiveBreak(breakType)
-    setBreakStartTime(new Date())
-    setBreaks(
-      breaks.map((b) =>
-        b.type === breakType ? { ...b, status: "active", startTime: new Date().toLocaleTimeString() } : b,
-      ),
-    )
-    onBreakStart(breakType)
-  }
+  // const handleBreakStart = (breakType: "break1" | "break2" | "lunch") => {
+  //   setActiveBreak(breakType)
+  //   setBreakStartTime(new Date())
+  //   setBreaks(
+  //     breaks.map((b) =>
+  //       b.type === breakType ? { ...b, status: "active", startTime: new Date().toLocaleTimeString() } : b,
+  //     ),
+  //   )
+  //   onBreakStart(breakType)
+  // }
 
-  const handleBreakEnd = () => {
-    if (activeBreak) {
-      setBreaks(
-        breaks.map((b) =>
-          b.type === activeBreak ? { ...b, status: "completed", endTime: new Date().toLocaleTimeString() } : b,
-        ),
-      )
-      onBreakEnd(activeBreak as "break1" | "break2" | "lunch")
-      setActiveBreak(null)
-      setBreakStartTime(null)
-      setBreakElapsed(0)
-    }
-  }
+  // const handleBreakEnd = () => {
+  //   if (activeBreak) {
+  //     setBreaks(
+  //       breaks.map((b) =>
+  //         b.type === activeBreak ? { ...b, status: "completed", endTime: new Date().toLocaleTimeString() } : b,
+  //       ),
+  //     )
+  //     onBreakEnd(activeBreak as "break1" | "break2" | "lunch")
+  //     setActiveBreak(null)
+  //     setBreakStartTime(null)
+  //     setBreakElapsed(0)
+  //   }
+  // }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
-  }
+  // const formatTime = (seconds: number) => {
+  //   const mins = Math.floor(seconds / 60)
+  //   const secs = seconds % 60
+  //   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  // }
 
-  const getBreakLabel = (type: string) => {
-    switch (type) {
-      case "break1":
-        return "Break 1 (15 min)"
-      case "break2":
-        return "Break 2 (15 min)"
-      case "lunch":
-        return "Lunch Break (30 min)"
-      default:
-        return ""
-    }
-  }
+  // const getBreakLabel = (type: string) => {
+  //   switch (type) {
+  //     case "break1":
+  //       return "Break 1 (15 min)"
+  //     case "break2":
+  //       return "Break 2 (15 min)"
+  //     case "lunch":
+  //       return "Lunch Break (30 min)"
+  //     default:
+  //       return ""
+  //   }
+  // }
 
   const isOvertimeRequired = totalWorkHours > 8.5
   const canPunchOut = totalWorkHours >= 8 || isOvertimeRequired
+
+  const formattedWorkStartTime = workStartTime
+    ? new Date(workStartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+    : null
 
   return (
     <div className="space-y-6">
@@ -116,7 +120,9 @@ export function AttendanceSystem({
           <h4 className="text-4xl font-bold text-gray-900 mb-2">{currentTime.toLocaleTimeString()}</h4>
           <p className="text-gray-600 text-lg">{currentTime.toLocaleDateString()}</p>
 
-          {workStartTime && <p className="text-blue-600 font-medium mt-2">Work started at: {workStartTime}</p>}
+          {formattedWorkStartTime && (
+            <p className="text-blue-600 font-medium mt-2">Work started at: {formattedWorkStartTime}</p>
+          )}
         </div>
 
         <div className="flex justify-center mb-6">
@@ -159,10 +165,10 @@ export function AttendanceSystem({
             <p className="text-sm text-gray-600">Today&apos;s Hours</p>
             <p className="text-2xl font-bold text-blue-600">{totalWorkHours.toFixed(1)}h</p>
           </div>
-          <div className="bg-green-50 rounded-lg p-4">
+          {/* <div className="bg-green-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Break Time</p>
             <p className="text-2xl font-bold text-green-600">{breakTime}m</p>
-          </div>
+          </div> */}
           <div className="bg-orange-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Overtime</p>
             <p className="text-2xl font-bold text-orange-600">{overtimeHours.toFixed(1)}h</p>
@@ -175,7 +181,7 @@ export function AttendanceSystem({
       </div>
 
       {/* Break System */}
-      {isPunchedIn && (
+      {/* {isPunchedIn && (
         <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
             <Coffee className="w-6 h-6 text-blue-500 mr-2" />
@@ -256,7 +262,7 @@ export function AttendanceSystem({
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Overtime Alert */}
       {isOvertimeRequired && (

@@ -4,9 +4,10 @@ import type { WorkHours } from "../../types/employees";
 interface WorkHoursDisplayProps {
   workHours: WorkHours
   isActive: boolean
+  onBreak?: boolean
 }
 
-export function WorkHoursDisplay({ workHours, isActive }: WorkHoursDisplayProps) {
+export function WorkHoursDisplay({ workHours, isActive, onBreak = false }: WorkHoursDisplayProps) {
   const progressPercentage = Math.min((workHours.todayHours / workHours.requiredHours) * 100, 100)
   const isOvertime = workHours.todayHours > workHours.requiredHours
   const remainingHours = Math.max(workHours.requiredHours - workHours.todayHours, 0)
@@ -41,12 +42,24 @@ export function WorkHoursDisplay({ workHours, isActive }: WorkHoursDisplayProps)
             </div>
           </div>
 
-          {isActive && (
-            <div className="flex items-center justify-center space-x-2 text-green-600">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium">Currently Working</span>
-            </div>
-          )}
+          <div className="flex items-center justify-center space-x-2">
+            {onBreak ? (
+              <>
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-orange-600">On Break</span>
+              </>
+            ) : isActive ? (
+              <>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-green-600">Currently Working</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-600">Not Working</span>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Progress Bar */}

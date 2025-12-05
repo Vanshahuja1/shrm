@@ -1,4 +1,7 @@
+"use client"
 import { User, Calendar, CreditCard, DollarSign, FileText, Shield } from "lucide-react"
+import { useState } from "react"
+import axios from "@/lib/axiosInstance"
 import type { EmployeeInfo, AttendanceRecord } from "../../types/employees";
 
 interface PersonalDashboardProps {
@@ -7,6 +10,47 @@ interface PersonalDashboardProps {
 }
 
 export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalDashboardProps) {
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwMessage, setPwMessage] = useState<string | null>(null)
+  const [pwError, setPwError] = useState<string | null>(null)
+
+  const handlePasswordChange = async () => {
+    setPwMessage(null)
+    setPwError(null)
+    if (!currentPassword || !newPassword) {
+      setPwError("Please fill all fields")
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError("New passwords do not match")
+      return
+    }
+    try {
+      setPwLoading(true)
+      const res = await axios.patch("/auth/change-password", {
+        currentPassword,
+        newPassword,
+      })
+      if (res.data?.success) {
+        setPwMessage("Password changed successfully. Please log in again if required.")
+        setCurrentPassword("")
+        setNewPassword("")
+        setConfirmPassword("")
+        setShowChangePassword(false)
+      } else {
+        setPwError(res.data?.message || "Failed to change password")
+      }
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setPwError(message || "Failed to change password")
+    } finally {
+      setPwLoading(false)
+    }
+  }
   // Calculate last 30 days attendance
   const last30Days = attendanceRecords.slice(-30)
   const presentDays = last30Days.filter((record) => record.status === "present" || record.status === "late").length
@@ -58,6 +102,54 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
             <p className="text-gray-900 font-medium">{employeeInfo.personalInfo.dateOfBirth}</p>
           </div>
         </div>
+
+        <div className="mt-6">
+          <button
+            onClick={() => setShowChangePassword((s) => !s)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            {showChangePassword ? "Cancel" : "Change Password"}
+          </button>
+        </div>
+
+        {showChangePassword && (
+          <div className="mt-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                type="password"
+                placeholder="Current password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="border rounded px-3 py-2"
+              />
+              <input
+                type="password"
+                placeholder="New password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="border rounded px-3 py-2"
+              />
+              <input
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="border rounded px-3 py-2"
+              />
+            </div>
+            <div className="mt-3 flex items-center space-x-3">
+              <button
+                onClick={handlePasswordChange}
+                disabled={pwLoading}
+                className={`px-4 py-2 rounded-lg text-white ${pwLoading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}
+              >
+                {pwLoading ? "Updating..." : "Update Password"}
+              </button>
+              {pwMessage && <span className="text-green-700 text-sm">{pwMessage}</span>}
+              {pwError && <span className="text-red-600 text-sm">{pwError}</span>}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Last 30 Days Attendance */}

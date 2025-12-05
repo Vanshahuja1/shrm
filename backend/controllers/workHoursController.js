@@ -68,14 +68,19 @@ const createTestWorkHours = async (req, res) => {
 const getWorkHours = async (req, res) => {
   try {
     const { id } = req.params
-    const { date = new Date().toISOString().split("T")[0] } = req.query
+    const { date, tzOffset } = req.query
 
-    console.log(`Fetching work hours for employee ${id} on ${date}`)
+    const now = new Date()
+    const offsetMs = tzOffset ? parseInt(tzOffset, 10) * 60 * 1000 : 0
+    const clientNow = new Date(now.getTime() - offsetMs)
+    const localDate = date || clientNow.toISOString().split("T")[0]
 
-    const attendance = await Attendance.findOne({ employeeId: id, date })
+    console.log(`Fetching work hours for employee ${id} on ${localDate}`)
+
+    const attendance = await Attendance.findOne({ employeeId: id, date: localDate })
 
     if (!attendance) {
-      console.log(`No attendance record found for employee ${id} on ${date}`)
+      console.log(`No attendance record found for employee ${id} on ${localDate}`)
       return res.json({
         todayHours: 0,
         requiredHours: 8,
@@ -94,10 +99,10 @@ const getWorkHours = async (req, res) => {
     })
 
     // Get task justifications for the day
-    const startOfDay = new Date(date)
+    const startOfDay = new Date(localDate)
     startOfDay.setHours(0, 0, 0, 0)
     
-    const endOfDay = new Date(date)
+    const endOfDay = new Date(localDate)
     endOfDay.setHours(23, 59, 59, 999)
 
     const tasks = await Task.find({
@@ -110,11 +115,27 @@ const getWorkHours = async (req, res) => {
 
     const taskJustification = tasks.map((task) => task.title)
 
+    // Compute live hours if active based on punch-in and excluding breaks
+    let todayHours = attendance.totalHours || 0
+    if (attendance.isActive && attendance.punchIn) {
+      const workingMs = clientNow.getTime() - new Date(attendance.punchIn).getTime()
+      let totalBreakMinutes = attendance.breakTime || 0
+      const activeBreak = (attendance.breaks || []).find((b) => !b.endTime)
+      if (activeBreak && activeBreak.startTime) {
+        const ongoingBreakMs = clientNow.getTime() - new Date(activeBreak.startTime).getTime()
+        totalBreakMinutes += Math.max(0, Math.floor(ongoingBreakMs / (1000 * 60)))
+      }
+      const breakHrs = totalBreakMinutes / 60
+      const workingHrs = workingMs / (1000 * 60 * 60)
+      todayHours = Math.max(0, parseFloat((workingHrs - breakHrs).toFixed(2)))
+    }
+
+    const liveOvertime = Math.max(0, parseFloat((todayHours - 8).toFixed(2)))
     const workHoursData = {
-      todayHours: attendance.totalHours || 0,
+      todayHours,
       requiredHours: 8,
       breakTime: attendance.breakTime || 0,
-      overtimeHours: attendance.overtimeHours || 0,
+      overtimeHours: attendance.isActive ? liveOvertime : (attendance.overtimeHours || 0),
       taskJustification,
       isActive: attendance.isActive || false,
     }

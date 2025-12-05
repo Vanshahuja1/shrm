@@ -1,8 +1,8 @@
 import axios from "axios"
 
 const axiosInstance = axios.create({
-  //baseURL: "http://localhost:5000/api",
-  baseURL: "https://app.theoneaim.co.in/api",
+  baseURL: "http://localhost:5000/api",
+  //baseURL: "https://app.theoneaim.co.in/api",
   withCredentials: true,
   timeout: 10000, // 10 second timeout
   headers: {
@@ -13,6 +13,14 @@ const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Attach auth token if available
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('authToken')
+      if (token) {
+        config.headers = config.headers || {}
+        config.headers["Authorization"] = `Bearer ${token}`
+      }
+    }
     console.log(`Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${config.url}`)
     return config
   },

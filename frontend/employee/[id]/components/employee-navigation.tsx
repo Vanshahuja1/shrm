@@ -2,7 +2,7 @@
 
 import { useParams, usePathname } from "next/navigation"
 import Link from "next/link"
-import { Target, Calendar, User, BarChart3, Zap,MailIcon } from "lucide-react"
+import { Target, Calendar, User, BarChart3, Zap,MailIcon , Database } from "lucide-react"
 import { useEffect, useState } from "react"
 import axios from "@/lib/axiosInstance"
 interface EmployeeNavigationProps {
@@ -12,8 +12,9 @@ interface EmployeeNavigationProps {
 export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
   const pathname = usePathname()
 
-  const [stats, setStats] = useState<{ isWorking: boolean, workingHrs: number }>({
+  const [stats, setStats] = useState<{ isWorking: boolean, onBreak: boolean, workingHrs: number }>({
     isWorking: false,
+    onBreak: false,
     workingHrs: 0
   })
 
@@ -22,10 +23,20 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`attendance/employee/stats/${employeeId}`)
+        if (!employeeId) return
+        const tzOffset = new Date().getTimezoneOffset()
+        const attendanceRes = await axios.get(`/employees/${employeeId}/attendance`, { params: { tzOffset } })
+        const breaksRes = await axios.get(`/employees/${employeeId}/attendance/breaks`, { params: { tzOffset } })
+
+        const isPunchedIn = attendanceRes.data?.isPunchedIn || false
+        const totalWorkHours = attendanceRes.data?.totalWorkHours || 0
+        const breaks: Array<{ endTime?: string }> = breaksRes.data || []
+        const hasActiveBreak = Array.isArray(breaks) && breaks.some(b => !b.endTime)
+
         setStats({
-          isWorking: res.data.isPunchedIn,
-          workingHrs: res.data.attendanceRecord?.totalHours || 0
+          isWorking: isPunchedIn && !hasActiveBreak,
+          onBreak: isPunchedIn && hasActiveBreak,
+          workingHrs: totalWorkHours,
         })
       } catch (error) {
         console.error('Error fetching stats:', error)
@@ -33,6 +44,13 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
     }
     if (employeeId) {
       fetchStats()
+      const interval = setInterval(fetchStats, 30000)
+      const onFocus = () => fetchStats()
+      window.addEventListener('focus', onFocus)
+      return () => {
+        clearInterval(interval)
+        window.removeEventListener('focus', onFocus)
+      }
     }
   }, [employeeId])
 
@@ -42,7 +60,7 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
     { id: "dashboard", label: "Personal Dashboard", icon: User, href: `/employee/${employeeId}/dashboard` },
     { id: "performance", label: "Performance Metrics", icon: BarChart3, href: `/employee/${employeeId}/performance` },
     { id: "workhours", label: "Work Hours Display", icon: Zap, href: `/employee/${employeeId}/workhours` },
-    // { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${employeeId}/datasync` },
+     { id: "datasync", label: "Data Sync Status", icon: Database, href: `/employee/${employeeId}/datasync` },
     {id: "email" , label : "Email System", icon: MailIcon, href: `/employee/${employeeId}/emails`},
     // { id: "settings", label: "Settings", icon: Settings, href: `/employee/${employeeId}/settings` },
   ]
@@ -74,10 +92,8 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
       {/* Status Indicator */}
       <div className="mt-6 pt-6 border-t border-blue-200">
         <div className="flex items-center space-x-2">
-          <div
-            className={`w-3 h-3 rounded-full ${stats.isWorking ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}
-          ></div>
-          <span className="text-sm text-gray-600">{stats.isWorking ? "Currently Working" : "Not Clocked In"}</span>
+          <div className={`w-3 h-3 rounded-full ${stats.onBreak ? "bg-orange-500 animate-pulse" : stats.isWorking ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}></div>
+          <span className="text-sm text-gray-600">{stats.onBreak ? "On Break" : stats.isWorking ? "Currently Working" : "Not Working"}</span>
         </div>
         <div className="mt-2">
           <span className="text-sm text-gray-600">Working Hours: {stats.workingHrs.toFixed(1)}h</span>

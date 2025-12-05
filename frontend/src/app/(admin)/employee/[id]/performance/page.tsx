@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Star } from "lucide-react"
+// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+// import { Badge } from "@/components/ui/badge"
+// import { Progress } from "@/components/ui/progress"
+// import { Star } from "lucide-react"
+import { motion } from "framer-motion";
 // import axios from "@/lib/axiosInstance" // Uncomment when using real API
 
 type PerformanceScore = {
@@ -71,94 +72,134 @@ export default function PerformancePage() {
       })
       setLoading(false)
     }, 800)
-  }, [id])
+  }, [id, setScore, setLoading])
 
   if (loading || !score) {
     return <div className="animate-pulse">Loading performance metrics...</div>
   }
 
   return (
-    <Card className="max-w-2xl mx-auto mt-8">
-      <CardHeader>
-        <CardTitle>Performance Details for {score.employeeId.name}</CardTitle>
-        <div className="text-sm text-gray-500">
-          {score.employeeId.role} &middot; {score.employeeId.department}
-        </div>
-        <div className="mt-1 text-gray-600">
-          Period: {score.evaluationPeriod.quarter} {score.evaluationPeriod.year}
-        </div>
-        <Badge className="mt-2">{score.category}</Badge>
-        <Badge variant="outline" className="ml-2">{score.status}</Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-medium mb-2">Score Breakdown</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span>Task Delivery (40%)</span>
-                <div className="flex items-center space-x-2">
-                  <Progress value={score.scores.taskDelivery} className="w-32" />
-                  <span className="font-medium w-12">{score.scores.taskDelivery}</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Quality Error Rate (30%)</span>
-                <div className="flex items-center space-x-2">
-                  <Progress value={score.scores.qualityErrorRate} className="w-32" />
-                  <span className="font-medium w-12">{score.scores.qualityErrorRate}</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Team Coordination (20%)</span>
-                <div className="flex items-center space-x-2">
-                  <Progress value={score.scores.teamCoordination} className="w-32" />
-                  <span className="font-medium w-12">{score.scores.teamCoordination}</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Efficiency (10%)</span>
-                <div className="flex items-center space-x-2">
-                  <Progress value={score.scores.efficiency} className="w-32" />
-                  <span className="font-medium w-12">{score.scores.efficiency}</span>
-                </div>
-              </div>
-              <div className="border-t pt-3 flex justify-between items-center">
-                <span className="font-medium">Total Score</span>
-                <span className="text-xl font-bold text-blue-600">{score.scores.totalScore}%</span>
-              </div>
-            </div>
-          </div>
-          {score.managerEvaluation && (
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Manager Evaluation</h4>
-              <div className="flex items-center space-x-1 mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${i < score.managerEvaluation!.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                  />
-                ))}
-              </div>
-              <div>{score.managerEvaluation.comments}</div>
-            </div>
-          )}
-          {score.selfAssessment && (
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Self Assessment</h4>
-              <div className="flex items-center space-x-1 mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${i < score.selfAssessment!.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                  />
-                ))}
-              </div>
-              <div>{score.selfAssessment.comments}</div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    // <Card className="max-w-2xl mx-auto mt-8">
+    //   <CardHeader>
+    //     <CardTitle>Performance Details for {score.employeeId.name}</CardTitle>
+    //     <div className="text-sm text-gray-500">
+    //       {score.employeeId.role} &middot; {score.employeeId.department}
+    //     </div>
+    //     <div className="mt-1 text-gray-600">
+    //       Period: {score.evaluationPeriod.quarter} {score.evaluationPeriod.year}
+    //     </div>
+    //     <Badge className="mt-2">{score.category}</Badge>
+    //     <Badge variant="outline" className="ml-2">{score.status}</Badge>
+    //   </CardHeader>
+    //   <CardContent>
+    //     <div className="space-y-4">
+    //       <div>
+    //         <h4 className="font-medium mb-2">Score Breakdown</h4>
+    //         <div className="space-y-2">
+    //           <div className="flex justify-between items-center">
+    //             <span>Task Delivery (40%)</span>
+    //             <div className="flex items-center space-x-2">
+    //               <Progress value={score.scores.taskDelivery} className="w-32" />
+    //               <span className="font-medium w-12">{score.scores.taskDelivery}</span>
+    //             </div>
+    //           </div>
+    //           <div className="flex justify-between items-center">
+    //             <span>Quality Error Rate (30%)</span>
+    //             <div className="flex items-center space-x-2">
+    //               <Progress value={score.scores.qualityErrorRate} className="w-32" />
+    //               <span className="font-medium w-12">{score.scores.qualityErrorRate}</span>
+    //             </div>
+    //           </div>
+    //           <div className="flex justify-between items-center">
+    //             <span>Team Coordination (20%)</span>
+    //             <div className="flex items-center space-x-2">
+    //               <Progress value={score.scores.teamCoordination} className="w-32" />
+    //               <span className="font-medium w-12">{score.scores.teamCoordination}</span>
+    //             </div>
+    //           </div>
+    //           <div className="flex justify-between items-center">
+    //             <span>Efficiency (10%)</span>
+    //             <div className="flex items-center space-x-2">
+    //               <Progress value={score.scores.efficiency} className="w-32" />
+    //               <span className="font-medium w-12">{score.scores.efficiency}</span>
+    //             </div>
+    //           </div>
+    //           <div className="border-t pt-3 flex justify-between items-center">
+    //             <span className="font-medium">Total Score</span>
+    //             <span className="text-xl font-bold text-blue-600">{score.scores.totalScore}%</span>
+    //           </div>
+    //         </div>
+    //       </div>
+    //       {score.managerEvaluation && (
+    //         <div className="bg-blue-50 p-4 rounded-lg">
+    //           <h4 className="font-medium mb-2">Manager Evaluation</h4>
+    //           <div className="flex items-center space-x-1 mb-2">
+    //             {[...Array(5)].map((_, i) => (
+    //               <Star
+    //                 key={i}
+    //                 className={`h-4 w-4 ${i < score.managerEvaluation!.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+    //               />
+    //             ))}
+    //           </div>
+    //           <div>{score.managerEvaluation.comments}</div>
+    //         </div>
+    //       )}
+    //       {score.selfAssessment && (
+    //         <div className="bg-green-50 p-4 rounded-lg">
+    //           <h4 className="font-medium mb-2">Self Assessment</h4>
+    //           <div className="flex items-center space-x-1 mb-2">
+    //             {[...Array(5)].map((_, i) => (
+    //               <Star
+    //                 key={i}
+    //                 className={`h-4 w-4 ${i < score.selfAssessment!.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+    //               />
+    //             ))}
+    //           </div>
+    //           <div>{score.selfAssessment.comments}</div>
+    //         </div>
+    //       )}
+    //     </div>
+    //   </CardContent>
+    // </Card>
+
+    <>
+    <div className="flex items-center justify-center min-h-[70vh] bg-white text-gray-800 px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="text-center space-y-4"
+      >
+        
+        <motion.h1
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-3xl font-semibold tracking-tight"
+        >
+          Stay Tuned!
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-lg text-gray-500"
+        >
+          Coming in the next update...
+        </motion.p>
+
+        {/* Loading dots animation */}
+        <motion.div
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="text-gray-400 text-2xl font-bold"
+        >
+          • • •
+        </motion.div>
+
+      </motion.div>
+    </div>
+    </>
   )
 }

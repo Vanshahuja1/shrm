@@ -5,20 +5,23 @@ const User = require("../models/userModel");
 const getAttendanceRecords = async (req, res) => {
   try {
     const { id } = req.params;
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, tzOffset } = req.query;
 
     const query = { employeeId: id };
 
     if (startDate && endDate) {
       query.date = { $gte: startDate, $lte: endDate };
     } else {
-      // Default to last 30 days
-      const thirtyDaysAgo = new Date();
+      // Default to last 30 days based on client timezone
+      const now = new Date();
+      const offsetMs = tzOffset ? parseInt(tzOffset, 10) * 60 * 1000 : 0;
+      const clientNow = new Date(now.getTime() - offsetMs);
+      const thirtyDaysAgo = new Date(clientNow);
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const today = new Date().toISOString().split("T")[0];
+      const todayStr = clientNow.toISOString().split("T")[0];
       const startDateDefault = thirtyDaysAgo.toISOString().split("T")[0];
 
-      query.date = { $gte: startDateDefault, $lte: today };
+      query.date = { $gte: startDateDefault, $lte: todayStr };
     }
 
     // Fetch user name
@@ -41,22 +44,57 @@ const getAttendanceRecords = async (req, res) => {
       name: employeeName,
     }));
 
-    // Check if currently punched in
-    const today = new Date().toISOString().split("T")[0];
+    // Check if currently punched in using client timezone
+    const now = new Date();
+    const offsetMs2 = tzOffset ? parseInt(tzOffset, 10) * 60 * 1000 : 0;
+    const clientNow = new Date(now.getTime() - offsetMs2);
+    const today = clientNow.toISOString().split("T")[0];
     const todayRecord = await Attendance.findOne({
       employeeId: id,
       date: today,
     });
 
+    // Auto-cap any active break that exceeded its allowed duration
+    if (todayRecord && Array.isArray(todayRecord.breaks)) {
+      const typeLimits = { break1: 15, break2: 15, lunch: 30 } // minutes
+      const active = todayRecord.breaks.find((b) => b && !b.endTime)
+      if (active && active.startTime) {
+        const allowedMin = typeLimits[active.type] || 0
+        const elapsedMs = clientNow.getTime() - new Date(active.startTime).getTime()
+        const elapsedMin = Math.floor(elapsedMs / (1000 * 60))
+        if (allowedMin > 0 && elapsedMin >= allowedMin) {
+          const cappedEnd = new Date(new Date(active.startTime).getTime() + allowedMin * 60 * 1000)
+          active.endTime = cappedEnd
+          active.duration = allowedMin
+          todayRecord.breakTime = todayRecord.breaks.reduce((t, b) => t + (b.duration || 0), 0)
+          await todayRecord.save()
+        }
+      }
+    }
+
+    // Compute live total hours if active (exclude accumulated and ongoing break time)
+    let totalWorkHours = todayRecord?.totalHours || 0;
+    if (todayRecord?.isActive && todayRecord.punchIn) {
+      const workingMs = clientNow.getTime() - new Date(todayRecord.punchIn).getTime();
+      let totalBreakMinutes = todayRecord.breakTime || 0;
+      const activeBreak = (todayRecord.breaks || []).find((b) => !b.endTime);
+      if (activeBreak && activeBreak.startTime) {
+        const ongoingBreakMs = clientNow.getTime() - new Date(activeBreak.startTime).getTime();
+        totalBreakMinutes += Math.max(0, Math.floor(ongoingBreakMs / (1000 * 60)));
+      }
+      const breakHrs = totalBreakMinutes / 60;
+      const workingHrs = workingMs / (1000 * 60 * 60);
+      totalWorkHours = Math.max(0, parseFloat((workingHrs - breakHrs).toFixed(2)));
+    }
+
     res.json({
       records: attendanceRecords,
       isPunchedIn: todayRecord?.isActive || false,
-      workStartTime: todayRecord?.punchIn
-        ? todayRecord.punchIn.toTimeString().slice(0, 5)
-        : null,
-      totalWorkHours: todayRecord?.totalHours || 0,
+      workStartTime: todayRecord?.punchIn ? todayRecord.punchIn.toISOString() : null,
+      totalWorkHours,
       breakTime: todayRecord?.breakTime || 0,
       overtimeHours: todayRecord?.overtimeHours || 0,
+      breakSessions: todayRecord?.breaks || [], // Add break sessions to response
     });
   } catch (error) {
     console.error("Get attendance records error:", error);
@@ -68,10 +106,13 @@ const getAttendanceRecords = async (req, res) => {
 const punchIn = async (req, res) => {
   try {
     const { id } = req.params;
-    const { timestamp } = req.body;
+    const { timestamp, tzOffset } = req.body;
 
-    const today = new Date().toISOString().split("T")[0];
-    const punchInTime = new Date(timestamp);
+    const now = new Date();
+    const offsetMs = tzOffset ? parseInt(tzOffset, 10) * 60 * 1000 : 0;
+    const clientNow = new Date(now.getTime() - offsetMs);
+    const today = clientNow.toISOString().split("T")[0];
+    const punchInTime = timestamp ? new Date(timestamp) : clientNow;
 
     // Check if already punched in today
     let attendance = await Attendance.findOne({ employeeId: id, date: today });
@@ -93,6 +134,7 @@ const punchIn = async (req, res) => {
         punchIn: punchInTime,
         isActive: true,
         status: "present",
+        breaks: [], // Initialize empty breaks array
       });
     }
 
@@ -114,10 +156,13 @@ const punchIn = async (req, res) => {
 const punchOut = async (req, res) => {
   try {
     const { id } = req.params;
-    const { timestamp } = req.body;
+    const { timestamp, tzOffset } = req.body;
 
-    const today = new Date().toISOString().split("T")[0];
-    const punchOutTime = new Date(timestamp);
+    const now = new Date();
+    const offsetMs = tzOffset ? parseInt(tzOffset, 10) * 60 * 1000 : 0;
+    const clientNow = new Date(now.getTime() - offsetMs);
+    const today = clientNow.toISOString().split("T")[0];
+    const punchOutTime = timestamp ? new Date(timestamp) : clientNow;
 
     const attendance = await Attendance.findOne({
       employeeId: id,
@@ -126,6 +171,20 @@ const punchOut = async (req, res) => {
 
     if (!attendance || !attendance.isActive) {
       return res.status(400).json({ error: "Not punched in today" });
+    }
+
+    // Auto-end any active break before punching out
+    if (attendance.breaks && attendance.breaks.length > 0) {
+      const typeLimits = { break1: 15, break2: 15, lunch: 30 };
+      const activeBreak = attendance.breaks.find((b) => b && !b.endTime);
+      
+      if (activeBreak && activeBreak.startTime) {
+        const allowedMin = typeLimits[activeBreak.type] || 0;
+        const cappedEnd = new Date(new Date(activeBreak.startTime).getTime() + allowedMin * 60 * 1000);
+        activeBreak.endTime = cappedEnd;
+        activeBreak.duration = allowedMin;
+        attendance.breakTime = attendance.breaks.reduce((t, b) => t + (b.duration || 0), 0);
+      }
     }
 
     attendance.punchOut = punchOutTime;
@@ -149,9 +208,12 @@ const punchOut = async (req, res) => {
 const handleBreak = async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, action } = req.body; // action: 'start' or 'end'
+    const { type, action, tzOffset } = req.body; // action: 'start' or 'end'
 
-    const today = new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const offsetMs = tzOffset ? parseInt(tzOffset, 10) * 60 * 1000 : 0;
+    const clientNow = new Date(now.getTime() - offsetMs);
+    const today = clientNow.toISOString().split("T")[0];
     const attendance = await Attendance.findOne({
       employeeId: id,
       date: today,
@@ -161,13 +223,20 @@ const handleBreak = async (req, res) => {
       return res.status(400).json({ error: "Not punched in today" });
     }
 
-    const now = new Date();
-
     if (action === "start") {
+      // Disallow starting a break if this type was already used or is active
+      const existingOfType = (attendance.breaks || []).find((b) => b.type === type)
+      if (existingOfType && !existingOfType.endTime) {
+        return res.status(400).json({ error: "This break is already active" })
+      }
+      if (existingOfType && existingOfType.endTime) {
+        return res.status(400).json({ error: "This break was already used today" })
+      }
+      
       // Start break
       attendance.breaks.push({
         type,
-        startTime: now,
+        startTime: clientNow,
       });
     } else if (action === "end") {
       // End break
@@ -176,10 +245,18 @@ const handleBreak = async (req, res) => {
       );
 
       if (activeBreak) {
-        activeBreak.endTime = now;
-        activeBreak.duration = Math.round(
-          (now - activeBreak.startTime) / (1000 * 60)
-        ); // minutes
+        // Cap the break to its maximum allowed duration
+        const typeLimits = { break1: 15, break2: 15, lunch: 30 };
+        const allowedMin = typeLimits[type] || 0;
+        const elapsedMs = clientNow.getTime() - new Date(activeBreak.startTime).getTime();
+        const elapsedMin = Math.floor(elapsedMs / (1000 * 60));
+        
+        // Use the actual duration but cap it at the maximum
+        const actualDuration = Math.min(elapsedMin, allowedMin);
+        const endTime = new Date(new Date(activeBreak.startTime).getTime() + actualDuration * 60 * 1000);
+        
+        activeBreak.endTime = endTime;
+        activeBreak.duration = actualDuration;
 
         // Update total break time
         attendance.breakTime = attendance.breaks.reduce(
@@ -196,7 +273,8 @@ const handleBreak = async (req, res) => {
       employeeId: id,
       type,
       action,
-      timestamp: now.toISOString(),
+      timestamp: clientNow.toISOString(),
+      breaks: attendance.breaks, // Return updated breaks
     });
   } catch (error) {
     console.error("Handle break error:", error);
@@ -208,12 +286,34 @@ const handleBreak = async (req, res) => {
 const getTodayBreaks = async (req, res) => {
   try {
     const { id } = req.params;
-    const today = new Date().toISOString().split("T")[0];
+    const { tzOffset } = req.query;
+    const now = new Date();
+    const offsetMs = tzOffset ? parseInt(tzOffset, 10) * 60 * 1000 : 0;
+    const clientNow = new Date(now.getTime() - offsetMs);
+    const today = clientNow.toISOString().split("T")[0];
 
     const attendance = await Attendance.findOne({
       employeeId: id,
       date: today,
     });
+
+    // Auto-cap any active break that exceeded its allowed duration
+    if (attendance && Array.isArray(attendance.breaks)) {
+      const typeLimits = { break1: 15, break2: 15, lunch: 30 }
+      const active = attendance.breaks.find((b) => b && !b.endTime)
+      if (active && active.startTime) {
+        const allowedMin = typeLimits[active.type] || 0
+        const elapsedMs = clientNow.getTime() - new Date(active.startTime).getTime()
+        const elapsedMin = Math.floor(elapsedMs / (1000 * 60))
+        if (allowedMin > 0 && elapsedMin >= allowedMin) {
+          const cappedEnd = new Date(new Date(active.startTime).getTime() + allowedMin * 60 * 1000)
+          active.endTime = cappedEnd
+          active.duration = allowedMin
+          attendance.breakTime = attendance.breaks.reduce((t, b) => t + (b.duration || 0), 0)
+          await attendance.save()
+        }
+      }
+    }
 
     res.json(attendance?.breaks || []);
   } catch (error) {
@@ -225,7 +325,11 @@ const getTodayBreaks = async (req, res) => {
 const getStats = async (req, res) => {
   try {
     const { id } = req.params;
-    const today = new Date().toISOString().split("T")[0];
+    const { tzOffset } = req.query;
+    const now = new Date();
+    const offsetMs = tzOffset ? parseInt(tzOffset, 10) * 60 * 1000 : 0;
+    const clientNow = new Date(now.getTime() - offsetMs);
+    const today = clientNow.toISOString().split("T")[0];
     const attendance = await Attendance.findOne({
       employeeId: id,
       date: today,

@@ -99,7 +99,7 @@ export function WorkHoursDisplay({ workHours, isActive }: WorkHoursDisplayProps)
       </div>
 
       {/* Task Justification */}
-      <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6">
+      {/* <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
           <FileText className="w-6 h-6 text-blue-500 mr-2" />
           Task Justification
@@ -122,7 +122,7 @@ export function WorkHoursDisplay({ workHours, isActive }: WorkHoursDisplayProps)
             <p>No task justifications recorded yet</p>
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Work Status Alerts */}
       {isOvertime && (
