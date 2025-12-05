@@ -2,7 +2,7 @@
 
 import { /* useEffect */ } from "react"
 import { Clock, /* Play, Pause, Square, Coffee, */ LogIn, LogOut, AlertCircle } from "lucide-react"
-import type { BreakSession } from "../../types/employees";
+//import type { BreakSession } from "../../types/employees";
 
 interface AttendanceSystemProps {
   onPunchIn: () => void
