@@ -105,6 +105,37 @@ export default function AttendanceManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [managerId]);
 
+  // Calculate real-time work hours if punched in
+  const calculateCurrentWorkHours = () => {
+    if (!managerAttendance?.isPunchedIn || !managerAttendance?.workStartTime) {
+      return managerAttendance?.totalWorkHours ?? 0;
+    }
+    
+    // Parse the work start time (assuming it's in IST or local timezone)
+    const workStartTime = managerAttendance.workStartTime;
+    let startTime: Date;
+    
+    // Handle different time formats
+    if (workStartTime.includes('T')) {
+      // ISO format: extract time and create date for today in local timezone
+      const timeOnly = workStartTime.split('T')[1].slice(0, 5); // Get HH:MM
+      const today = new Date();
+      const [hours, minutes] = timeOnly.split(':').map(Number);
+      startTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes);
+    } else {
+      // Assume it's already a valid date string
+      startTime = new Date(workStartTime);
+    }
+    
+    // Calculate hours from work start time to current time (both in local timezone)
+    const currentTimeMs = currentTime.getTime();
+    const startTimeMs = startTime.getTime();
+    const diffMs = currentTimeMs - startTimeMs;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    
+    return Math.max(0, diffHours);
+  };
+
   // Check if user can punch in (not completed work today)
   const canPunchIn = () => {
     if (!managerAttendance) return true;
@@ -116,7 +147,7 @@ export default function AttendanceManagement() {
     
     // If user has already worked 8+ hours today and is not currently punched in,
     // it means they already completed work and punched out - don't allow punch in again
-    if ((managerAttendance.totalWorkHours ?? 0) >= 8) {
+    if (calculateCurrentWorkHours() >= 8 && !managerAttendance.isPunchedIn) {
       return false;
     }
     
@@ -138,6 +169,10 @@ export default function AttendanceManagement() {
   const handleManagerPunchToggle = async () => {
     if (!managerId) return;
     try {
+      // Create local timestamp
+      const now = new Date();
+      const localTimestamp = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
+      
       if (!managerAttendance?.isPunchedIn) {
         // Check if user can punch in
         if (!canPunchIn()) {
@@ -146,13 +181,15 @@ export default function AttendanceManagement() {
         }
         
         // Punch in
+        console.log(localTimestamp, "Punching in for manager:", managerId);
         await axiosInstance.post(`/employees/${managerId}/attendance`, {
-          timestamp: new Date().toISOString(),
+          timestamp: localTimestamp,
         });
       } else {
         // Punch out
+        console.log(localTimestamp, "Punching out for manager:", managerId);
         await axiosInstance.post(`/employees/${managerId}/attendance/punch-out`, {
-          timestamp: new Date().toISOString(),
+          timestamp: localTimestamp,
         });
       }
       fetchManagerAttendance();
@@ -349,7 +386,12 @@ export default function AttendanceManagement() {
           <h4 className="text-4xl font-bold text-gray-900 mb-2">{hasMounted ? currentTime.toLocaleTimeString() : "--:--:--"}</h4>
           <p className="text-gray-600 text-lg">{hasMounted ? currentTime.toLocaleDateString() : "--/--/----"}</p>
           {managerAttendance?.workStartTime && (
-            <p className="text-red-600 font-medium mt-2">Work started at: {managerAttendance.workStartTime}</p>
+            <p className="text-red-600 font-medium mt-2">
+              Work started at: {managerAttendance.workStartTime.includes('T') 
+                ? managerAttendance.workStartTime.split('T')[1].slice(0, 5)
+                : managerAttendance.workStartTime
+              }
+            </p>
           )}
         </div>
 
@@ -370,9 +412,9 @@ export default function AttendanceManagement() {
           ) : (
             <button
               onClick={handleManagerPunchToggle}
-              disabled={isManagerLoading || (managerAttendance?.totalWorkHours ?? 0) < 8}
+              disabled={isManagerLoading || calculateCurrentWorkHours() < 8}
               className={`px-12 py-4 rounded-lg transition-colors flex items-center space-x-3 text-xl font-semibold ${
-                (managerAttendance?.totalWorkHours ?? 0) >= 8 ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                calculateCurrentWorkHours() >= 8 ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
               <LogOut className="w-8 h-8" />
@@ -382,22 +424,22 @@ export default function AttendanceManagement() {
         </div>
 
         {/* Minimum hours warning */}
-        {managerAttendance?.isPunchedIn && (managerAttendance?.totalWorkHours ?? 0) < 8 && (
+        {managerAttendance?.isPunchedIn && calculateCurrentWorkHours() < 8 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <div className="flex items-center">
               <span className="text-yellow-800 font-medium">
-                Minimum 8 hours required before punch out. Current: {(managerAttendance?.totalWorkHours ?? 0).toFixed(1)} hours
+                Minimum 8 hours required before punch out. Current: {calculateCurrentWorkHours().toFixed(1)} hours
               </span>
             </div>
           </div>
         )}
 
         {/* Work completed for today warning */}
-        {!managerAttendance?.isPunchedIn && (managerAttendance?.totalWorkHours ?? 0) >= 8 && (
+        {!managerAttendance?.isPunchedIn && calculateCurrentWorkHours() >= 8 && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
             <div className="flex items-center">
               <span className="text-green-800 font-medium">
-                ✅ You have already completed your work for today ({(managerAttendance?.totalWorkHours ?? 0).toFixed(1)} hours). 
+                ✅ You have already completed your work for today ({calculateCurrentWorkHours().toFixed(1)} hours). 
                 You cannot punch in again until tomorrow.
               </span>
             </div>
@@ -408,7 +450,7 @@ export default function AttendanceManagement() {
         <div className="grid grid-cols-3 gap-4 text-center">
           <div className="bg-red-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Today&apos;s Hours</p>
-            <p className="text-2xl font-bold text-red-600">{(managerAttendance?.totalWorkHours ?? 0).toFixed(1)}h</p>
+            <p className="text-2xl font-bold text-red-600">{calculateCurrentWorkHours().toFixed(1)}h</p>
           </div>
           {/* <div className="bg-green-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Break Time</p>
@@ -416,7 +458,7 @@ export default function AttendanceManagement() {
           </div> */}
           <div className="bg-orange-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Overtime</p>
-            <p className="text-2xl font-bold text-orange-600">{(managerAttendance?.overtimeHours ?? 0).toFixed(1)}h</p>
+            <p className="text-2xl font-bold text-orange-600">{Math.max(0, calculateCurrentWorkHours() - 8).toFixed(1)}h</p>
           </div>
           <div className="bg-purple-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Required</p>
