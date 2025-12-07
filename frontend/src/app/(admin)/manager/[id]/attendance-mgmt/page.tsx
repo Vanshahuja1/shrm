@@ -21,6 +21,7 @@ interface ApiResponse {
   data?: AttendanceRecord[];
   records?: AttendanceRecord[];
 }
+
 export default function AttendanceManagement() {
   // Manager's own attendance state
   const [managerAttendance, setManagerAttendance] = useState<ManagerAttendance | null>(null);
@@ -29,45 +30,51 @@ export default function AttendanceManagement() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
   const [employeeMap, setEmployeeMap] = useState<Record<string, { id: string; name: string }>>({});
   const [hasMounted, setHasMounted] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 10;
+  const [isLoading, setIsLoading] = useState(true);
 
   const { id: managerId } = useParams()
 
-useEffect(() => {
-  if (!managerId) return;
-  const fetchData = async () => {
-    try {
-      // Fetch manager info (with employees and interns)
-      const managerRes = await axiosInstance.get(`/IT/org-members/${managerId}`);
-      const managerData = managerRes.data;
-      // Collect all employee and intern IDs and build a map for details
-      const employees = Array.isArray(managerData.employees) ? managerData.employees : [];
-      const interns = Array.isArray(managerData.interns) ? managerData.interns : [];
-      const allIds = [...employees.map((e: { id: string }) => e.id), ...interns.map((i: { id: string }) => i.id)];
-      // Build a map of id -> { id, name }
-      const map: Record<string, { id: string; name: string }> = {};
-      employees.forEach((e: { id: string; name: string }) => { map[e.id] = { id: e.id, name: e.name }; });
-      interns.forEach((i: { id: string; name: string }) => { map[i.id] = { id: i.id, name: i.name }; });
-      setEmployeeMap(map);
-      // Fetch attendance for all
-      const attendancePromises = allIds.map((empId: string) =>
-        axiosInstance.get(`/employees/${empId}/attendance`).then((res: { data: ApiResponse }) => res.data)
-      );
-      const attendanceResults = await Promise.all(attendancePromises);
-      // Flatten and filter attendance records
-      const allRecords = attendanceResults.flatMap((raw: ApiResponse) => {
-        if (Array.isArray(raw)) return raw as AttendanceRecord[];
-        if (raw.records) return raw.records;
-        if (raw.data) return raw.data;
-        return [];
-      });
-      setAttendanceRecords(allRecords);
-    } catch (error) {
-      console.error("Error fetching attendance records:", error);
-      setAttendanceRecords(mockAttendanceRecords); // Fallback to mock records
-    }
-  };
-  fetchData();
-}, [managerId]);
+  useEffect(() => {
+    if (!managerId) return;
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch manager info (with employees and interns)
+        const managerRes = await axiosInstance.get(`/IT/org-members/${managerId}`);
+        const managerData = managerRes.data;
+        // Collect all employee and intern IDs and build a map for details
+        const employees = Array.isArray(managerData.employees) ? managerData.employees : [];
+        const interns = Array.isArray(managerData.interns) ? managerData.interns : [];
+        const allIds = [...employees.map((e: { id: string }) => e.id), ...interns.map((i: { id: string }) => i.id)];
+        // Build a map of id -> { id, name }
+        const map: Record<string, { id: string; name: string }> = {};
+        employees.forEach((e: { id: string; name: string }) => { map[e.id] = { id: e.id, name: e.name }; });
+        interns.forEach((i: { id: string; name: string }) => { map[i.id] = { id: i.id, name: i.name }; });
+        setEmployeeMap(map);
+        // Fetch attendance for all
+        const attendancePromises = allIds.map((empId: string) =>
+          axiosInstance.get(`/employees/${empId}/attendance`).then((res: { data: ApiResponse }) => res.data)
+        );
+        const attendanceResults = await Promise.all(attendancePromises);
+        // Flatten and filter attendance records
+        const allRecords = attendanceResults.flatMap((raw: ApiResponse) => {
+          if (Array.isArray(raw)) return raw as AttendanceRecord[];
+          if (raw.records) return raw.records;
+          if (raw.data) return raw.data;
+          return [];
+        });
+        setAttendanceRecords(allRecords);
+      } catch (error) {
+        console.error("Error fetching attendance records:", error);
+        setAttendanceRecords(mockAttendanceRecords); // Fallback to mock records
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [managerId]);
 
   // Update current time every second
   useEffect(() => {
@@ -75,7 +82,6 @@ useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
-
 
   // Fetch manager's own attendance info
   const fetchManagerAttendance = async () => {
@@ -118,8 +124,6 @@ useEffect(() => {
     }
   };
 
-
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Attendance Management</h2>
@@ -127,54 +131,172 @@ useEffect(() => {
       {/* Last 30 Days Overview */}
       <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-4">Last 30 Days Overview</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-red-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Employee/Intern</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Punch In</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Punch Out</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Hours</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attendanceRecords?.map((record: AttendanceRecord, idx: number) => {
-                if (!record.employee || !record.date) return null;
-                const employeeName = employeeMap[record.employee]?.name || record.employee || "Unknown";
-                const rowKey = `${record.employee || "unknown"}-${record.date || idx}`;
-                return (
-                  <tr key={rowKey} className="border-b border-gray-100 hover:bg-red-50">
-                    <td className="py-3 px-4">{record.date}</td>
-                    <td className="py-3 px-4 font-medium">{employeeName}</td>
-                    <td className="py-3 px-4">{record.punchIn}</td>
-                    <td className="py-3 px-4">{record.punchOut}</td>
-                    <td className="py-3 px-4">{record.totalHours}h</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          record.status === "present"
-                            ? "bg-green-100 text-green-800"
-                            : record.status === "late"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : record.status === "absent"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {record.status.toUpperCase()}
-                      </span>
-                      {record.regularized && (
-                        <span className="ml-2 text-xs text-blue-600 font-medium">(Regularized)</span>
-                      )}
-                    </td>
+        
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="relative w-16 h-16">
+              <div className="absolute top-0 left-0 w-full h-full border-4 border-red-200 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-full h-full border-4 border-red-500 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <p className="mt-4 text-gray-600 font-medium">Loading attendance records...</p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-red-200">
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Employee/Intern</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Punch In</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Punch Out</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Hours</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {(() => {
+                    // Group records by date
+                    const groupedByDate = attendanceRecords.reduce((acc, record) => {
+                      if (!record.date) return acc;
+                      if (!acc[record.date]) acc[record.date] = [];
+                      acc[record.date].push(record);
+                      return acc;
+                    }, {} as Record<string, AttendanceRecord[]>);
+
+                    // Sort dates in descending order (most recent first)
+                    const sortedDates = Object.keys(groupedByDate).sort((a, b) => 
+                      new Date(b).getTime() - new Date(a).getTime()
+                    );
+
+                    // Flatten all records while maintaining date grouping
+                    const allRecords = sortedDates.flatMap((date) => 
+                      groupedByDate[date].map((record: AttendanceRecord) => record)
+                    );
+
+                    // Calculate pagination
+                    const startIndex = (currentPage - 1) * recordsPerPage;
+                    const endIndex = startIndex + recordsPerPage;
+                    const paginatedRecords = allRecords.slice(startIndex, endIndex);
+
+                    if (paginatedRecords.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-gray-500">
+                            No attendance records found
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return paginatedRecords.map((record: AttendanceRecord, idx: number) => {
+                      if (!record.employee) return null;
+                      const employeeName = employeeMap[record.employee]?.name || record.employee || "Unknown";
+                      const rowKey = `${record.date}-${record.employee || "unknown"}-${startIndex + idx}`;
+                      return (
+                        <tr key={rowKey} className="border-b border-gray-100 hover:bg-red-50">
+                          <td className="py-3 px-4">{record.date}</td>
+                          <td className="py-3 px-4 font-medium">{employeeName}</td>
+                          <td className="py-3 px-4">{record.punchIn}</td>
+                          <td className="py-3 px-4">{record.punchOut}</td>
+                          <td className="py-3 px-4">{record.totalHours}h</td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                record.status === "present"
+                                  ? "bg-green-100 text-green-800"
+                                  : record.status === "late"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : record.status === "absent"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {record.status.toUpperCase()}
+                            </span>
+                            {record.regularized && (
+                              <span className="ml-2 text-xs text-blue-600 font-medium">(Regularized)</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {(() => {
+              const groupedByDate = attendanceRecords.reduce((acc, record) => {
+                if (!record.date) return acc;
+                if (!acc[record.date]) acc[record.date] = [];
+                acc[record.date].push(record);
+                return acc;
+              }, {} as Record<string, AttendanceRecord[]>);
+
+              const sortedDates = Object.keys(groupedByDate).sort((a, b) => 
+                new Date(b).getTime() - new Date(a).getTime()
+              );
+
+              const allRecords = sortedDates.flatMap((date) => 
+                groupedByDate[date].map((record: AttendanceRecord) => record)
+              );
+
+              const totalRecords = allRecords.length;
+              const totalPages = Math.ceil(totalRecords / recordsPerPage);
+
+              if (totalPages <= 1) return null;
+
+              return (
+                <div className="flex items-center justify-between mt-4 px-4">
+                  <div className="text-sm text-gray-600">
+                    Showing {((currentPage - 1) * recordsPerPage) + 1} to {Math.min(currentPage * recordsPerPage, totalRecords)} of {totalRecords} records
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className={`px-4 py-2 rounded-lg border transition-colors ${
+                        currentPage === 1
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-white text-red-600 border-red-200 hover:bg-red-50"
+                      }`}
+                    >
+                      Previous
+                    </button>
+                    <div className="flex space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`px-4 py-2 rounded-lg border transition-colors ${
+                            currentPage === page
+                              ? "bg-red-500 text-white border-red-500"
+                              : "bg-white text-red-600 border-red-200 hover:bg-red-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className={`px-4 py-2 rounded-lg border transition-colors ${
+                        currentPage === totalPages
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-white text-red-600 border-red-200 hover:bg-red-50"
+                      }`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </>
+        )}
       </div>
 
       {/* Manager's Own Attendance Section (Red Themed, Employee UI) */}
@@ -230,15 +352,15 @@ useEffect(() => {
         )}
 
         {/* Work Hours Display */}
-        <div className="grid grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-3 gap-4 text-center">
           <div className="bg-red-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Today&apos;s Hours</p>
             <p className="text-2xl font-bold text-red-600">{(managerAttendance?.totalWorkHours ?? 0).toFixed(1)}h</p>
           </div>
-          <div className="bg-green-50 rounded-lg p-4">
+          {/* <div className="bg-green-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Break Time</p>
             <p className="text-2xl font-bold text-green-600">{managerAttendance?.breakTime ?? 0}m</p>
-          </div>
+          </div> */}
           <div className="bg-orange-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">Overtime</p>
             <p className="text-2xl font-bold text-orange-600">{(managerAttendance?.overtimeHours ?? 0).toFixed(1)}h</p>
@@ -249,16 +371,17 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Break System (with real logic) */}
-        {managerAttendance?.isPunchedIn && typeof managerId === 'string' && (
+        {/* Break System (disabled for now) */}
+        {/* {managerAttendance?.isPunchedIn && typeof managerId === 'string' && (
           <ManagerBreakSystem managerId={managerId} />
-        )}
+        )} */}
       </div>
     </div>
   );
 }
 
-// --- ManagerBreakSystem component definition ---
+// --- ManagerBreakSystem component definition (disabled for now) ---
+/* 
 function ManagerBreakSystem({ managerId }: { managerId: string }) {
   const [onBreak, setOnBreak] = useState(false);
   const [breakStart, setBreakStart] = useState<string | null>(null);
@@ -317,4 +440,4 @@ function ManagerBreakSystem({ managerId }: { managerId: string }) {
     </div>
   );
 }
-
+*/
