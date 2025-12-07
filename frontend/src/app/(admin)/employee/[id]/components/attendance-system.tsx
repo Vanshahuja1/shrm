@@ -98,9 +98,8 @@ export function AttendanceSystem({
   const isOvertimeRequired = totalWorkHours > 8.5
   const canPunchOut = totalWorkHours >= 8 || isOvertimeRequired
 
-  const formattedWorkStartTime = workStartTime
-    ? new Date(workStartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-    : null
+  const formattedWorkStartTime = workStartTime ?
+  new Date(workStartTime).toISOString().slice(11,16) : null ;
 
   return (
     <div className="space-y-6">

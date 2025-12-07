@@ -17,6 +17,7 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
   const [currentTime, setCurrentTime] = useState(new Date())
   const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null)
   const [loading, setLoading] = useState(true)
+  
 
   const fetchAttendanceData = useCallback(async () => {
     try {
@@ -40,7 +41,6 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
   const handlePunchIn = async () => {
     try {
       await axios.post(`/employees/${id}/attendance`, {
-        timestamp: new Date().toISOString(),
         tzOffset: new Date().getTimezoneOffset(),
       });
       fetchAttendanceData();
@@ -52,7 +52,6 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
   const handlePunchOut = async () => {
     try {
       await axios.post(`/employees/${id}/attendance/punch-out`, {
-        timestamp: new Date().toISOString(),
         tzOffset: new Date().getTimezoneOffset(),
       })
       fetchAttendanceData()
@@ -105,6 +104,7 @@ export default function AttendancePage({ params }: { params: Promise<{ id: strin
       totalWorkHours={attendanceData?.totalWorkHours || 0}
       breakTime={attendanceData?.breakTime || 0}
       overtimeHours={attendanceData?.overtimeHours || 0}
+      
     />
   )
 }
