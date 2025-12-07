@@ -15,6 +15,8 @@ interface AttendanceSystemProps {
   totalWorkHours: number
   breakTime: number
   overtimeHours: number
+  hasCompletedWorkToday?: boolean // New field to track if user completed work today
+  lastPunchOutTime?: string // Track when they last punched out
 }
 
 export function AttendanceSystem({
@@ -28,6 +30,8 @@ export function AttendanceSystem({
   totalWorkHours,
   /* breakTime, */
   overtimeHours,
+  hasCompletedWorkToday,
+  lastPunchOutTime,
 }: AttendanceSystemProps) {
   // const [breaks, setBreaks] = useState<BreakSession[]>([
   //   { id: 1, type: "break1", duration: 15, status: "available" },
@@ -98,6 +102,42 @@ export function AttendanceSystem({
   const isOvertimeRequired = totalWorkHours > 8.5
   const canPunchOut = totalWorkHours >= 8 || isOvertimeRequired
 
+  // Check if user can punch in (not completed work today)
+  const canPunchIn = () => {
+    // If user is currently punched in, they can't punch in again
+    if (isPunchedIn) {
+      return false;
+    }
+    
+    // If user has already worked 8+ hours today and is not currently punched in,
+    // it means they already completed work and punched out - don't allow punch in again
+    if (totalWorkHours >= 8) {
+      return false;
+    }
+    
+    // Backend-based logic (if available)
+    if (hasCompletedWorkToday) {
+      const today = new Date().toDateString();
+      const lastPunchOut = lastPunchOutTime ? new Date(lastPunchOutTime).toDateString() : null;
+      
+      // If they completed work today, don't allow punch in
+      if (lastPunchOut === today) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  // Enhanced punch in handler with validation
+  const handlePunchIn = () => {
+    if (!canPunchIn()) {
+      alert("You have already completed your work for today. You cannot punch in again.");
+      return;
+    }
+    onPunchIn();
+  };
+
   const formattedWorkStartTime = workStartTime ?
   new Date(workStartTime).toISOString().slice(11,16) : null ;
 
@@ -127,8 +167,13 @@ export function AttendanceSystem({
         <div className="flex justify-center mb-6">
           {!isPunchedIn ? (
             <button
-              onClick={onPunchIn}
-              className="bg-green-500 text-white px-12 py-4 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-3 text-xl font-semibold"
+              onClick={handlePunchIn}
+              className={`px-12 py-4 rounded-lg transition-colors flex items-center space-x-3 text-xl font-semibold ${
+                canPunchIn() 
+                  ? "bg-green-500 text-white hover:bg-green-600" 
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              disabled={!canPunchIn()}
             >
               <LogIn className="w-8 h-8" />
               <span>Punch In</span>
@@ -153,6 +198,19 @@ export function AttendanceSystem({
               <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
               <span className="text-yellow-800 font-medium">
                 Minimum 8 hours required before punch out. Current: {totalWorkHours.toFixed(1)} hours
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Work completed for today warning */}
+        {!isPunchedIn && totalWorkHours >= 8 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 text-green-600 mr-2" />
+              <span className="text-green-800 font-medium">
+                ✅ You have already completed your work for today ({totalWorkHours.toFixed(1)} hours). 
+                You cannot punch in again until tomorrow.
               </span>
             </div>
           </div>

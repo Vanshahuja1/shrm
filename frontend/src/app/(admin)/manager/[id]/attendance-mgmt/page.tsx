@@ -14,6 +14,8 @@ interface ManagerAttendance {
   totalWorkHours?: number;
   breakTime?: number;
   overtimeHours?: number;
+  hasCompletedWorkToday?: boolean; // New field to track if user completed work today
+  lastPunchOutTime?: string; // Track when they last punched out
 }
 
 // Type for API response data
@@ -103,11 +105,46 @@ export default function AttendanceManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [managerId]);
 
+  // Check if user can punch in (not completed work today)
+  const canPunchIn = () => {
+    if (!managerAttendance) return true;
+    
+    // If user is currently punched in, they can't punch in again
+    if (managerAttendance.isPunchedIn) {
+      return false;
+    }
+    
+    // If user has already worked 8+ hours today and is not currently punched in,
+    // it means they already completed work and punched out - don't allow punch in again
+    if ((managerAttendance.totalWorkHours ?? 0) >= 8) {
+      return false;
+    }
+    
+    // Backend-based logic (if available)
+    if (managerAttendance.hasCompletedWorkToday) {
+      const today = new Date().toDateString();
+      const lastPunchOut = managerAttendance.lastPunchOutTime ? new Date(managerAttendance.lastPunchOutTime).toDateString() : null;
+      
+      // If they completed work today, don't allow punch in
+      if (lastPunchOut === today) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   // Handle punch in/out for manager
   const handleManagerPunchToggle = async () => {
     if (!managerId) return;
     try {
       if (!managerAttendance?.isPunchedIn) {
+        // Check if user can punch in
+        if (!canPunchIn()) {
+          alert("You have already completed your work for today. You cannot punch in again.");
+          return;
+        }
+        
         // Punch in
         await axiosInstance.post(`/employees/${managerId}/attendance`, {
           timestamp: new Date().toISOString(),
@@ -320,8 +357,12 @@ export default function AttendanceManagement() {
           {!managerAttendance?.isPunchedIn ? (
             <button
               onClick={handleManagerPunchToggle}
-              className="bg-green-500 text-white px-12 py-4 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-3 text-xl font-semibold"
-              disabled={isManagerLoading}
+              className={`px-12 py-4 rounded-lg transition-colors flex items-center space-x-3 text-xl font-semibold ${
+                canPunchIn() 
+                  ? "bg-green-500 text-white hover:bg-green-600" 
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              disabled={isManagerLoading || !canPunchIn()}
             >
               <LogIn className="w-8 h-8" />
               <span>Punch In</span>
@@ -346,6 +387,18 @@ export default function AttendanceManagement() {
             <div className="flex items-center">
               <span className="text-yellow-800 font-medium">
                 Minimum 8 hours required before punch out. Current: {(managerAttendance?.totalWorkHours ?? 0).toFixed(1)} hours
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Work completed for today warning */}
+        {!managerAttendance?.isPunchedIn && (managerAttendance?.totalWorkHours ?? 0) >= 8 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center">
+              <span className="text-green-800 font-medium">
+                ✅ You have already completed your work for today ({(managerAttendance?.totalWorkHours ?? 0).toFixed(1)} hours). 
+                You cannot punch in again until tomorrow.
               </span>
             </div>
           </div>
