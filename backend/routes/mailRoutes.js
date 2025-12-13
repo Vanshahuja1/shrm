@@ -1,4 +1,5 @@
 const express = require("express");
+const { authenticateToken } = require("../middleware/auth");
 const {
   sendEmail,
   getAllEmails,
@@ -10,6 +11,9 @@ const {
 } = require("../controllers/mailController");
 
 const router = express.Router();
+
+// Apply authentication to all mail routes
+router.use(authenticateToken);
 
 router.post("/send", sendEmail);
 router.get("/", getAllEmails);

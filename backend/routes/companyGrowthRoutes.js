@@ -1,4 +1,5 @@
 const express = require("express")
+const { authenticateToken } = require("../middleware/auth")
 const router = express.Router()
 const {
   getAllCompanyGrowth,
@@ -13,6 +14,9 @@ const {
   getGrowthAnalytics,
   deleteCompanyGrowth
 } = require("../controllers/companyGrowthController")
+
+// Apply authentication to all company growth routes
+router.use(authenticateToken)
 
 // Basic CRUD routes
 router.get("/", getAllCompanyGrowth)

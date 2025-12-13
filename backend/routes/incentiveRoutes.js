@@ -1,4 +1,5 @@
 const express = require("express")
+const { authenticateToken } = require("../middleware/auth")
 const router = express.Router()
 const {
   // PLI controllers
@@ -18,6 +19,9 @@ const {
   // Combined analytics
   getIncentiveAnalytics
 } = require("../controllers/incentiveController")
+
+// Apply authentication to all incentive routes
+router.use(authenticateToken)
 
 // Combined analytics route
 router.get("/analytics", getIncentiveAnalytics)
