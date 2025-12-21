@@ -23,7 +23,8 @@ router.get('/employee/stats/:id', authorizeAttendanceAccess, getStats);
 router.get('/hr/:hrId', authorizeHRAccess, getTodaysAttendance);
 router.get('/hr/employee/:id', authorizeAttendanceAccess, getAttendanceByEmpId);
 
-// Route for manager to get team attendance with pagination
-router.get('/manager/:managerId/team', authorizeManagerTeamAccess, getManagerTeamAttendance);
+// Route for manager to get all employees attendance in their organization with pagination
+// Uses authenticated user's organization from JWT token
+router.get('/manager/team', authorizeManagerTeamAccess, getManagerTeamAttendance);
 
 module.exports = router;

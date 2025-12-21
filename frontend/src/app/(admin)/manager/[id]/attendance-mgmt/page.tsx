@@ -85,30 +85,29 @@ export default function AttendanceManagement() {
 
   const { id: managerId } = useParams()
 
-  // Helper function to convert UTC time to local time
-  const convertUTCToLocal = (dateStr: string, timeStr: string | null): string => {
-    if (!timeStr) return '-';
+  // Helper function to format time display (no timezone conversion - display as-is)
+  const formatTimeDisplay = (timeStr: string | null | undefined): string => {
+    // Return dash for null, undefined, or empty string
+    if (!timeStr || timeStr === '-' || timeStr === 'null') return '-';
     
     try {
-      // Parse UTC time
-      const [hours, minutes] = timeStr.split(':');
-      const utcDate = new Date(`${dateStr}T${hours}:${minutes}:00Z`);
+      // Just format the time string directly without conversion
+      const timeParts = timeStr.split(':');
+      if (timeParts.length < 2) return '-';
       
-      // Convert to local time
-      return utcDate.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
+      const hours = timeParts[0].padStart(2, '0');
+      const minutes = timeParts[1].padStart(2, '0');
+      
+      return `${hours}:${minutes}`;
     } catch (error) {
-      console.error('Error converting time:', error);
-      return timeStr || '-';
+      console.error('Error formatting time:', error, 'Time:', timeStr);
+      return '-';
     }
   };
 
-  // Fetch team attendance using new API endpoint
+  // Fetch organization attendance using new API endpoint
+  // API uses authenticated user's organization from JWT token (no need to pass managerId)
   const fetchTeamAttendance = async (page: number = 1) => {
-    if (!managerId) return;
     setIsLoading(true);
     try {
       // Build query parameters
@@ -122,9 +121,9 @@ export default function AttendanceManagement() {
       if (endDate) params.endDate = endDate;
       if (statusFilter) params.status = statusFilter;
 
-      // Use the new manager team attendance endpoint with pagination
+      // API returns all employees in the authenticated manager's organization
       const response = await axiosInstance.get<TeamAttendanceResponse>(
-        `/attendance/manager/${managerId}/team`,
+        `/attendance/manager/team`,
         { params }
       );
 
@@ -175,7 +174,7 @@ export default function AttendanceManagement() {
   useEffect(() => {
     fetchTeamAttendance(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [managerId, currentPage, startDate, endDate, statusFilter]);
+  }, [currentPage, startDate, endDate, statusFilter]);
 
   // Reset to page 1 when filters change
   const handleFilterChange = () => {
@@ -321,9 +320,9 @@ export default function AttendanceManagement() {
       {/* Team Attendance Overview */}
       <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-gray-900">Team Attendance Records</h3>
+          <h3 className="text-xl font-semibold text-gray-900">All Employees Attendance</h3>
           <div className="text-sm text-gray-600">
-            Total Team Members: <span className="font-semibold text-red-600">{totalEmployees}</span>
+            Total Employees: <span className="font-semibold text-red-600">{totalEmployees}</span>
           </div>
         </div>
 
@@ -435,8 +434,8 @@ export default function AttendanceManagement() {
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-gray-500">
                         {totalEmployees === 0 
-                          ? "No team members found" 
-                          : "No attendance records found for your team"}
+                          ? "No employees found" 
+                          : "No attendance records found"}
                       </td>
                     </tr>
                   ) : (
@@ -444,12 +443,27 @@ export default function AttendanceManagement() {
                       if (!record.employee) return null;
                       const employeeName = record.name || employeeMap[record.employee]?.name || record.employee || "Unknown";
                       const rowKey = `${record.date}-${record.employee || "unknown"}-${idx}`;
+                      const punchInDisplay = formatTimeDisplay(record.punchIn);
+                      const punchOutDisplay = formatTimeDisplay(record.punchOut);
+                      
                       return (
                         <tr key={rowKey} className="border-b border-gray-100 hover:bg-red-50">
                           <td className="py-3 px-4">{record.date}</td>
                           <td className="py-3 px-4 font-medium">{employeeName}</td>
-                          <td className="py-3 px-4">{convertUTCToLocal(record.date, record.punchIn)}</td>
-                          <td className="py-3 px-4">{convertUTCToLocal(record.date, record.punchOut)}</td>
+                          <td className="py-3 px-4">
+                            {punchInDisplay === '-' ? (
+                              <span className="text-gray-400">-</span>
+                            ) : (
+                              <span className="font-mono">{punchInDisplay}</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            {punchOutDisplay === '-' || punchOutDisplay === 'Invalid Date' ? (
+                              <span className="text-gray-400">-</span>
+                            ) : (
+                              <span className="font-mono">{punchOutDisplay}</span>
+                            )}
+                          </td>
                           <td className="py-3 px-4">{record.totalHours}h</td>
                           <td className="py-3 px-4">
                             <span

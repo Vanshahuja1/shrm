@@ -443,10 +443,11 @@ const getAttendanceByEmpId = async (req, res) => {
   }
 };
 
-// Get attendance of all associated employees for a manager with pagination
+// Get attendance of all employees in manager's organization with pagination
 const getManagerTeamAttendance = async (req, res) => {
   try {
-    const { managerId } = req.params;
+    // Use authenticated user's info (from JWT token)
+    const currentUser = req.user;
     const { 
       page = 1, 
       limit = 10, 
@@ -456,16 +457,16 @@ const getManagerTeamAttendance = async (req, res) => {
       employeeId 
     } = req.query;
 
-    // Verify manager exists
-    const manager = await User.findOne({ id: managerId, role: "manager" });
-    if (!manager) {
-      return res.status(404).json({ error: "Manager not found" });
+    // Verify current user is a manager, HR, or admin
+    if (!["manager", "hr", "admin"].includes(currentUser.role)) {
+      return res.status(403).json({ error: "Access denied. Manager privileges required." });
     }
 
-    // Find all employees under this manager
+    // Find ALL employees in the authenticated user's organization
+    // This allows managers to view attendance of all employees in their organization
     const employees = await User.find({
-      upperManager: { $in: [managerId, manager.name] },
-      role: { $in: ["employee", "intern"] },
+      organizationId: currentUser.organizationId,
+      role: { $in: ["employee", "intern", "manager", "hr"] },
       isActive: true
     }).select("id name email role departmentName");
 
@@ -525,11 +526,14 @@ const getManagerTeamAttendance = async (req, res) => {
     const enrichedRecords = attendanceRecords.map((record) => {
       const employee = employees.find(emp => emp.id === record.employeeId);
       
-      // Format time in UTC to avoid timezone conversion issues
-      const formatTimeUTC = (date) => {
+      // Extract UTC time from ISO string (database stores in UTC)
+      // This shows the actual time stored in DB without timezone conversion
+      const formatTime = (date) => {
         if (!date) return null;
-        const hours = date.getUTCHours().toString().padStart(2, '0');
-        const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+        // Get ISO string and extract time portion (always in UTC)
+        const isoString = date.toISOString(); // e.g., "2025-12-20T09:00:06.198Z"
+        const timePart = isoString.split('T')[1]; // "09:00:06.198Z"
+        const [hours, minutes] = timePart.split(':'); // ["09", "00"]
         return `${hours}:${minutes}`;
       };
       
@@ -541,8 +545,8 @@ const getManagerTeamAttendance = async (req, res) => {
         employeeRole: employee?.role || "",
         department: employee?.departmentName || "",
         date: record.date,
-        punchIn: formatTimeUTC(record.punchIn),
-        punchOut: formatTimeUTC(record.punchOut),
+        punchIn: formatTime(record.punchIn),
+        punchOut: formatTime(record.punchOut),
         totalHours: record.totalHours,
         breakTime: record.breakTime,
         overtimeHours: record.overtimeHours,
@@ -555,6 +559,8 @@ const getManagerTeamAttendance = async (req, res) => {
     const summary = {
       totalEmployees: employees.length,
       totalRecords: totalRecords,
+      organizationId: currentUser.organizationId,
+      requestedBy: currentUser.id,
       employeeList: employees.map(emp => ({
         id: emp.id,
         name: emp.name,
