@@ -75,6 +75,7 @@ export type TaskResponse = {
 export type AttendanceRecord = {
   date: string
   employee: string
+  name?: string
   punchIn: string
   punchOut: string
   status: "present" | "absent" | "late" | "half-day"

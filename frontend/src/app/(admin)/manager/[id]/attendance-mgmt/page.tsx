@@ -24,6 +24,43 @@ interface ApiResponse {
   records?: AttendanceRecord[];
 }
 
+// Type for new manager team attendance API response
+interface TeamAttendanceResponse {
+  attendanceRecords: Array<{
+    attendanceId: string;
+    employeeId: string;
+    employeeName: string;
+    employeeEmail: string;
+    employeeRole: string;
+    department: string;
+    date: string;
+    punchIn: string | null;
+    punchOut: string | null;
+    totalHours: number;
+    breakTime: number;
+    overtimeHours: number;
+    status: string;
+    isActive: boolean;
+  }>;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalRecords: number;
+    recordsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+  summary: {
+    totalEmployees: number;
+    totalRecords: number;
+    employeeList: Array<{
+      id: string;
+      name: string;
+      role: string;
+    }>;
+  };
+}
+
 export default function AttendanceManagement() {
   // Manager's own attendance state
   const [managerAttendance, setManagerAttendance] = useState<ManagerAttendance | null>(null);
@@ -35,48 +72,127 @@ export default function AttendanceManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 10;
   const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    totalPages: 0,
+    totalRecords: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
+  const [totalEmployees, setTotalEmployees] = useState(0);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const { id: managerId } = useParams()
 
-  useEffect(() => {
+  // Helper function to convert UTC time to local time
+  const convertUTCToLocal = (dateStr: string, timeStr: string | null): string => {
+    if (!timeStr) return '-';
+    
+    try {
+      // Parse UTC time
+      const [hours, minutes] = timeStr.split(':');
+      const utcDate = new Date(`${dateStr}T${hours}:${minutes}:00Z`);
+      
+      // Convert to local time
+      return utcDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      console.error('Error converting time:', error);
+      return timeStr || '-';
+    }
+  };
+
+  // Fetch team attendance using new API endpoint
+  const fetchTeamAttendance = async (page: number = 1) => {
     if (!managerId) return;
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch manager info (with employees and interns)
-        const managerRes = await axiosInstance.get(`/IT/org-members/${managerId}`);
-        const managerData = managerRes.data;
-        // Collect all employee and intern IDs and build a map for details
-        const employees = Array.isArray(managerData.employees) ? managerData.employees : [];
-        const interns = Array.isArray(managerData.interns) ? managerData.interns : [];
-        const allIds = [...employees.map((e: { id: string }) => e.id), ...interns.map((i: { id: string }) => i.id)];
-        // Build a map of id -> { id, name }
-        const map: Record<string, { id: string; name: string }> = {};
-        employees.forEach((e: { id: string; name: string }) => { map[e.id] = { id: e.id, name: e.name }; });
-        interns.forEach((i: { id: string; name: string }) => { map[i.id] = { id: i.id, name: i.name }; });
-        setEmployeeMap(map);
-        // Fetch attendance for all
-        const attendancePromises = allIds.map((empId: string) =>
-          axiosInstance.get(`/employees/${empId}/attendance`).then((res: { data: ApiResponse }) => res.data)
-        );
-        const attendanceResults = await Promise.all(attendancePromises);
-        // Flatten and filter attendance records
-        const allRecords = attendanceResults.flatMap((raw: ApiResponse) => {
-          if (Array.isArray(raw)) return raw as AttendanceRecord[];
-          if (raw.records) return raw.records;
-          if (raw.data) return raw.data;
-          return [];
-        });
-        setAttendanceRecords(allRecords);
-      } catch (error) {
-        console.error("Error fetching attendance records:", error);
-        setAttendanceRecords(mockAttendanceRecords); // Fallback to mock records
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [managerId]);
+    setIsLoading(true);
+    try {
+      // Build query parameters
+      const params: any = {
+        page: page,
+        limit: recordsPerPage,
+      };
+
+      // Add filters if they exist
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      if (statusFilter) params.status = statusFilter;
+
+      // Use the new manager team attendance endpoint with pagination
+      const response = await axiosInstance.get<TeamAttendanceResponse>(
+        `/attendance/manager/${managerId}/team`,
+        { params }
+      );
+
+      // Transform API response to match existing AttendanceRecord format
+      const transformedRecords: AttendanceRecord[] = response.data.attendanceRecords.map((record) => ({
+        date: record.date,
+        employee: record.employeeId,
+        name: record.employeeName,
+        punchIn: record.punchIn || "-",
+        punchOut: record.punchOut || "-",
+        totalHours: record.totalHours,
+        status: record.status as "present" | "absent" | "late" | "half-day",
+        regularized: false, // API doesn't provide this yet
+      }));
+
+      setAttendanceRecords(transformedRecords);
+      
+      // Update pagination info
+      setPagination({
+        totalPages: response.data.pagination.totalPages,
+        totalRecords: response.data.pagination.totalRecords,
+        hasNextPage: response.data.pagination.hasNextPage,
+        hasPreviousPage: response.data.pagination.hasPreviousPage,
+      });
+
+      // Build employee map from summary
+      const map: Record<string, { id: string; name: string }> = {};
+      response.data.summary.employeeList.forEach((emp) => {
+        map[emp.id] = { id: emp.id, name: emp.name };
+      });
+      setEmployeeMap(map);
+      setTotalEmployees(response.data.summary.totalEmployees);
+
+    } catch (error) {
+      console.error("Error fetching team attendance:", error);
+      setAttendanceRecords(mockAttendanceRecords); // Fallback to mock records
+      setPagination({
+        totalPages: 0,
+        totalRecords: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeamAttendance(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managerId, currentPage, startDate, endDate, statusFilter]);
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = () => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      fetchTeamAttendance(1);
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    setStatusFilter('');
+    setCurrentPage(1);
+  };
 
   // Update current time every second
   useEffect(() => {
@@ -202,9 +318,95 @@ export default function AttendanceManagement() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Attendance Management</h2>
 
-      {/* Last 30 Days Overview */}
+      {/* Team Attendance Overview */}
       <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">Last 30 Days Overview</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-900">Team Attendance Records</h3>
+          <div className="text-sm text-gray-600">
+            Total Team Members: <span className="font-semibold text-red-600">{totalEmployees}</span>
+          </div>
+        </div>
+
+        {/* Filters Section */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Start Date Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* End Date Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+                <option value="">All Status</option>
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="late">Late</option>
+                <option value="holiday">Holiday</option>
+              </select>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-end">
+              <button
+                onClick={clearFilters}
+                className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {(startDate || endDate || statusFilter) && (
+            <div className="mt-3 flex items-center gap-2 text-sm">
+              <span className="text-gray-600 font-medium">Active Filters:</span>
+              {startDate && (
+                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                  From: {startDate}
+                </span>
+              )}
+              {endDate && (
+                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                  To: {endDate}
+                </span>
+              )}
+              {statusFilter && (
+                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                  Status: {statusFilter}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
@@ -229,50 +431,25 @@ export default function AttendanceManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => {
-                    // Group records by date
-                    const groupedByDate = attendanceRecords.reduce((acc, record) => {
-                      if (!record.date) return acc;
-                      if (!acc[record.date]) acc[record.date] = [];
-                      acc[record.date].push(record);
-                      return acc;
-                    }, {} as Record<string, AttendanceRecord[]>);
-
-                    // Sort dates in descending order (most recent first)
-                    const sortedDates = Object.keys(groupedByDate).sort((a, b) => 
-                      new Date(b).getTime() - new Date(a).getTime()
-                    );
-
-                    // Flatten all records while maintaining date grouping
-                    const allRecords = sortedDates.flatMap((date) => 
-                      groupedByDate[date].map((record: AttendanceRecord) => record)
-                    );
-
-                    // Calculate pagination
-                    const startIndex = (currentPage - 1) * recordsPerPage;
-                    const endIndex = startIndex + recordsPerPage;
-                    const paginatedRecords = allRecords.slice(startIndex, endIndex);
-
-                    if (paginatedRecords.length === 0) {
-                      return (
-                        <tr>
-                          <td colSpan={6} className="py-8 text-center text-gray-500">
-                            No attendance records found
-                          </td>
-                        </tr>
-                      );
-                    }
-
-                    return paginatedRecords.map((record: AttendanceRecord, idx: number) => {
+                  {attendanceRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-gray-500">
+                        {totalEmployees === 0 
+                          ? "No team members found" 
+                          : "No attendance records found for your team"}
+                      </td>
+                    </tr>
+                  ) : (
+                    attendanceRecords.map((record: AttendanceRecord, idx: number) => {
                       if (!record.employee) return null;
-                      const employeeName = employeeMap[record.employee]?.name || record.employee || "Unknown";
-                      const rowKey = `${record.date}-${record.employee || "unknown"}-${startIndex + idx}`;
+                      const employeeName = record.name || employeeMap[record.employee]?.name || record.employee || "Unknown";
+                      const rowKey = `${record.date}-${record.employee || "unknown"}-${idx}`;
                       return (
                         <tr key={rowKey} className="border-b border-gray-100 hover:bg-red-50">
                           <td className="py-3 px-4">{record.date}</td>
                           <td className="py-3 px-4 font-medium">{employeeName}</td>
-                          <td className="py-3 px-4">{record.punchIn}</td>
-                          <td className="py-3 px-4">{record.punchOut}</td>
+                          <td className="py-3 px-4">{convertUTCToLocal(record.date, record.punchIn)}</td>
+                          <td className="py-3 px-4">{convertUTCToLocal(record.date, record.punchOut)}</td>
                           <td className="py-3 px-4">{record.totalHours}h</td>
                           <td className="py-3 px-4">
                             <span
@@ -294,81 +471,72 @@ export default function AttendanceManagement() {
                           </td>
                         </tr>
                       );
-                    });
-                  })()}
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
 
             {/* Pagination Controls */}
-            {(() => {
-              const groupedByDate = attendanceRecords.reduce((acc, record) => {
-                if (!record.date) return acc;
-                if (!acc[record.date]) acc[record.date] = [];
-                acc[record.date].push(record);
-                return acc;
-              }, {} as Record<string, AttendanceRecord[]>);
-
-              const sortedDates = Object.keys(groupedByDate).sort((a, b) => 
-                new Date(b).getTime() - new Date(a).getTime()
-              );
-
-              const allRecords = sortedDates.flatMap((date) => 
-                groupedByDate[date].map((record: AttendanceRecord) => record)
-              );
-
-              const totalRecords = allRecords.length;
-              const totalPages = Math.ceil(totalRecords / recordsPerPage);
-
-              if (totalPages <= 1) return null;
-
-              return (
-                <div className="flex items-center justify-between mt-4 px-4">
-                  <div className="text-sm text-gray-600">
-                    Showing {((currentPage - 1) * recordsPerPage) + 1} to {Math.min(currentPage * recordsPerPage, totalRecords)} of {totalRecords} records
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      className={`px-4 py-2 rounded-lg border transition-colors ${
-                        currentPage === 1
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-white text-red-600 border-red-200 hover:bg-red-50"
-                      }`}
-                    >
-                      Previous
-                    </button>
-                    <div className="flex space-x-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 px-4">
+                <div className="text-sm text-gray-600">
+                  Showing {((currentPage - 1) * recordsPerPage) + 1} to {Math.min(currentPage * recordsPerPage, pagination.totalRecords)} of {pagination.totalRecords} records
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={!pagination.hasPreviousPage}
+                    className={`px-4 py-2 rounded-lg border transition-colors ${
+                      !pagination.hasPreviousPage
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-red-600 border-red-200 hover:bg-red-50"
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  <div className="flex space-x-1">
+                    {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+                      // Show pages around current page
+                      let pageNum;
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
                         <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
                           className={`px-4 py-2 rounded-lg border transition-colors ${
-                            currentPage === page
+                            currentPage === pageNum
                               ? "bg-red-500 text-white border-red-500"
                               : "bg-white text-red-600 border-red-200 hover:bg-red-50"
                           }`}
                         >
-                          {page}
+                          {pageNum}
                         </button>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                      className={`px-4 py-2 rounded-lg border transition-colors ${
-                        currentPage === totalPages
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-white text-red-600 border-red-200 hover:bg-red-50"
-                      }`}
-                    >
-                      Next
-                    </button>
+                      );
+                    })}
                   </div>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                    disabled={!pagination.hasNextPage}
+                    className={`px-4 py-2 rounded-lg border transition-colors ${
+                      !pagination.hasNextPage
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-red-600 border-red-200 hover:bg-red-50"
+                    }`}
+                  >
+                    Next
+                  </button>
                 </div>
-              );
-            })()}
+              </div>
+            )}
           </>
         )}
       </div>

@@ -183,10 +183,43 @@ const authorizeAttendanceAccess = async (req, res, next) => {
   }
 }
 
+/**
+ * Authorization for manager team attendance - ensures manager is viewing their own team
+ */
+const authorizeManagerTeamAccess = async (req, res, next) => {
+  try {
+    const { managerId } = req.params
+    const currentUser = req.user
+
+    // Admin and HR can view any manager's team
+    if (["admin", "hr"].includes(currentUser.role)) {
+      return next()
+    }
+
+    // Managers can only view their own team
+    if (currentUser.role === "manager" && currentUser.id === managerId) {
+      return next()
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. You can only view your own team's attendance."
+    })
+
+  } catch (error) {
+    console.error("Manager team authorization error:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Authorization error"
+    })
+  }
+}
+
 module.exports = {
   authorizeEmployeeAccess,
   authorizeHRAccess,
   authorizeManagerAccess,
   authorizeOrganizationAccess,
-  authorizeAttendanceAccess
+  authorizeAttendanceAccess,
+  authorizeManagerTeamAccess
 }

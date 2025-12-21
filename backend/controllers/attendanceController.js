@@ -443,6 +443,143 @@ const getAttendanceByEmpId = async (req, res) => {
   }
 };
 
+// Get attendance of all associated employees for a manager with pagination
+const getManagerTeamAttendance = async (req, res) => {
+  try {
+    const { managerId } = req.params;
+    const { 
+      page = 1, 
+      limit = 10, 
+      startDate, 
+      endDate, 
+      status, 
+      employeeId 
+    } = req.query;
+
+    // Verify manager exists
+    const manager = await User.findOne({ id: managerId, role: "manager" });
+    if (!manager) {
+      return res.status(404).json({ error: "Manager not found" });
+    }
+
+    // Find all employees under this manager
+    const employees = await User.find({
+      upperManager: { $in: [managerId, manager.name] },
+      role: { $in: ["employee", "intern"] },
+      isActive: true
+    }).select("id name email role departmentName");
+
+
+    if (!employees || employees.length === 0) {
+      return res.json({
+        attendanceRecords: [],
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: 0,
+          totalRecords: 0,
+          recordsPerPage: parseInt(limit),
+          hasNextPage: false,
+          hasPreviousPage: false
+        },
+        summary: {
+          totalEmployees: 0,
+          totalRecords: 0
+        }
+      });
+    }
+
+    const employeeIds = employees.map(emp => emp.id);
+
+    // Build query for attendance records
+    const attendanceQuery = { employeeId: { $in: employeeIds } };
+
+    // Apply filters
+    if (startDate && endDate) {
+      attendanceQuery.date = { $gte: startDate, $lte: endDate };
+    } else if (startDate) {
+      attendanceQuery.date = { $gte: startDate };
+    } else if (endDate) {
+      attendanceQuery.date = { $lte: endDate };
+    }
+
+    if (status) {
+      attendanceQuery.status = status;
+    }
+
+    if (employeeId) {
+      attendanceQuery.employeeId = employeeId;
+    }
+
+    // Count total records for pagination
+    const totalRecords = await Attendance.countDocuments(attendanceQuery);
+    const totalPages = Math.ceil(totalRecords / limit);
+    const skip = (page - 1) * limit;
+
+    // Fetch attendance records with pagination
+    const attendanceRecords = await Attendance.find(attendanceQuery)
+      .sort({ date: -1, employeeId: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Map attendance records with employee information
+    const enrichedRecords = attendanceRecords.map((record) => {
+      const employee = employees.find(emp => emp.id === record.employeeId);
+      
+      // Format time in UTC to avoid timezone conversion issues
+      const formatTimeUTC = (date) => {
+        if (!date) return null;
+        const hours = date.getUTCHours().toString().padStart(2, '0');
+        const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+      };
+      
+      return {
+        attendanceId: record._id,
+        employeeId: record.employeeId,
+        employeeName: employee?.name || "Unknown",
+        employeeEmail: employee?.email || "",
+        employeeRole: employee?.role || "",
+        department: employee?.departmentName || "",
+        date: record.date,
+        punchIn: formatTimeUTC(record.punchIn),
+        punchOut: formatTimeUTC(record.punchOut),
+        totalHours: record.totalHours,
+        breakTime: record.breakTime,
+        overtimeHours: record.overtimeHours,
+        status: record.status,
+        isActive: record.isActive
+      };
+    });
+
+    // Calculate summary statistics
+    const summary = {
+      totalEmployees: employees.length,
+      totalRecords: totalRecords,
+      employeeList: employees.map(emp => ({
+        id: emp.id,
+        name: emp.name,
+        role: emp.role
+      }))
+    };
+
+    res.json({
+      attendanceRecords: enrichedRecords,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: totalPages,
+        totalRecords: totalRecords,
+        recordsPerPage: parseInt(limit),
+        hasNextPage: parseInt(page) < totalPages,
+        hasPreviousPage: parseInt(page) > 1
+      },
+      summary: summary
+    });
+  } catch (error) {
+    console.error("Get manager team attendance error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getAttendanceRecords,
   punchIn,
@@ -452,4 +589,5 @@ module.exports = {
   getTodaysAttendance,
   getAttendanceByEmpId,
   getStats,
+  getManagerTeamAttendance,
 };
