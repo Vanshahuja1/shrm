@@ -156,9 +156,10 @@ export default function MonthlyCalendar() {
   // Fetch employees on component mount
   useEffect(() => {
     const fetchEmployees = async () => {
+      const orgName = "IT Solutions"
       try {
         setLoading(true)
-        const res = await axiosInstance.get(`IT/org-members/empInfo`)
+        const res = await axiosInstance.get(`${orgName}/org-members/empInfo`)
         setEmployees(res.data)
       } catch (error) {
         console.error('Error fetching employees:', error)

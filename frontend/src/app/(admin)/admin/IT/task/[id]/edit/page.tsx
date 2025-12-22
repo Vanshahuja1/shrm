@@ -34,13 +34,13 @@ export default function EditTaskPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        
+        const orgName = "IT Solutions";
         // Fetch task details
         const taskResponse = await axiosInstance.get(`/tasks/${id}`)
         setTask(taskResponse.data)
 
         // Fetch organizational members
-        const orgResponse = await axiosInstance.get("/IT/org-members/empInfo")
+        const orgResponse = await axiosInstance.get(`/${orgName}/org-members/empInfo`)
         const allMembers: Employee[] = orgResponse.data
 
         // All employees for "Assigned To"

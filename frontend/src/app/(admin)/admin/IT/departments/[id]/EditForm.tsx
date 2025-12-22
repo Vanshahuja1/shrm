@@ -33,9 +33,10 @@ export default function EditForm({
   const [showInternDropdown, setShowInternDropdown] = useState(false)
 
   const fetchOrgMembers = async () => {
+    const orgName = "IT Solutions"
     if (!Array.isArray(orgMembers) || orgMembers.length === 0) {
       try {
-        const res = await axios.get("/IT/org-members/empInfo")
+        const res = await axios.get(`/${orgName}/org-members/empInfo`)
         console.log("Fetched employee info:", res.data)
         setOrgMembers(res.data)
       } catch (err) {

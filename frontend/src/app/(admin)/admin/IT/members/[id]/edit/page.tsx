@@ -66,8 +66,9 @@ export default function EditMemberPage() {
     };
 
     const fetchMembers = async () => {
+      const orgName = "IT Solutions";
       try {
-        const response = await axios.get("/IT/org-members/empInfo");
+        const response = await axios.get(`/${orgName}/org-members/empInfo`);
         const allMembers = response.data;
         console.log("All members:", allMembers); // Debug log
         

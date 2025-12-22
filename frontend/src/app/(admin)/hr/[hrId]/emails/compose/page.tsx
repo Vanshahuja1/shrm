@@ -140,8 +140,9 @@ export default function ComposeEmailPage() {
     const [members, setMembers] = useState<{ id: string; email: string, name: string }[]>([])
 
     const fetchMembers = async () => {
+        const orgName = "IT Solutions";
         try {
-            const response = await axios.get("/IT/org-members/empInfo")
+            const response = await axios.get(`${orgName}/org-members/empInfo`)
             setMembers(response.data)
         } catch (error) {
             console.error("Error fetching members:", error)

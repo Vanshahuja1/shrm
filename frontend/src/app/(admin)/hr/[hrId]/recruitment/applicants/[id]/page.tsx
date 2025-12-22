@@ -83,13 +83,14 @@ export default function ApplicantDetailPage() {
   const router = useRouter();
 
   useEffect(() => {
+    const orgName = "IT Solutions";
     async function fetchData() {
       setLoading(true);
       try {
         const [applicantRes, managersRes, hrRes] = await Promise.all([
           axios.get(`/recruitment/candidate/${id}`),
-          axios.get('/IT/org-members/empInfo?role=manager'),
-          axios.get('/IT/org-members/empInfo?role=hr')
+          axios.get(`${orgName}/org-members/empInfo?role=manager`),
+          axios.get(`${orgName}/org-members/empInfo?role=hr`)
         ]);
 
         setApplicant(applicantRes.data);

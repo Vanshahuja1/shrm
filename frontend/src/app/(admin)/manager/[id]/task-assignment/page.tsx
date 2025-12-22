@@ -51,8 +51,9 @@ export default function TaskAssignment() {
     fetchTasks();
     // Fetch org members for modal dropdowns
     const fetchOrgMembers = async () => {
+      const orgName = "IT Solutions";
       try {
-        const response = await axiosInstance.get("/IT/org-members/empInfo");
+        const response = await axiosInstance.get(`${orgName}/org-members/empInfo`);
         const allMembers = response.data;
         
         // Filter only employees and interns for "Assigned To" (not managers or HR)

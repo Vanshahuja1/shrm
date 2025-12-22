@@ -48,9 +48,10 @@ export default function AddTaskPage() {
   // Fetch organizational members on component mount
   useEffect(() => {
     const fetchOrgMembers = async () => {
+      const orgName = "IT Solutions";
       try {
         setLoading(true);
-        const response = await axiosInstance.get("/IT/org-members/empInfo");
+        const response = await axiosInstance.get(`${orgName}/org-members/empInfo`);
         const allMembers: Employee[] = response.data;
 
         // Filter only employees and interns for "Assigned To" (not managers or HR)
