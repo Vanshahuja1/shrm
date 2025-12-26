@@ -2,7 +2,7 @@
 
 import { useParams, usePathname } from "next/navigation"
 import Link from "next/link"
-import { Target, Calendar, User, BarChart3, Zap,MailIcon , Database } from "lucide-react"
+import { Target, Calendar, User, BarChart3, Zap, MailIcon, Database, Menu, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import axios from "@/lib/axiosInstance"
 interface EmployeeNavigationProps {
@@ -17,6 +17,7 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
     onBreak: false,
     workingHrs: 0
   })
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const { id: employeeId } = useParams()
 
@@ -65,40 +66,80 @@ export function EmployeeNavigation({}: EmployeeNavigationProps = {}) {
     // { id: "settings", label: "Settings", icon: Settings, href: `/employee/${employeeId}/settings` },
   ]
 
+  const Nav = () => (
+    <nav className="grid grid-cols-2 sm:grid-cols-3 lg:block gap-2 lg:space-y-2">
+      {tabs.map((tab) => {
+        const Icon = tab.icon
+        const isActive = pathname === tab.href
+
+        return (
+          <Link
+            key={tab.id}
+            href={tab.href}
+            className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-left transition-colors font-medium ${isActive ? "bg-blue-500 text-white shadow-md" : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"}`}
+            onClick={() => setMobileOpen(false)}
+          >
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-xs sm:text-sm truncate">{tab.label}</span>
+          </Link>
+        )
+      })}
+    </nav>
+  )
+
   return (
-    <div className="w-72 bg-white rounded-lg shadow-sm border border-blue-200 p-4">
-      <nav className="space-y-2">
-        {tabs.map((tab) => {
-          const Icon = tab.icon
-          const isActive = pathname === tab.href
+    <div className="w-full">
+      {/* Mobile hamburger */}
+      <div className="lg:hidden mb-3">
+        <button
+          type="button"
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          onClick={() => setMobileOpen((v) => !v)}
+          className="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-blue-50"
+        >
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <span>Menu</span>
+        </button>
+      </div>
 
-          return (
-            <Link
-              key={tab.id}
-              href={tab.href}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors font-medium ${isActive ? "bg-blue-500 text-white shadow-md" : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-sm">{tab.label}</span>
-            </Link>
-          )
-        })}
-      </nav>
-
-      {/* Quick Stats */}
-
-
-      {/* Status Indicator */}
-      <div className="mt-6 pt-6 border-t border-blue-200">
-        <div className="flex items-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${stats.onBreak ? "bg-orange-500 animate-pulse" : stats.isWorking ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}></div>
-          <span className="text-sm text-gray-600">{stats.onBreak ? "On Break" : stats.isWorking ? "Currently Working" : "Not Working"}</span>
-        </div>
-        <div className="mt-2">
-          <span className="text-sm text-gray-600">Working Hours: {stats.workingHrs.toFixed(1)}h</span>
+      {/* Desktop static sidebar */}
+      <div className="hidden lg:block lg:w-72 bg-white rounded-lg shadow-sm border border-blue-200 p-4 lg:sticky lg:top-6">
+        <Nav />
+        <div className="mt-6 pt-6 border-t border-blue-200">
+          <div className="flex items-center space-x-2">
+            <div className={`w-3 h-3 rounded-full ${stats.onBreak ? "bg-orange-500 animate-pulse" : stats.isWorking ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}></div>
+            <span className="text-sm text-gray-600">{stats.onBreak ? "On Break" : stats.isWorking ? "Currently Working" : "Not Working"}</span>
+          </div>
+          <div className="mt-2">
+            <span className="text-sm text-gray-600">Working Hours: {stats.workingHrs.toFixed(1)}h</span>
+          </div>
         </div>
       </div>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl p-4 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-semibold text-gray-700">Navigation</span>
+              <button aria-label="Close menu" onClick={() => setMobileOpen(false)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <Nav />
+            <div className="mt-6 pt-6 border-t border-blue-200">
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${stats.onBreak ? "bg-orange-500 animate-pulse" : stats.isWorking ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}></div>
+                <span className="text-sm text-gray-600">{stats.onBreak ? "On Break" : stats.isWorking ? "Currently Working" : "Not Working"}</span>
+              </div>
+              <div className="mt-2">
+                <span className="text-sm text-gray-600">Working Hours: {stats.workingHrs.toFixed(1)}h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

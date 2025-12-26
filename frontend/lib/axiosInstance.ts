@@ -48,6 +48,18 @@ axiosInstance.interceptors.response.use(
       console.error("Connection refused - is the backend server running on localhost:5000?")
     }
     
+    const status = error.response?.status
+    if (typeof window !== 'undefined' && (status === 401 || status === 403)) {
+      try {
+        localStorage.removeItem('authToken')
+      } catch (_) {}
+      const currentPath = window.location.pathname
+      if (!currentPath.startsWith('/login')) {
+        const redirectTo = '/login'
+        window.location.replace(redirectTo)
+      }
+    }
+    
     return Promise.reject(error)
   }
 )

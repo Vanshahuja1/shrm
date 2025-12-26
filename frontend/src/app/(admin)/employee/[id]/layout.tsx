@@ -22,6 +22,22 @@ export default function EmployeeLayout({
       router.replace('/login')
       return
     }
+    try {
+      const parts = token.split('.')
+      if (parts.length !== 3) {
+        router.replace('/login')
+        return
+      }
+      const payload = JSON.parse(atob(parts[1])) as { exp?: number }
+      if (payload?.exp && payload.exp * 1000 <= Date.now()) {
+        localStorage.removeItem('authToken')
+        router.replace('/login')
+        return
+      }
+    } catch (_) {
+      router.replace('/login')
+      return
+    }
     setAuthorized(true)
   }, [router])
 

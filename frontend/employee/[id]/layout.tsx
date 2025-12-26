@@ -16,10 +16,10 @@ export default function EmployeeLayout({
     <div className="min-h-screen bg-blue-50">
       <EmployeeHeader employeeId={id} />
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex space-x-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           <EmployeeNavigation employeeId={id} />
-          <div className="flex-1">{children}</div>
+          <div className="flex-1 min-w-0">{children}</div>
         </div>
       </div>
     </div>

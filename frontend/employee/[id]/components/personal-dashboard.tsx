@@ -8,10 +8,10 @@ interface PersonalDashboardProps {
 
 export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalDashboardProps) {
   // Calculate last 30 days attendance
-  const last30Days = attendanceRecords.slice(-30)
+  const last30Days = attendanceRecords.slice(0, Math.min(30, attendanceRecords.length))
   const presentDays = last30Days.filter((record) => record.status === "present" || record.status === "late").length
   const attendancePercentage = Math.round((presentDays / last30Days.length) * 100)
-
+  console.log(last30Days);
   return (
     <div className="space-y-6">
       {/* Basic Details */}
@@ -20,19 +20,19 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
           <User className="w-6 h-6 text-blue-500 mr-2" />
           Basic Details
         </h3>
-        <div className="flex items-center space-x-6 mb-6">
-          <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-            <User className="w-12 h-12 text-white" />
+        <div className="flex flex-col sm:flex-row items-center sm:items-center sm:space-x-6 space-y-4 sm:space-y-0 mb-6 text-center sm:text-left">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+            <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
           </div>
           <div>
-            <h4 className="text-2xl font-bold text-gray-900">{employeeInfo.name}</h4>
-            <p className="text-blue-600 font-medium text-lg">{employeeInfo.role}</p>
+            <h4 className="text-xl sm:text-2xl font-bold text-gray-900">{employeeInfo.name}</h4>
+            <p className="text-blue-600 font-medium text-base sm:text-lg">{employeeInfo.role}</p>
             {/* <p className="text-gray-600">{employeeInfo.designation}</p> */}
-            <p className="text-sm text-gray-500">Employee ID: {employeeInfo.employeeId}</p>
+            <p className="text-xs sm:text-sm text-gray-500">Employee ID: {employeeInfo.employeeId}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
             <p className="text-gray-900 font-medium">{employeeInfo.department}</p>
@@ -67,7 +67,7 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
           Last 30 Days Attendance
         </h3>
 
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
               <span className="text-2xl font-bold text-green-600">{attendancePercentage}%</span>
@@ -99,7 +99,7 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="border-b border-blue-200">
                 <th className="text-left py-2 px-3 font-medium text-gray-900">Date</th>
@@ -216,7 +216,7 @@ export function PersonalDashboard({ employeeInfo, attendanceRecords }: PersonalD
         </h3>
         <div className="grid gap-4">
           {employeeInfo.personalInfo.identityDocuments.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div key={doc.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-3">
                 <FileText className="w-5 h-5 text-gray-500" />
                 <div>
