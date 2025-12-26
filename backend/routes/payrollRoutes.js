@@ -1,5 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateToken } = require('../middleware/auth');
+const { authorizeEmployeeAccess, authorizeHRAccess } = require('../middleware/authorization');
+
+// Apply authentication to all payroll routes
+router.use(authenticateToken);
 
 // Import controllers
 const {
@@ -35,14 +40,14 @@ const {
 } = require('../controllers/payrollAdjustmentController');
 
 // Employee Payroll Routes
-router.get('/employees',  getEmployeePayrollRecords);
-router.post('/employees',  createEmployeePayroll);
-router.put('/employees/:id',  updateEmployeePayroll);
-router.post('/generate-payslip', generatePayslip);
+router.get('/employees', authorizeHRAccess, getEmployeePayrollRecords);
+router.post('/employees', authorizeHRAccess, createEmployeePayroll);
+router.put('/employees/:id', authorizeHRAccess, updateEmployeePayroll);
+router.post('/generate-payslip', authorizeHRAccess, generatePayslip);
 
 // New HR Payslip Management Routes
-router.post('/generate-attendance-payslip', generateAttendanceBasedPayslip);
-router.put('/edit/:id', editPayslip);
+router.post('/generate-attendance-payslip', authorizeHRAccess, generateAttendanceBasedPayslip);
+router.put('/edit/:id', authorizeHRAccess, editPayslip);
 router.put('/status/:id', updatePayslipStatus);
 router.put('/bulk-status', bulkUpdatePayslipStatus);
 router.get('/history/:id', getPayslipEditHistory);

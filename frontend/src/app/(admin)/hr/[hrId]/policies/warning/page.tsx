@@ -59,8 +59,9 @@ export default function WarningPolicyPage() {
 
   useEffect(() => {
     const fetchEmployees = async () => {
+      const orgName = 'IT Solutions';
       try {
-        const response = await axios.get('/IT/org-members/empInfo');
+        const response = await axios.get(`${orgName}/org-members/empInfo`);
         setEmployees(
           response.data.map((emp: {_id :string , name :string , email :string , organization :string , department :string , role :string , id :string }) => ({
             id: emp._id || emp.id,

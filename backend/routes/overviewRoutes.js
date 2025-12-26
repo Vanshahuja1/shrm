@@ -1,9 +1,13 @@
 const express = require("express")
+const { authenticateToken } = require("../middleware/auth")
 const router = express.Router()
 const Department = require("../models/departmentModel")
 const Project = require("../models/projectModel")
 const User = require("../models/userModel")
 const Attendance = require("../models/attendanceModel")
+
+// Apply authentication to all overview routes
+router.use(authenticateToken)
 
 router.get("/", async (req, res) => {
   try {

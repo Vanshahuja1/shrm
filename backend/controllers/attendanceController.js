@@ -443,6 +443,149 @@ const getAttendanceByEmpId = async (req, res) => {
   }
 };
 
+// Get attendance of all employees in manager's organization with pagination
+const getManagerTeamAttendance = async (req, res) => {
+  try {
+    // Use authenticated user's info (from JWT token)
+    const currentUser = req.user;
+    const { 
+      page = 1, 
+      limit = 10, 
+      startDate, 
+      endDate, 
+      status, 
+      employeeId 
+    } = req.query;
+
+    // Verify current user is a manager, HR, or admin
+    if (!["manager", "hr", "admin"].includes(currentUser.role)) {
+      return res.status(403).json({ error: "Access denied. Manager privileges required." });
+    }
+
+    // Find ALL employees in the authenticated user's organization
+    // This allows managers to view attendance of all employees in their organization
+    const employees = await User.find({
+      organizationId: currentUser.organizationId,
+      role: { $in: ["employee", "intern", "manager", "hr"] },
+      isActive: true
+    }).select("id name email role departmentName");
+
+
+    if (!employees || employees.length === 0) {
+      return res.json({
+        attendanceRecords: [],
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: 0,
+          totalRecords: 0,
+          recordsPerPage: parseInt(limit),
+          hasNextPage: false,
+          hasPreviousPage: false
+        },
+        summary: {
+          totalEmployees: 0,
+          totalRecords: 0
+        }
+      });
+    }
+
+    const employeeIds = employees.map(emp => emp.id);
+
+    // Build query for attendance records
+    const attendanceQuery = { employeeId: { $in: employeeIds } };
+
+    // Apply filters
+    if (startDate && endDate) {
+      attendanceQuery.date = { $gte: startDate, $lte: endDate };
+    } else if (startDate) {
+      attendanceQuery.date = { $gte: startDate };
+    } else if (endDate) {
+      attendanceQuery.date = { $lte: endDate };
+    }
+
+    if (status) {
+      attendanceQuery.status = status;
+    }
+
+    if (employeeId) {
+      attendanceQuery.employeeId = employeeId;
+    }
+
+    // Count total records for pagination
+    const totalRecords = await Attendance.countDocuments(attendanceQuery);
+    const totalPages = Math.ceil(totalRecords / limit);
+    const skip = (page - 1) * limit;
+
+    // Fetch attendance records with pagination
+    const attendanceRecords = await Attendance.find(attendanceQuery)
+      .sort({ date: -1, employeeId: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Map attendance records with employee information
+    const enrichedRecords = attendanceRecords.map((record) => {
+      const employee = employees.find(emp => emp.id === record.employeeId);
+      
+      // Extract UTC time from ISO string (database stores in UTC)
+      // This shows the actual time stored in DB without timezone conversion
+      const formatTime = (date) => {
+        if (!date) return null;
+        // Get ISO string and extract time portion (always in UTC)
+        const isoString = date.toISOString(); // e.g., "2025-12-20T09:00:06.198Z"
+        const timePart = isoString.split('T')[1]; // "09:00:06.198Z"
+        const [hours, minutes] = timePart.split(':'); // ["09", "00"]
+        return `${hours}:${minutes}`;
+      };
+      
+      return {
+        attendanceId: record._id,
+        employeeId: record.employeeId,
+        employeeName: employee?.name || "Unknown",
+        employeeEmail: employee?.email || "",
+        employeeRole: employee?.role || "",
+        department: employee?.departmentName || "",
+        date: record.date,
+        punchIn: formatTime(record.punchIn),
+        punchOut: formatTime(record.punchOut),
+        totalHours: record.totalHours,
+        breakTime: record.breakTime,
+        overtimeHours: record.overtimeHours,
+        status: record.status,
+        isActive: record.isActive
+      };
+    });
+
+    // Calculate summary statistics
+    const summary = {
+      totalEmployees: employees.length,
+      totalRecords: totalRecords,
+      organizationId: currentUser.organizationId,
+      requestedBy: currentUser.id,
+      employeeList: employees.map(emp => ({
+        id: emp.id,
+        name: emp.name,
+        role: emp.role
+      }))
+    };
+
+    res.json({
+      attendanceRecords: enrichedRecords,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: totalPages,
+        totalRecords: totalRecords,
+        recordsPerPage: parseInt(limit),
+        hasNextPage: parseInt(page) < totalPages,
+        hasPreviousPage: parseInt(page) > 1
+      },
+      summary: summary
+    });
+  } catch (error) {
+    console.error("Get manager team attendance error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getAttendanceRecords,
   punchIn,
@@ -452,4 +595,5 @@ module.exports = {
   getTodaysAttendance,
   getAttendanceByEmpId,
   getStats,
+  getManagerTeamAttendance,
 };

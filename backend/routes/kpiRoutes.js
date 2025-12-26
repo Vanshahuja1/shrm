@@ -1,4 +1,5 @@
 const express = require("express")
+const { authenticateToken } = require("../middleware/auth")
 const router = express.Router()
 const {
   getAllKPIs,
@@ -14,6 +15,9 @@ const {
   getKPIAnalytics,
   deleteKPI
 } = require("../controllers/kpiController")
+
+// Apply authentication to all KPI routes
+router.use(authenticateToken)
 
 // Basic CRUD routes
 router.get("/", getAllKPIs)

@@ -117,7 +117,7 @@ export default function OngoingProjects() {
         const managerResponse = await axios.get(`/user/${managerId}`);
         if (managerResponse.data.success) {
           const manager = managerResponse.data.data;
-
+          const orgName = manager.organizationName || "IT Solutions"; 
           // Fetch organization members using organization ID
           if (manager.organizationId) {
             try {
@@ -125,15 +125,15 @@ export default function OngoingProjects() {
               let membersResponse;
               try {
                 // First try the org-members endpoint with empInfo
-                membersResponse = await axios.get(`/IT/org-members/empInfo?organizationId=${manager.organizationId}`);
+                membersResponse = await axios.get(`${orgName}/org-members/empInfo?organizationId=${manager.organizationId}`);
               } catch {
                 try {
                   // If that fails, try the direct org-members endpoint
-                  membersResponse = await axios.get(`/IT/org-members`);
+                  membersResponse = await axios.get(`${orgName}/org-members`);
                 } catch {
                   // If both fail, try using organization name if available
                   if (manager.organizationName) {
-                    membersResponse = await axios.get(`/IT/org-members/${manager.organizationName}`);
+                    membersResponse = await axios.get(`${orgName}/org-members/${manager.organizationName}`);
                   } else {
                     throw new Error('Unable to fetch organization members');
                   }

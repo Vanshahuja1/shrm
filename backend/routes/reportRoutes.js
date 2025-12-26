@@ -1,7 +1,11 @@
 const express = require('express');
+const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 const Report = require('../models/reportModel');
 const User = require('../models/userModel');
+
+// Apply authentication to all report routes
+router.use(authenticateToken);
 
 // Get all employee reports
 router.get('/employees', async (req, res) => {

@@ -1,4 +1,5 @@
 const express = require("express");
+const { authenticateToken } = require("../middleware/auth");
 const {
   getAllProjects,
   getProjectById,
@@ -8,6 +9,9 @@ const {
 } = require("../controllers/projectController");
 
 const router = express.Router();
+
+// Apply authentication to all project routes
+router.use(authenticateToken);
 
 router.route("/").get(getAllProjects).post(createProject);
 

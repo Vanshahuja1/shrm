@@ -1,7 +1,11 @@
 const express = require("express")
+const { authenticateToken } = require("../middleware/auth")
 const { getUserFiles, getSpecificDocument, getAllUsersWithFiles } = require("../controllers/fileController")
 
 const router = express.Router()
+
+// Apply authentication to all file routes
+router.use(authenticateToken)
 
 // Get all files for a specific user
 router.get("/user/:userId", getUserFiles)

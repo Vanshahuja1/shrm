@@ -68,13 +68,14 @@ export default function EditProjectPage() {
 
         // Fetch organization members
         let memberRes;
+        const orgName = "IT Solutions";
         try {
           memberRes = await axios.get("/IT/org-members");
         } catch {
           console.log("First API failed, trying alternative...");
           // Try alternative API if the first one fails
           try {
-            memberRes = await axios.get("/IT/org-members/empInfo");
+            memberRes = await axios.get(`/${orgName}/org-members/empInfo`);
           } catch {
             console.log("Second API failed, trying third alternative...");
             // Try another alternative
